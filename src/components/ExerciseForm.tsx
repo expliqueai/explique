@@ -602,8 +602,9 @@ function QuizQuestion({
 }) {
   const correctAnswerName = useId();
 
-  const chance = new Chance(`${batchNumber} ${questionNumber} example order`);
-  const shuffledAnswers = chance.shuffle(question.answers);
+// Answers shuffling disabled
+//   const chance = new Chance(`${batchNumber} ${questionNumber} example order`);
+//   const shuffledAnswers = chance.shuffle(question.answers);
 
   return (
     <div>
@@ -711,7 +712,7 @@ function QuizQuestion({
         <div className="mt-6">
           <QuizContents
             question={question.question}
-            answers={shuffledAnswers}
+            answers={question.answers}
             selectedAnswerIndex={null}
             correctAnswer={
               question.correctAnswerIndex === null
