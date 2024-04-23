@@ -317,7 +317,7 @@ export default function ExerciseForm({
                 setFeedback({
                   model: "gpt-3.5-turbo",
                   prompt:
-                    "You will be provided a conversation between a student and a chatbot, where the student had to explain a concept. Provide feedback to the student on whether their explanation is correct. Please address the student directly (e.g. “You have understood correctly the algorithm” and not “The student has understood correctly the algorithm”). The messages are delimited by XML tags. Do not include XML tags in your response.",
+                    "You will be provided a conversation between a student and a chatbot, where the student had to explain the {ALGO} algorithm. Provide feedback to the student on whether their explanation is correct. Please address the student directly (e.g. “You have understood correctly the algorithm” and not “The student has understood correctly the algorithm”). The messages are delimited by XML tags. Do not include XML tags in your response. Keep your answer somewhat concise.",
                 });
               } else {
                 setFeedback(null);
