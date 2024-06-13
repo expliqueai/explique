@@ -105,6 +105,10 @@ export default defineSchema(
         ),
       ),
     }).index("by_attempt", ["attemptId"]),
+    reports: defineTable({
+      messageId: v.id("messages"),
+      reason: v.string()
+    }),
     logs: defineTable({
       type: v.union(
         v.literal("attemptStarted"),

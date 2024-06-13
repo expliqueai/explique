@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
+import { HandThumbDownIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import {
   CheckCircleIcon,
@@ -169,7 +169,10 @@ export default function ExplainExercise({
                         </p>
                       </div>
                     ) : (
-                      <Markdown text={message.content} />
+                      <div>
+                        <Markdown text={message.content} />
+                        <ReportMessage attemptId={attemptId} messageId={message.id} reason="No reason"/>
+                      </div>
                     )
                   ) : (
                     <p className="prose prose-sm sm:prose-base text-white whitespace-pre-wrap">
@@ -197,6 +200,41 @@ export default function ExplainExercise({
     </>
   );
 }
+
+
+function ReportMessage({attemptId, messageId, reason}: {attemptId: Id<"attempts">, messageId: Id<"messages">, reason: string}) {
+  const reportMessage = useMutation(api.chat.reportMessage);
+  const unreportMessage = useMutation(api.chat.unreportMessage);
+  const [reported, setReported] = useState(false);
+  
+  return (
+    <>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          !reported && reportMessage({ attemptId: attemptId, messageId: messageId, reason});
+          reported && unreportMessage({ attemptId: attemptId, messageId: messageId});
+          setReported(!reported);
+        }}
+      >
+        <div className="flex items-center justify-end box-content p-1">
+          <button
+            className={clsx(
+                        "w-8 h-8 rounded-full flex items-center justify-center shadow-md",
+                        reported && "bg-purple-600 text-white",
+                        !reported && "bg-white text-purple-600",
+                      )}
+            type="submit"
+            title="Report"
+          >
+            <HandThumbDownIcon className="w-5 h-5" />
+          </button>
+        </div>
+      </form>
+    </>
+  );
+}
+
 
 function NewMessage({ attemptId }: { attemptId: Id<"attempts"> }) {
   const sendMessage = useMutation(api.chat.sendMessage);

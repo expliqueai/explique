@@ -205,6 +205,47 @@ export const sendMessage = mutationWithAuth({
   },
 });
 
+export const reportMessage = mutationWithAuth({
+  args: {
+    attemptId: v.id("attempts"),
+    messageId: v.id("messages"),
+    reason: v.string(),
+  },
+  handler: async (ctx, { attemptId, messageId, reason }) => {
+    const attempt = await getAttemptIfAuthorized(
+      ctx.db,
+      ctx.session,
+      attemptId,
+    );
+    if (attempt.threadId === null)
+      throw new ConvexError("Not doing the explanation exercise");
+
+    await ctx.db.insert("reports", {
+      messageId: messageId,
+      reason: reason
+    });
+  },
+});
+
+export const unreportMessage = mutationWithAuth({
+  args: {
+    attemptId: v.id("attempts"),
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, { attemptId, messageId }) => {
+    const attempt = await getAttemptIfAuthorized(
+      ctx.db,
+      ctx.session,
+      attemptId,
+    );
+    if (attempt.threadId === null)
+      throw new ConvexError("Not doing the explanation exercise");
+
+    const report = await ctx.db.query("reports").filter((x) => x.eq(x.field("messageId"), messageId)).take(1);
+    await ctx.db.delete(report[0]._id);
+  },
+});
+
 export const answerAssistantsApi = internalAction({
   args: {
     threadId: v.string(),
