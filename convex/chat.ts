@@ -205,22 +205,45 @@ export const sendMessage = mutationWithAuth({
   },
 });
 
+export const getReport = queryWithAuth({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, { messageId }) => {
+    const message = await ctx.db.get(messageId);
+    if (message === null)
+      throw new ConvexError("Message not found");
+    
+    await getAttemptIfAuthorized(ctx.db, ctx.session, message.attemptId);
+
+    const report = await ctx.db
+                            .query("reports")
+                            .withIndex("by_attempt", (x) => x.eq("attemptId", message.attemptId))
+                            .filter(x => x.eq(x.field("messageId"), messageId))
+                            .first();
+
+    return report;
+  },
+});
+
 export const reportMessage = mutationWithAuth({
   args: {
-    attemptId: v.id("attempts"),
     messageId: v.id("messages"),
     reason: v.string(),
   },
-  handler: async (ctx, { attemptId, messageId, reason }) => {
-    const attempt = await getAttemptIfAuthorized(
+  handler: async (ctx, { messageId, reason }) => {
+    const message = await ctx.db.get(messageId);
+    if (message === null)
+      throw new ConvexError("Message not found")
+
+    await getAttemptIfAuthorized(
       ctx.db,
       ctx.session,
-      attemptId,
+      message.attemptId,
     );
-    if (attempt.threadId === null)
-      throw new ConvexError("Not doing the explanation exercise");
 
     await ctx.db.insert("reports", {
+      attemptId: message.attemptId,
       messageId: messageId,
       reason: reason
     });
@@ -229,20 +252,24 @@ export const reportMessage = mutationWithAuth({
 
 export const unreportMessage = mutationWithAuth({
   args: {
-    attemptId: v.id("attempts"),
     messageId: v.id("messages"),
   },
-  handler: async (ctx, { attemptId, messageId }) => {
-    const attempt = await getAttemptIfAuthorized(
+  handler: async (ctx, { messageId }) => {
+    const message = await ctx.db.get(messageId)
+    if (message === null)
+      throw new ConvexError("Message not found");
+
+    await getAttemptIfAuthorized(
       ctx.db,
       ctx.session,
-      attemptId,
+      message.attemptId,
     );
-    if (attempt.threadId === null)
-      throw new ConvexError("Not doing the explanation exercise");
 
-    const report = await ctx.db.query("reports").filter((x) => x.eq(x.field("messageId"), messageId)).take(1);
-    await ctx.db.delete(report[0]._id);
+    const report = await ctx.db.query("reports").filter((x) => x.eq(x.field("messageId"), messageId)).first();
+    if (report === null)
+      throw new ConvexError("No report");
+
+    await ctx.db.delete(report._id);
   },
 });
 

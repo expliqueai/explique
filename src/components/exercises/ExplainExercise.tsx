@@ -171,7 +171,7 @@ export default function ExplainExercise({
                     ) : (
                       <div>
                         <Markdown text={message.content} />
-                        <ReportMessage attemptId={attemptId} messageId={message.id} reason="No reason"/>
+                        <ReportMessage attemptId={attemptId} messageId={message.id} />
                       </div>
                     )
                   ) : (
@@ -202,19 +202,35 @@ export default function ExplainExercise({
 }
 
 
-function ReportMessage({attemptId, messageId, reason}: {attemptId: Id<"attempts">, messageId: Id<"messages">, reason: string}) {
+function ReportMessage({attemptId, messageId}: {attemptId: Id<"attempts">, messageId: Id<"messages">}) {
   const reportMessage = useMutation(api.chat.reportMessage);
   const unreportMessage = useMutation(api.chat.unreportMessage);
-  const [reported, setReported] = useState(false);
+  const reported = useQuery(api.chat.getReport, { messageId });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [reason, setReason] = useState("");
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setReason('');
+  };
+
+  const handleSubmitReport = async (e: {preventDefault: () => void; }) => {
+    e.preventDefault();
+    if (reason.trim()) {
+      reportMessage({ messageId, reason });
+      handleCloseModal();
+    } else {
+      alert('Please enter a reason for reporting.');
+    }
+  };
   
   return (
     <>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          !reported && reportMessage({ attemptId: attemptId, messageId: messageId, reason});
-          reported && unreportMessage({ attemptId: attemptId, messageId: messageId});
-          setReported(!reported);
+          !reported && setIsModalOpen(true);
+          reported && unreportMessage({ messageId });
         }}
       >
         <div className="flex items-center justify-end box-content p-1">
@@ -231,6 +247,39 @@ function ReportMessage({attemptId, messageId, reason}: {attemptId: Id<"attempts"
           </button>
         </div>
       </form>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">
+                Please specify the reason you are reporting this message
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <input
+                  type="text"
+                  className="px-4 py-2 w-full border rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  placeholder="Report reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
+              </div>
+              <div className="items-center px-4 py-3">
+                <button
+                  onClick={handleSubmitReport}
+                  className="px-4 py-2 bg-purple-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                  Report message
+                </button>
+                <button
+                  onClick={handleCloseModal}
+                  className="mt-3 w-full text-gray-500">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>  
+      )}
     </>
   );
 }
