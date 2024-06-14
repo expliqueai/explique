@@ -7,6 +7,7 @@ import {
   PuzzlePieceIcon,
   TagIcon,
   UserIcon,
+  ExclamationCircleIcon
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
@@ -62,6 +63,10 @@ export default function AdminRootLayout({ children }: { children: ReactNode }) {
         <NavLink href="/admin/users">
           <UserIcon />
           Users
+        </NavLink>
+        <NavLink href="/admin/reports">
+          <ExclamationCircleIcon />
+          Reports
         </NavLink>
       </nav>
       <div className="max-w-6xl md:flex-1">{children}</div>
