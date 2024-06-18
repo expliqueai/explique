@@ -38,7 +38,7 @@ async function login(key: string, authCheck: string) {
 }
 
 export default function Page() {
-  const tequilaLogin = useMutation(api.auth.tequilaLogin);
+  const tequilaLogin = useMutation(api.auth.tequila.login);
   const setSession = useSetSession();
   const router = useRouter();
   const [showError, setShowError] = useState(false);

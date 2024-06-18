@@ -19,7 +19,7 @@ async function getTequilaLoginUrl() {
 }
 
 export default function Page() {
-  const authUrlAction = useAction(api.auth.getLoginUrl);
+  const generateGoogleAuthUrl = useAction(api.auth.google.getLoginUrl);
 
   const isUsingIdentities = useIsUsingIdentities();
 
@@ -36,10 +36,14 @@ export default function Page() {
       const legacy = urlParams.has("legacy") || !isUsingIdentities;
 
       if (external || legacy) {
-        const redirectUrl = await authUrlAction({
+        const { url, state, codeVerifier } = await generateGoogleAuthUrl({
           external,
         });
-        window.location.href = redirectUrl;
+
+        localStorage.setItem("googleState", state);
+        localStorage.setItem("googleCodeVerifier", codeVerifier);
+
+        window.location.href = url;
       } else {
         try {
           window.location.href = await getTequilaLoginUrl();
