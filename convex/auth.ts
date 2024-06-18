@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { action, mutation } from "./_generated/server";
-import { getAuth, getEpflAuth, getGoogleAuth } from "./lucia";
+import { getAuth, getEpflAuth, getGoogleAuth } from "./auth/lucia";
 import { actionAuthDbWriter, mutationAuthDbWriter } from "./authDbWriter";
 import { OAuthRequestError } from "@lucia-auth/oauth";
 import * as TequilaLucia from "./lucia_tequila";

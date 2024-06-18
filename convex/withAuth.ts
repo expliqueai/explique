@@ -11,7 +11,7 @@ import {
   mutation,
   query,
 } from "./_generated/server";
-import { Auth, getAuth } from "./lucia";
+import { Auth, getAuth } from "./auth/lucia";
 import { actionAuthDbWriter, mutationAuthDbWriter } from "./authDbWriter";
 
 export function queryWithAuth<

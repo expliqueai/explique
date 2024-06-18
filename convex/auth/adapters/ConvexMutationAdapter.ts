@@ -1,6 +1,6 @@
 import { Adapter, DatabaseSession, DatabaseUser, UserId } from "lucia";
-import { DatabaseWriter } from "./_generated/server";
-import { Doc } from "./_generated/dataModel";
+import { Doc } from "../../_generated/dataModel";
+import { DatabaseWriter } from "../../_generated/server";
 
 export function mapDbSession(rawSession: Doc<"sessions">): DatabaseSession {
   return {

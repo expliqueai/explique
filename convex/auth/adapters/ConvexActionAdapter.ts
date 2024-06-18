@@ -3,14 +3,14 @@ import {
   ActionCtx,
   internalMutation,
   internalQuery,
-} from "./_generated/server";
+} from "../../_generated/server";
 import {
   ConvexMutationAdapter,
   mapDbSession,
   mapDbUser,
-} from "./luciaMutationAdapter";
+} from "./ConvexMutationAdapter";
 import { Adapter, DatabaseSession, DatabaseUser } from "lucia";
-import { internal } from "./_generated/api";
+import { internal } from "../../_generated/api";
 
 export class ConvexActionAdapter implements Adapter {
   constructor(private ctx: ActionCtx) {}
@@ -19,7 +19,8 @@ export class ConvexActionAdapter implements Adapter {
     sessionId: string,
   ): Promise<[session: DatabaseSession | null, user: DatabaseUser | null]> {
     const result = await this.ctx.runQuery(
-      internal.luciaActionAdapter.getSessionAndUser,
+      // @ts-ignore
+      internal.auth.adapters.ConvexActionAdapter.getSessionAndUser,
       {
         sessionId,
       },
@@ -35,7 +36,7 @@ export class ConvexActionAdapter implements Adapter {
 
   async getUserSessions(userId: string): Promise<DatabaseSession[]> {
     const results = await this.ctx.runQuery(
-      internal.luciaActionAdapter.getUserSessions,
+      internal.auth.adapters.ConvexActionAdapter.getUserSessions,
       {
         userId,
       },
@@ -45,11 +46,14 @@ export class ConvexActionAdapter implements Adapter {
   }
 
   async setSession(session: DatabaseSession): Promise<void> {
-    await this.ctx.runMutation(internal.luciaActionAdapter.setSession, {
-      userId: session.userId,
-      id: session.id,
-      expiresAt: +session.expiresAt,
-    });
+    await this.ctx.runMutation(
+      internal.auth.adapters.ConvexActionAdapter.setSession,
+      {
+        userId: session.userId,
+        id: session.id,
+        expiresAt: +session.expiresAt,
+      },
+    );
   }
 
   async updateSessionExpiration(
@@ -57,7 +61,7 @@ export class ConvexActionAdapter implements Adapter {
     expiresAt: Date,
   ): Promise<void> {
     await this.ctx.runMutation(
-      internal.luciaActionAdapter.updateSessionExpiration,
+      internal.auth.adapters.ConvexActionAdapter.updateSessionExpiration,
       {
         sessionId,
         expiresAt: +expiresAt,
@@ -66,20 +70,26 @@ export class ConvexActionAdapter implements Adapter {
   }
 
   async deleteSession(sessionId: string): Promise<void> {
-    await this.ctx.runMutation(internal.luciaActionAdapter.deleteSession, {
-      sessionId,
-    });
+    await this.ctx.runMutation(
+      internal.auth.adapters.ConvexActionAdapter.deleteSession,
+      {
+        sessionId,
+      },
+    );
   }
 
   async deleteUserSessions(userId: string): Promise<void> {
-    await this.ctx.runMutation(internal.luciaActionAdapter.deleteUserSessions, {
-      userId,
-    });
+    await this.ctx.runMutation(
+      internal.auth.adapters.ConvexActionAdapter.deleteUserSessions,
+      {
+        userId,
+      },
+    );
   }
 
   async deleteExpiredSessions(): Promise<void> {
     await this.ctx.runMutation(
-      internal.luciaActionAdapter.deleteExpiredSessions,
+      internal.auth.adapters.ConvexActionAdapter.deleteExpiredSessions,
       {},
     );
   }

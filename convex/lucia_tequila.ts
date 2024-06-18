@@ -1,6 +1,6 @@
 import { DatabaseWriter } from "./_generated/server";
 import { GlobalDatabaseUserAttributes, LuciaError, User } from "lucia";
-import { getAuth } from "./lucia";
+import { getAuth } from "./auth/lucia";
 import { mutationAuthDbWriter } from "./authDbWriter";
 import { Id } from "./_generated/dataModel";
 import * as jsrsasign from "jsrsasign";

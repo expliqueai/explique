@@ -1,5 +1,5 @@
 import { Adapter, Lucia, RegisteredDatabaseUserAttributes } from "lucia";
-import { Id } from "./_generated/dataModel";
+import { Id } from "../_generated/dataModel";
 
 declare module "lucia" {
   interface Register {
