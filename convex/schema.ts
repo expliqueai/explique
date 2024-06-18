@@ -176,18 +176,18 @@ export default defineSchema(
       identifier: v.optional(v.string()),
       extraTime: v.optional(v.literal(true)),
     })
-      .index("byId", ["id"])
+      .index("by_id", ["id"])
       .index("byEmail", ["email"])
       .index("byIdentifier", ["identifier"]),
 
     sessions: defineTable({
-      id: v.string(),
-      user_id: v.string(),
-      active_expires: v.float64(),
-      idle_expires: v.float64(),
+      id: v.string(), // Lucia session ID
+      userId: v.string(), // Lucia user ID
+      expiresAt: v.number(),
     })
-      .index("byId", ["id"])
-      .index("byUserId", ["user_id"]),
+      .index("by_id", ["id"])
+      .index("by_user_id", ["userId"])
+      .index("by_expires_at", ["expiresAt"]),
     auth_keys: defineTable({
       id: v.string(),
       hashed_password: v.union(v.string(), v.null()),
