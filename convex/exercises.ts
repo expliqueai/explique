@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { queryWithAuth } from "./withAuth";
+import { queryWithAuth } from "./auth/withAuth";
 import { DatabaseReader, internalQuery } from "./_generated/server";
 import { getCourseRegistration } from "./courses";
 import { Doc, Id } from "./_generated/dataModel";

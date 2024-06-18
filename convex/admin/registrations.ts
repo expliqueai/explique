@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { getCourseRegistration } from "../courses";
-import { mutationWithAuth } from "../withAuth";
+import { mutationWithAuth } from "../auth/withAuth";
 
 export default mutationWithAuth({
   args: {

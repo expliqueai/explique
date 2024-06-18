@@ -23,17 +23,16 @@ import type * as admin_weeks from "../admin/weeks.js";
 import type * as attempts from "../attempts.js";
 import type * as auth_adapters_ConvexActionAdapter from "../auth/adapters/ConvexActionAdapter.js";
 import type * as auth_adapters_ConvexMutationAdapter from "../auth/adapters/ConvexMutationAdapter.js";
+import type * as auth_google from "../auth/google.js";
 import type * as auth_lucia from "../auth/lucia.js";
-import type * as auth from "../auth.js";
+import type * as auth_tequila from "../auth/tequila.js";
+import type * as auth_withAuth from "../auth/withAuth.js";
 import type * as chat from "../chat.js";
 import type * as courses from "../courses.js";
 import type * as exercises from "../exercises.js";
 import type * as internal_seed from "../internal/seed.js";
-import type * as lucia_epfl from "../lucia_epfl.js";
-import type * as lucia_tequila from "../lucia_tequila.js";
 import type * as quiz from "../quiz.js";
 import type * as weeks from "../weeks.js";
-import type * as withAuth from "../withAuth.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -53,17 +52,16 @@ declare const fullApi: ApiFromModules<{
   attempts: typeof attempts;
   "auth/adapters/ConvexActionAdapter": typeof auth_adapters_ConvexActionAdapter;
   "auth/adapters/ConvexMutationAdapter": typeof auth_adapters_ConvexMutationAdapter;
+  "auth/google": typeof auth_google;
   "auth/lucia": typeof auth_lucia;
-  auth: typeof auth;
+  "auth/tequila": typeof auth_tequila;
+  "auth/withAuth": typeof auth_withAuth;
   chat: typeof chat;
   courses: typeof courses;
   exercises: typeof exercises;
   "internal/seed": typeof internal_seed;
-  lucia_epfl: typeof lucia_epfl;
-  lucia_tequila: typeof lucia_tequila;
   quiz: typeof quiz;
   weeks: typeof weeks;
-  withAuth: typeof withAuth;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

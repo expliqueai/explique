@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { actionWithAuth, queryWithAuth } from "../withAuth";
+import { actionWithAuth, queryWithAuth } from "../auth/withAuth";
 import { validateExerciseInCourse } from "./exercises";
 import OpenAI from "openai";
 import { internalMutation } from "../_generated/server";

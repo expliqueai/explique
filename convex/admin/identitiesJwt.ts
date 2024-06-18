@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { queryWithAuth } from "../withAuth";
+import { queryWithAuth } from "../auth/withAuth";
 import * as jsrsasign from "jsrsasign";
 import { getCourseRegistration } from "../courses";
 

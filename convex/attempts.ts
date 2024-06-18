@@ -3,7 +3,11 @@ import { internalMutation, internalQuery } from "./_generated/server";
 import OpenAI from "openai";
 import { internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
-import { actionWithAuth, mutationWithAuth, queryWithAuth } from "./withAuth";
+import {
+  actionWithAuth,
+  mutationWithAuth,
+  queryWithAuth,
+} from "./auth/withAuth";
 import { validateDueDate, validateDueDateFromAction } from "./weeks";
 import { Question, shownQuestions } from "./quiz";
 import { Chance } from "chance";

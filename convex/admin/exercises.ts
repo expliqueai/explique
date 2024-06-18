@@ -8,7 +8,7 @@ import {
 import OpenAI from "openai";
 import { internal } from "../_generated/api";
 import { exerciseAdminSchema } from "../schema";
-import { actionWithAuth, queryWithAuth } from "../withAuth";
+import { actionWithAuth, queryWithAuth } from "../auth/withAuth";
 import { COMPLETION_VALID_MODELS } from "../chat";
 import { getCourseRegistration } from "../courses";
 import { Id } from "../_generated/dataModel";

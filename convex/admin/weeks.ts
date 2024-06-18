@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { mutationWithAuth, queryWithAuth } from "../withAuth";
+import { mutationWithAuth, queryWithAuth } from "../auth/withAuth";
 import { Id } from "../_generated/dataModel";
 import { MutationCtx, internalQuery } from "../_generated/server";
 import { internal } from "../_generated/api";

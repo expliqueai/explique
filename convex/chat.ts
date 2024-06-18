@@ -8,9 +8,8 @@ import {
 import { ConvexError, v } from "convex/values";
 import OpenAI from "openai";
 import { internal } from "./_generated/api";
-import { mutationWithAuth, queryWithAuth } from "./withAuth";
+import { Session, mutationWithAuth, queryWithAuth } from "./auth/withAuth";
 import { Id } from "./_generated/dataModel";
-import { Session } from "lucia";
 import { TextContentBlock } from "openai/resources/beta/threads/messages";
 
 export const COMPLETION_VALID_MODELS = [

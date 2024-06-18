@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { mutationWithAuth } from "./withAuth";
+import { mutationWithAuth } from "./auth/withAuth";
 import { validateDueDate } from "./weeks";
 import { Doc, Id } from "./_generated/dataModel";
 import Chance from "chance";

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { queryWithAuth } from "../withAuth";
+import { queryWithAuth } from "../auth/withAuth";
 import { getCourseRegistration } from "../courses";
 
 export default queryWithAuth({

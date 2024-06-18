@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 import { ActionCtx, DatabaseReader, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { queryWithAuth } from "./withAuth";
+import { queryWithAuth } from "./auth/withAuth";
 
 export const getCourseRegistrationQuery = internalQuery({
   args: {
