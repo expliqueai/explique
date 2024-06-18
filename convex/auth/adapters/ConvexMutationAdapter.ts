@@ -27,7 +27,7 @@ export class ConvexMutationAdapter implements Adapter {
   ): Promise<[session: DatabaseSession | null, user: DatabaseUser | null]> {
     const rawSession = await this.db
       .query("sessions")
-      .withIndex("by_id", (q) => q.eq("id", sessionId))
+      .withIndex("by_lucia_id", (q) => q.eq("id", sessionId))
       .first();
     if (rawSession === null) {
       return [null, null];
@@ -35,7 +35,7 @@ export class ConvexMutationAdapter implements Adapter {
 
     const rawUser = await this.db
       .query("users")
-      .withIndex("by_id", (q) => q.eq("id", rawSession.userId))
+      .withIndex("by_lucia_id", (q) => q.eq("id", rawSession.userId))
       .first();
     if (rawUser === null) {
       return [null, null];
@@ -67,7 +67,7 @@ export class ConvexMutationAdapter implements Adapter {
   ): Promise<void> {
     const rawSession = await this.db
       .query("sessions")
-      .withIndex("by_id", (q) => q.eq("id", sessionId))
+      .withIndex("by_lucia_id", (q) => q.eq("id", sessionId))
       .first();
 
     if (rawSession === null) {
@@ -82,7 +82,7 @@ export class ConvexMutationAdapter implements Adapter {
   async deleteSession(sessionId: string): Promise<void> {
     const rawSession = await this.db
       .query("sessions")
-      .withIndex("by_id", (q) => q.eq("id", sessionId))
+      .withIndex("by_lucia_id", (q) => q.eq("id", sessionId))
       .first();
 
     if (rawSession !== null) {

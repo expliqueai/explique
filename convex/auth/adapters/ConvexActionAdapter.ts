@@ -102,7 +102,7 @@ export const getSessionAndUser = internalQuery({
   handler: async ({ db }, { sessionId }) => {
     const rawSession = await db
       .query("sessions")
-      .withIndex("by_id", (q) => q.eq("id", sessionId))
+      .withIndex("by_lucia_id", (q) => q.eq("id", sessionId))
       .first();
     if (rawSession === null) {
       return null;
@@ -110,7 +110,7 @@ export const getSessionAndUser = internalQuery({
 
     const rawUser = await db
       .query("users")
-      .withIndex("by_id", (q) => q.eq("id", rawSession.userId))
+      .withIndex("by_lucia_id", (q) => q.eq("id", rawSession.userId))
       .first();
     if (rawUser === null) {
       return null;

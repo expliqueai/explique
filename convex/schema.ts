@@ -170,13 +170,14 @@ export default defineSchema(
 
     // Lucia
     users: defineTable({
-      id: v.string(), // Lucia ID
+      id: v.string(), // Lucia user ID
       email: v.union(v.string(), v.null()),
       name: v.union(v.string(), v.null()),
+      googleId: v.optional(v.string()),
       identifier: v.optional(v.string()),
       extraTime: v.optional(v.literal(true)),
     })
-      .index("by_id", ["id"])
+      .index("by_lucia_id", ["id"])
       .index("byEmail", ["email"])
       .index("byIdentifier", ["identifier"]),
 
@@ -185,7 +186,7 @@ export default defineSchema(
       userId: v.string(), // Lucia user ID
       expiresAt: v.number(),
     })
-      .index("by_id", ["id"])
+      .index("by_lucia_id", ["id"])
       .index("by_user_id", ["userId"])
       .index("by_expires_at", ["expiresAt"]),
     auth_keys: defineTable({
