@@ -40,7 +40,7 @@ const RootPage: NextPage = () => {
         toast.error(
           "You are not enrolled in any courses. Please contact your instructor.",
           {
-            duration: Number.POSITIVE_INFINITY,
+            duration: Infinity,
           },
         );
         return;
