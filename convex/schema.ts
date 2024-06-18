@@ -174,12 +174,14 @@ export default defineSchema(
       email: v.union(v.string(), v.null()),
       name: v.union(v.string(), v.null()),
       googleId: v.optional(v.string()),
+      googleMetadata: v.optional(v.any()),
       identifier: v.optional(v.string()),
       extraTime: v.optional(v.literal(true)),
     })
       .index("by_lucia_id", ["id"])
-      .index("byEmail", ["email"])
-      .index("byIdentifier", ["identifier"]),
+      .index("by_email", ["email"])
+      .index("byIdentifier", ["identifier"])
+      .index("by_google_id", ["googleId"]),
 
     sessions: defineTable({
       id: v.string(), // Lucia session ID
