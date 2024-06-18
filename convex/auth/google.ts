@@ -143,6 +143,7 @@ async function getOrCreateUser(
   if (existingUser) {
     // Update the Google metadata fields of the existing user
     await db.patch(existingUser._id, {
+      googleId: profile.sub,
       email: profile.email,
       name: profile.name ?? null,
       googleMetadata: {
