@@ -169,10 +169,10 @@ export default function ExplainExercise({
                         </p>
                       </div>
                     ) : (
-                      <div>
+                      <>
                         <Markdown text={message.content} />
-                        <ReportMessage attemptId={attemptId} messageId={message.id} />
-                      </div>
+                        <ReportMessage attemptId={attemptId} messageId={message.id} isReported={message.isReported} />
+                      </>
                     )
                   ) : (
                     <p className="prose prose-sm sm:prose-base text-white whitespace-pre-wrap">
@@ -202,10 +202,9 @@ export default function ExplainExercise({
 }
 
 
-function ReportMessage({attemptId, messageId}: {attemptId: Id<"attempts">, messageId: Id<"messages">}) {
+function ReportMessage({attemptId, messageId, isReported}: {attemptId: Id<"attempts">, messageId: Id<"messages">, isReported: boolean}) {
   const reportMessage = useMutation(api.chat.reportMessage);
   const unreportMessage = useMutation(api.chat.unreportMessage);
-  const reported = useQuery(api.chat.getReport, { messageId });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reason, setReason] = useState("");
 
@@ -229,16 +228,16 @@ function ReportMessage({attemptId, messageId}: {attemptId: Id<"attempts">, messa
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          !reported && setIsModalOpen(true);
-          reported && unreportMessage({ messageId });
+          !isReported && setIsModalOpen(true);
+          isReported && unreportMessage({ messageId });
         }}
       >
         <div className="flex items-center justify-end box-content p-1">
           <button
             className={clsx(
                         "w-8 h-8 rounded-full flex items-center justify-center shadow-md",
-                        reported && "bg-purple-600 text-white",
-                        !reported && "bg-white text-purple-600",
+                        isReported && "bg-purple-600 text-white",
+                        !isReported && "bg-white text-purple-600",
                       )}
             type="submit"
             title="Report"
