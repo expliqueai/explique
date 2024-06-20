@@ -109,7 +109,8 @@ export default defineSchema(
       attemptId: v.id("attempts"),
       messageId: v.id("messages"),
       reason: v.string()
-    }).index("by_attempt", ["attemptId"]),
+    }).index("by_attempt", ["attemptId"])
+      .index("by_message", ["messageId"]),
     logs: defineTable({
       type: v.union(
         v.literal("attemptStarted"),

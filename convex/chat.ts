@@ -12,6 +12,8 @@ import { mutationWithAuth, queryWithAuth } from "./withAuth";
 import { Id } from "./_generated/dataModel";
 import { Session } from "lucia";
 import { TextContentBlock } from "openai/resources/beta/threads/messages";
+import { report } from "process";
+import { isNull } from "util";
 
 export const COMPLETION_VALID_MODELS = [
   "gpt-4-1106-preview",
@@ -62,12 +64,25 @@ export const getMessages = queryWithAuth({
       .withIndex("by_attempt", (x) => x.eq("attemptId", attemptId))
       .collect();
 
-    return rows.map(({ _id: id, system, content, appearance }) => ({
-      id,
-      system,
-      content,
-      appearance,
-    }));
+    const reportedMessages = await db
+      .query("reports")
+      .withIndex("by_attempt", (x) => x.eq("attemptId", attemptId))
+      .collect();
+    
+    const result = [];
+    for (const message of rows) {
+      const isReported = reportedMessages.some((x) => x.messageId === message._id);
+
+      result.push({
+        id: message._id,
+        system: message.system,
+        content: message.content,
+        appearance: message.appearance,
+        isReported: isReported,
+      });
+    }
+
+    return result;
   },
 });
 
@@ -205,27 +220,6 @@ export const sendMessage = mutationWithAuth({
   },
 });
 
-export const getReport = queryWithAuth({
-  args: {
-    messageId: v.id("messages"),
-  },
-  handler: async (ctx, { messageId }) => {
-    const message = await ctx.db.get(messageId);
-    if (message === null)
-      throw new ConvexError("Message not found");
-    
-    await getAttemptIfAuthorized(ctx.db, ctx.session, message.attemptId);
-
-    const report = await ctx.db
-                            .query("reports")
-                            .withIndex("by_attempt", (x) => x.eq("attemptId", message.attemptId))
-                            .filter(x => x.eq(x.field("messageId"), messageId))
-                            .first();
-
-    return report;
-  },
-});
-
 export const reportMessage = mutationWithAuth({
   args: {
     messageId: v.id("messages"),
@@ -265,7 +259,7 @@ export const unreportMessage = mutationWithAuth({
       message.attemptId,
     );
 
-    const report = await ctx.db.query("reports").filter((x) => x.eq(x.field("messageId"), messageId)).first();
+    const report = await ctx.db.query("reports").withIndex("by_message", (x) => x.eq("messageId", messageId)).first();
     if (report === null)
       throw new ConvexError("No report");
 
