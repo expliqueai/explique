@@ -10,6 +10,7 @@ import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { ArrowRightIcon, SparklesIcon } from "@heroicons/react/16/solid";
 import Markdown from "../Markdown";
+import Input from "../Input";
 
 export default function ExplainExercise({
   hasQuiz,
@@ -140,7 +141,7 @@ export default function ExplainExercise({
               >
                 <div
                   className={clsx(
-                    "inline-block p-3 sm:p-4 rounded-xl shadow",
+                    "inline-block p-3 sm:p-4 rounded-xl shadow relative",
                     message.system && "bg-white rounded-bl-none",
                     !message.system &&
                       "bg-gradient-to-b from-purple-500 to-purple-600 text-white rounded-br-none ml-auto",
@@ -207,45 +208,27 @@ function ReportMessage({attemptId, messageId, isReported}: {attemptId: Id<"attem
   const unreportMessage = useMutation(api.chat.unreportMessage);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reason, setReason] = useState("");
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setReason('');
-  };
-
-  const handleSubmitReport = async (e: {preventDefault: () => void; }) => {
-    e.preventDefault();
-    if (reason.trim()) {
-      reportMessage({ messageId, reason });
-      handleCloseModal();
-    } else {
-      alert('Please enter a reason for reporting.');
-    }
-  };
   
   return (
     <>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          !isReported && setIsModalOpen(true);
-          isReported && unreportMessage({ messageId });
-        }}
-      >
-        <div className="flex items-center justify-end box-content p-1">
-          <button
-            className={clsx(
-                        "w-8 h-8 rounded-full flex items-center justify-center shadow-md",
-                        isReported && "bg-purple-600 text-white",
-                        !isReported && "bg-white text-purple-600",
-                      )}
-            type="submit"
-            title="Report"
-          >
-            <HandThumbDownIcon className="w-5 h-5" />
-          </button>
-        </div>
-      </form>
+      <div className="flex items-center justify-end box-content p-1">
+        <button
+          className={clsx(
+                      "w-8 h-8 rounded-full flex items-center justify-center shadow-md absolute bottom-0 -right-10",
+                      isReported && "bg-purple-600 text-white",
+                      !isReported && "bg-white text-purple-600",
+                    )}
+          type="button"
+          title="Report"
+          onClick={(e) => {
+            e.preventDefault();
+            !isReported && setIsModalOpen(true);
+            isReported && unreportMessage({ messageId });
+          }}
+        >
+          <HandThumbDownIcon className="w-5 h-5" />
+        </button>
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
@@ -254,27 +237,47 @@ function ReportMessage({attemptId, messageId, isReported}: {attemptId: Id<"attem
               <h3 className="text-lg leading-6 font-medium text-gray-900">
                 Please specify the reason you are reporting this message
               </h3>
-              <div className="mt-2 px-7 py-3">
-                <input
-                  type="text"
-                  className="px-4 py-2 w-full border rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  placeholder="Report reason"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                />
-              </div>
-              <div className="items-center px-4 py-3">
-                <button
-                  onClick={handleSubmitReport}
-                  className="px-4 py-2 bg-purple-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                  Report message
-                </button>
-                <button
-                  onClick={handleCloseModal}
-                  className="mt-3 w-full text-gray-500">
-                  Cancel
-                </button>
-              </div>
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (reason.trim()) {
+                    reportMessage({ messageId, reason });
+                    setIsModalOpen(false);
+                    setReason('');
+                  }
+                }}
+              >
+                <div className="mt-2 px-7 py-3">
+                  <Input
+                    label=""
+                    placeholder="Report reason"
+                    value={reason}
+                    onChange={(value) => setReason(value)}
+                    required
+                  />
+                </div>
+                <div className="items-center px-4 py-3">
+                  <button
+                    className="px-4 py-2 bg-purple-600 text-white text-base font-medium rounded-md w-full shadow-md hover:bg-purple-700"
+                    type="submit"
+                    title="Report"
+                  >
+                    Report message
+                  </button>
+                </div>
+              </form>
+              <button
+                className="mt-3 w-full text-gray-500"
+                type="button"
+                title="Cancel"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsModalOpen(false);
+                  setReason('');
+                }}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>  
