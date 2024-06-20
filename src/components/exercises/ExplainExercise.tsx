@@ -10,6 +10,8 @@ import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { ArrowRightIcon, SparklesIcon } from "@heroicons/react/16/solid";
 import Markdown from "../Markdown";
+import { PrimaryButton } from "../PrimaryButton";
+import Input from "../Input";
 
 export default function ExplainExercise({
   hasQuiz,
