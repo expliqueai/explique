@@ -1,56 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-export const exerciseAdminSchema = {
-  name: v.string(),
-  weekId: v.union(v.id("weeks"), v.null()), // null = soft-deleted exercise
-
-  instructions: v.string(), // instructions for the chatbot in the explanation part
-  chatCompletionsApi: v.optional(v.literal(true)), // whether to use the chat completions API instead of the assistants API
-  model: v.string(), // OpenAI model used for the chatbot
-  feedback: v.optional(
-    // whether to provide some feedback after the explanation
-    v.object({
-      model: v.string(), // the OpenAI model used for the feedback
-      prompt: v.string(), // the system prompt of the feedback part
-    }),
-  ),
-
-  text: v.string(), // the text the users need to read for the reading exercise
-
-  quiz: v.union(
-    v.object({
-      batches: v.array(
-        v.object({
-          randomize: v.optional(v.boolean()),
-          questions: v.array(
-            v.object({
-              question: v.string(),
-              answers: v.array(
-                v.object({
-                  text: v.string(),
-                  correct: v.boolean(),
-                }),
-              ),
-            }),
-          ),
-        }),
-      ),
-    }),
-    v.null(),
-  ),
-  firstMessage: v.optional(v.string()),
-  controlGroup: v.union(
-    v.literal("A"),
-    v.literal("B"),
-    v.literal("none"),
-    v.literal("all"),
-  ),
-  completionFunctionDescription: v.string(),
-  image: v.optional(v.id("images")),
-  imagePrompt: v.optional(v.string()),
-};
-
 export default defineSchema(
   {
     courses: defineTable({
@@ -73,6 +23,57 @@ export default defineSchema(
       .index("by_key", ["userId", "exerciseId"])
       .index("by_status", ["status"]),
 
+    exercises: defineTable({
+      name: v.string(),
+      weekId: v.union(v.id("weeks"), v.null()), // null = soft-deleted exercise
+
+      instructions: v.string(), // instructions for the chatbot in the explanation part
+      chatCompletionsApi: v.optional(v.literal(true)), // whether to use the chat completions API instead of the assistants API
+      model: v.string(), // OpenAI model used for the chatbot
+      feedback: v.optional(
+        // whether to provide some feedback after the explanation
+        v.object({
+          model: v.string(), // the OpenAI model used for the feedback
+          prompt: v.string(), // the system prompt of the feedback part
+        }),
+      ),
+
+      text: v.string(), // the text the users need to read for the reading exercise
+
+      quiz: v.union(
+        v.object({
+          batches: v.array(
+            v.object({
+              randomize: v.optional(v.boolean()),
+              questions: v.array(
+                v.object({
+                  question: v.string(),
+                  answers: v.array(
+                    v.object({
+                      text: v.string(),
+                      correct: v.boolean(),
+                    }),
+                  ),
+                }),
+              ),
+            }),
+          ),
+        }),
+        v.null(),
+      ),
+      firstMessage: v.optional(v.string()),
+      controlGroup: v.union(
+        v.literal("A"),
+        v.literal("B"),
+        v.literal("none"),
+        v.literal("all"),
+      ),
+      completionFunctionDescription: v.string(),
+      image: v.optional(v.id("images")),
+      imagePrompt: v.optional(v.string()),
+      assistantId: v.string(),
+    }).index("by_week_id", ["weekId"]),
+
     quizSubmissions: defineTable({
       attemptId: v.id("attempts"),
       answers: v.array(v.number()),
@@ -90,11 +91,6 @@ export default defineSchema(
       // are invalidated.
       cacheInvalidation: v.optional(v.number()),
     }).index("by_course_and_start_date", ["courseId", "startDate"]),
-
-    exercises: defineTable({
-      ...exerciseAdminSchema,
-      assistantId: v.string(),
-    }).index("by_week_id", ["weekId"]),
 
     images: defineTable({
       storageId: v.id("_storage"),
