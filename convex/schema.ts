@@ -10,38 +10,74 @@ export default defineSchema(
     }).index("by_slug", ["slug"]),
 
     attempts: defineTable({
-      status: v.union(
-        v.literal("exercise"),
-        v.literal("exerciseCompleted"),
-        v.literal("quiz"),
-        v.literal("quizCompleted"),
-      ),
+      completed: v.boolean(), // whether the user completly finished the exercise
+      currentStepId: v.id("steps"),
+
+      // Whether the user completed the current step and can continue to the next step
+      // (quiz: answer it successfully, explain: give a complete explanation)
+      currentStepCompleted: v.boolean(),
+
       exerciseId: v.id("exercises"),
       userId: v.id("users"),
-      threadId: v.union(v.string(), v.null()), // null: reading variant, otherwise: explain variant
-    })
-      .index("by_key", ["userId", "exerciseId"])
-      .index("by_status", ["status"]),
+
+      // When the user is doing explanation exercises with the OpenAI assistants API,
+      // this stores the thread ID for the conversation.
+      threads: v.array(
+        v.object({
+          stepId: v.id("steps"),
+          threadId: v.string(),
+        }),
+      ),
+    }).index("by_key", ["userId", "exerciseId"]),
 
     exercises: defineTable({
       name: v.string(),
       weekId: v.union(v.id("weeks"), v.null()), // null = soft-deleted exercise
 
-      instructions: v.string(), // instructions for the chatbot in the explanation part
-      chatCompletionsApi: v.optional(v.literal(true)), // whether to use the chat completions API instead of the assistants API
-      model: v.string(), // OpenAI model used for the chatbot
-      feedback: v.optional(
-        // whether to provide some feedback after the explanation
-        v.object({
-          model: v.string(), // the OpenAI model used for the feedback
-          prompt: v.string(), // the system prompt of the feedback part
-        }),
-      ),
-
       text: v.string(), // the text the users need to read for the reading exercise
 
-      quiz: v.union(
+      image: v.optional(v.id("images")),
+      imagePrompt: v.optional(v.string()),
+
+      steps: v.array(v.id("steps")),
+    }).index("by_week_id", ["weekId"]),
+
+    steps: defineTable(
+      v.union(
         v.object({
+          variant: v.literal("read"),
+        }),
+
+        v.object({
+          variant: v.literal("explain"),
+          instructions: v.string(), // instructions for the chatbot in the explanation part
+
+          model: v.union(
+            v.object({
+              type: v.literal("OpenAIChatCompletion"),
+              openAiModel: v.string(),
+            }),
+            v.object({
+              type: v.literal("OpenAIAssistant"),
+              openAiModel: v.string(),
+              assistantId: v.string(),
+            }),
+          ),
+          completionFunctionDescription: v.string(),
+
+          feedback: v.optional(
+            // whether to provide some feedback after the explanation
+            v.object({
+              openAiModel: v.string(), // the OpenAI model used for the feedback
+              prompt: v.string(), // the system prompt of the feedback part
+            }),
+          ),
+
+          firstMessage: v.optional(v.string()),
+        }),
+
+        v.object({
+          variant: v.literal("quiz"),
           batches: v.array(
             v.object({
               randomize: v.optional(v.boolean()),
@@ -59,25 +95,13 @@ export default defineSchema(
             }),
           ),
         }),
-        v.null(),
       ),
-      firstMessage: v.optional(v.string()),
-      controlGroup: v.union(
-        v.literal("A"),
-        v.literal("B"),
-        v.literal("none"),
-        v.literal("all"),
-      ),
-      completionFunctionDescription: v.string(),
-      image: v.optional(v.id("images")),
-      imagePrompt: v.optional(v.string()),
-      assistantId: v.string(),
-    }).index("by_week_id", ["weekId"]),
+    ),
 
     quizSubmissions: defineTable({
-      attemptId: v.id("attempts"),
+      stepId: v.id("steps"),
       answers: v.array(v.number()),
-    }).index("attemptId", ["attemptId"]),
+    }).index("by_step_id", ["stepId"]),
 
     weeks: defineTable({
       courseId: v.id("courses"),
@@ -147,7 +171,6 @@ export default defineSchema(
       exerciseId: v.id("exercises"),
       userMessageId: v.optional(v.id("messages")),
       systemMessageId: v.optional(v.id("messages")),
-      variant: v.union(v.literal("reading"), v.literal("explain")),
       details: v.optional(v.any()),
     }).index("by_type", ["type"]),
 
@@ -162,13 +185,6 @@ export default defineSchema(
         v.null(),
       ),
       completedExercises: v.array(v.id("exercises")),
-      researchGroup: v.optional(
-        v.object({
-          id: v.union(v.literal("A"), v.literal("B")), // ✅
-          position: v.optional(v.number()), // ✅
-          length: v.optional(v.number()), // ✅
-        }),
-      ),
     })
       .index("by_user", ["userId"])
       .index("by_course", ["courseId"])
