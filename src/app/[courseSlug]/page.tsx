@@ -48,7 +48,6 @@ function Login() {
       <div className="flex flex-col leading-snug text-gray-700">
         <p className="text-gray-800 font-semibold">
           {identity ? identity.name : user.name}
-          {user.group && <span className="font-normal"> ({user.group})</span>}
         </p>
         <p>{identity ? identity.email : user.email}</p>
       </div>
