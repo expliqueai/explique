@@ -166,7 +166,6 @@ export const insert = internalMutation({
       userId,
       attemptId,
       exerciseId,
-      variant: threadId === null ? "reading" : "explain",
     });
 
     return attemptId;
@@ -289,7 +288,6 @@ export const goToQuiz = mutationWithAuth({
       userId: session.user._id,
       attemptId,
       exerciseId: attempt.exerciseId,
-      variant: attempt.threadId === null ? "reading" : "explain",
     });
 
     await db.patch(attemptId, {
