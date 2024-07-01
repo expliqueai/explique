@@ -142,7 +142,6 @@ export const writeSystemResponse = internalMutation({
       exerciseId: attempt.exerciseId,
       userMessageId,
       systemMessageId,
-      variant: "explain",
     });
   },
 });
@@ -159,6 +158,15 @@ async function sendMessageController(
 ) {
   const attempt = await ctx.db.get(attemptId);
   if (!attempt) throw new Error(`Attempt ${attemptId} not found`);
+
+  const step = await ctx.db.get(attempt.currentStepId);
+  if (!step) throw new Error(`Step ${attempt.currentStepId} not found`);
+  if (step.variant !== "explain") {
+    throw new ConvexError(
+      "You are not currently doing an explanation exercise.",
+    );
+  }
+  const stepId = step._id;
 
   const exercise = await ctx.db.get(attempt.exerciseId);
   if (!exercise) throw new Error(`Exercise ${attempt.exerciseId} not found`);
@@ -183,27 +191,37 @@ async function sendMessageController(
     exerciseId: attempt.exerciseId,
     userMessageId,
     systemMessageId,
-    variant: "explain",
   });
 
-  if (exercise.chatCompletionsApi) {
+  if (step.model.type === "OpenAIChatCompletion") {
     ctx.scheduler.runAfter(0, internal.chat.answerChatCompletionsApi, {
       attemptId,
+      stepId,
       userMessageId,
       systemMessageId,
-      model: exercise.model,
-      completionFunctionDescription: exercise.completionFunctionDescription,
-      instructions: exercise.instructions,
+      model: step.model.openAiModel,
+      completionFunctionDescription: step.completionFunctionDescription,
+      instructions: step.instructions,
     });
-  } else {
+  } else if (step.model.type === "OpenAIAssistant") {
+    const threadId = attempt.threads.find(
+      (x) => x.stepId === step._id,
+    )?.threadId;
+    if (!threadId) {
+      throw new ConvexError("Could not find the discussion thread.");
+    }
+
     ctx.scheduler.runAfter(0, internal.chat.answerAssistantsApi, {
       attemptId,
+      stepId,
       message,
-      threadId: attempt.threadId!,
-      assistantId: exercise.assistantId,
+      threadId,
+      assistantId: step.model.assistantId,
       userMessageId,
       systemMessageId,
     });
+  } else {
+    throw new ConvexError("Unknown model.");
   }
 }
 
@@ -228,8 +246,6 @@ export const sendMessage = mutationWithAuth({
       ctx.session,
       attemptId,
     );
-    if (attempt.threadId === null)
-      throw new ConvexError("Not doing the explanation exercise");
 
     await sendMessageController(ctx, {
       message,
@@ -296,6 +312,7 @@ export const answerAssistantsApi = internalAction({
   args: {
     threadId: v.string(),
     attemptId: v.id("attempts"),
+    stepId: v.id("steps"),
     message: v.string(),
     assistantId: v.string(),
     userMessageId: v.id("messages"),
@@ -306,6 +323,7 @@ export const answerAssistantsApi = internalAction({
     {
       threadId,
       attemptId,
+      stepId,
       message,
       assistantId,
       userMessageId,
@@ -357,6 +375,7 @@ export const answerAssistantsApi = internalAction({
       runId,
       threadId,
       attemptId,
+      stepId,
       lastMessageId,
       userMessageId,
       systemMessageId,
@@ -369,6 +388,7 @@ export const checkAnswerAssistantsApi = internalAction({
     threadId: v.string(),
     runId: v.string(),
     attemptId: v.id("attempts"),
+    stepId: v.id("steps"),
     lastMessageId: v.string(),
     userMessageId: v.id("messages"),
     systemMessageId: v.id("messages"),
@@ -379,6 +399,7 @@ export const checkAnswerAssistantsApi = internalAction({
       runId,
       threadId,
       attemptId,
+      stepId,
       lastMessageId,
       userMessageId,
       systemMessageId,
@@ -408,6 +429,7 @@ export const checkAnswerAssistantsApi = internalAction({
         if (action === null) throw new Error("Unexpected null action");
 
         await runMutation(internal.chat.markFinished, {
+          stepId,
           attemptId,
           systemMessageId,
         });
@@ -459,6 +481,7 @@ export const checkAnswerAssistantsApi = internalAction({
       runId,
       threadId,
       attemptId,
+      stepId,
       lastMessageId,
       userMessageId,
       systemMessageId,
@@ -469,6 +492,7 @@ export const checkAnswerAssistantsApi = internalAction({
 export const answerChatCompletionsApi = internalAction({
   args: {
     attemptId: v.id("attempts"),
+    stepId: v.id("steps"),
     userMessageId: v.id("messages"),
     systemMessageId: v.id("messages"),
     model: v.string(),
@@ -479,6 +503,7 @@ export const answerChatCompletionsApi = internalAction({
     ctx,
     {
       attemptId,
+      stepId,
       userMessageId,
       systemMessageId,
       model,
@@ -546,6 +571,7 @@ export const answerChatCompletionsApi = internalAction({
       // Mark as finished
       await ctx.runMutation(internal.chat.markFinished, {
         attemptId,
+        stepId,
         systemMessageId,
       });
     } else if (!message.content) {
@@ -572,13 +598,25 @@ export const answerChatCompletionsApi = internalAction({
 export const markFinished = internalMutation({
   args: {
     attemptId: v.id("attempts"),
+    stepId: v.id("steps"),
     systemMessageId: v.id("messages"),
   },
-  handler: async (ctx, { attemptId, systemMessageId }) => {
+  handler: async (ctx, { attemptId, stepId, systemMessageId }) => {
     const attempt = await ctx.db.get(attemptId);
     if (!attempt) {
       throw new Error("Can’t find the attempt");
     }
+
+    const step = await ctx.db.get(stepId);
+    if (!step || step.variant !== "explain") {
+      throw new Error("Can’t find the step");
+    }
+
+    if (step.variant !== "explain") {
+      console.log("The user is Not an explanation exercise");
+      throw new Error("You are not currently doing an explanation exercise.");
+    }
+
     // Start feedback
     const exercise = await ctx.db.get(attempt.exerciseId);
     if (!exercise) {
@@ -587,15 +625,15 @@ export const markFinished = internalMutation({
       );
     }
 
-    if (attempt.status === "exercise") {
+    if (attempt.currentStepId === stepId) {
       await ctx.db.patch(attemptId, {
-        status: exercise.quiz === null ? "quizCompleted" : "exerciseCompleted",
+        currentStepCompleted: true,
       });
     }
 
     await ctx.db.patch(systemMessageId, {
       content: "",
-      appearance: exercise.feedback ? "feedback" : "finished",
+      appearance: step.feedback ? "feedback" : "finished",
     });
 
     await ctx.db.insert("logs", {
@@ -603,15 +641,14 @@ export const markFinished = internalMutation({
       userId: attempt.userId,
       attemptId,
       exerciseId: attempt.exerciseId,
-      variant: "explain",
     });
 
-    if (exercise.feedback) {
+    if (step.feedback) {
       await ctx.scheduler.runAfter(0, internal.chat.startFeedback, {
         feedbackMessageId: systemMessageId,
         attemptId,
-        model: exercise.feedback.model,
-        prompt: exercise.feedback.prompt,
+        model: step.feedback.openAiModel,
+        prompt: step.feedback.prompt,
       });
     }
   },
@@ -733,7 +770,6 @@ export const saveFeedback = internalMutation({
       attemptId: args.attemptId,
       exerciseId: attempt.exerciseId,
       systemMessageId: args.feedbackMessageId,
-      variant: "explain",
     });
   },
 });
