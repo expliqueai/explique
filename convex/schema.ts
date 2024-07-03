@@ -46,6 +46,7 @@ export default defineSchema(
       v.union(
         v.object({
           variant: v.literal("read"),
+          text: v.string(),
         }),
 
         v.object({

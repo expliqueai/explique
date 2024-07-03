@@ -1,5 +1,9 @@
 import { ConvexError, v } from "convex/values";
-import { internalMutation, internalQuery } from "./_generated/server";
+import {
+  DatabaseReader,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import OpenAI from "openai";
 import { internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
@@ -43,9 +47,12 @@ export const get = queryWithAuth({
         q.eq("userId", session.user._id).eq("courseId", course._id),
       )
       .first();
-    if (!registration) throw new Error("User not enrolled in the course.");
+    if (!registration) {
+      throw new ConvexError("You are not enrolled in the course.");
+    }
 
-    if (attempt.userId !== session.user._id && registration.role !== "admin") {
+    const userId = session.user._id;
+    if (attempt.userId !== userId && registration.role !== "admin") {
       throw new Error("Attempt from someone else");
     }
 
@@ -63,69 +70,118 @@ export const get = queryWithAuth({
       !(session.user.extraTime && now < week.endDateExtraTime);
     const isSolutionShown = now >= week.endDateExtraTime;
 
-    const lastQuizSubmission = await db
-      .query("quizSubmissions")
-      .withIndex("attemptId", (q) => q.eq("attemptId", attempt._id))
-      .order("desc")
-      .first();
-
-    let quiz = null;
-    if (
-      exercise.quiz !== null &&
-      (attempt.status === "quiz" ||
-        attempt.status === "quizCompleted" ||
-        isSolutionShown)
-    ) {
-      const { identifier } = session.user;
-
-      quiz = shownQuestions(
-        exercise.quiz,
-        attempt.userId,
-        attempt.exerciseId,
-        registration,
-      ).map((question, questionIndex) =>
-        toUserVisibleQuestion(
-          question,
-          isSolutionShown,
-          session.user._id,
-          exercise._id,
-          questionIndex,
-        ),
-      );
-    }
-
     return {
-      courseSlug: course.slug,
-      exerciseId: exercise._id,
-      exerciseName: exercise.name,
-      status: attempt.status,
-      isDue,
-      isSolutionShown,
+      course: {
+        slug: course.slug,
+      },
+
+      exercise: {
+        id: exercise._id,
+        name: exercise.name,
+      },
+
       isAdmin: registration.role === "admin",
-      text:
-        attempt.threadId !== null
-          ? null
-          : (isSolutionShown ||
-              attempt.status === "exercise" ||
-              attempt.status === "exerciseCompleted") &&
-            exercise.text,
-      quiz,
-      lastQuizSubmission: lastQuizSubmission
+
+      ...(isSolutionShown
         ? {
-            answers: lastQuizSubmission.answers,
-            timestamp: lastQuizSubmission._creationTime,
+            steps: Promise.all(
+              exercise.steps.map((stepId) =>
+                getStepData(
+                  db,
+                  stepId,
+                  userId,
+                  exercise,
+                  attempt,
+                  isSolutionShown,
+                ),
+              ),
+            ),
           }
-        : null,
-      hasQuiz: exercise.quiz !== null,
+        : {
+            currentStep: await getStepData(
+              db,
+              attempt.currentStepId,
+              userId,
+              exercise,
+              attempt,
+              isSolutionShown,
+            ),
+          }),
+
+      isDue,
     };
   },
 });
+
+export async function getStepData(
+  db: DatabaseReader,
+  stepId: Id<"steps">,
+  userId: Id<"users">,
+  exercise: Doc<"exercises">,
+  attempt: Doc<"attempts">,
+  isSolutionShown: boolean,
+) {
+  const step = await db.get(stepId);
+  if (step === null) throw new Error(`Step ${stepId} not found`);
+
+  const stepIndex = exercise.steps.indexOf(stepId);
+  if (stepIndex === -1) throw new Error("Step not in exercise");
+
+  const currentExerciseIndex = exercise.steps.indexOf(attempt.currentStepId);
+  if (currentExerciseIndex === -1) {
+    throw new Error("Current step not in exercise");
+  }
+
+  const completed = attempt.completed ? true : stepIndex > currentExerciseIndex;
+
+  switch (step.variant) {
+    case "explain":
+      return {
+        variant: "explain" as const,
+        completed,
+      };
+    case "quiz":
+      const lastQuizSubmission = await db
+        .query("quizSubmissions")
+        .withIndex("by_step_id", (q) => q.eq("stepId", step._id))
+        .order("desc")
+        .first();
+      return {
+        variant: "quiz" as const,
+        completed,
+        quiz: shownQuestions(step, userId, stepId).map(
+          (question, questionIndex) =>
+            toUserVisibleQuestion(
+              question,
+              isSolutionShown,
+              userId,
+              stepId,
+              questionIndex,
+            ),
+        ),
+        lastQuizSubmission: lastQuizSubmission
+          ? {
+              answers: lastQuizSubmission.answers,
+              timestamp: lastQuizSubmission._creationTime,
+            }
+          : null,
+      };
+    case "read":
+      return {
+        variant: "read" as const,
+        completed,
+        text: step.text,
+      };
+    default:
+      throw new Error("Unknown step variant");
+  }
+}
 
 function toUserVisibleQuestion(
   question: Question,
   isSolutionShown: boolean,
   userId: Id<"users">,
-  exerciseId: Id<"exercises">,
+  stepId: Id<"steps">,
   questionIndex: number,
 ): {
   question: string;
@@ -133,7 +189,7 @@ function toUserVisibleQuestion(
   correctAnswer: string | null;
 } {
   const chanceAnswersOrder = new Chance(
-    `${exerciseId} ${userId} ${questionIndex} answers order`,
+    `${stepId} ${userId} ${questionIndex} answers order`,
   );
 
   return {
@@ -147,7 +203,7 @@ function toUserVisibleQuestion(
   };
 }
 
-export const insert = internalMutation({
+/*export const insert = internalMutation({
   args: {
     exerciseId: v.id("exercises"),
     userId: v.id("users"),
@@ -170,9 +226,9 @@ export const insert = internalMutation({
 
     return attemptId;
   },
-});
+});*/
 
-export const start = actionWithAuth({
+/*export const start = actionWithAuth({
   args: {
     exerciseId: v.id("exercises"),
   },
@@ -295,3 +351,4 @@ export const goToQuiz = mutationWithAuth({
     });
   },
 });
+*/

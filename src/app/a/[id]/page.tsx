@@ -12,6 +12,7 @@ import { Fragment, useState } from "react";
 import Tooltip from "@/components/Tooltip";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
+import type { getStepData } from "../../../../convex/attempts";
 
 export default function Page({ params }: { params: { id: string } }) {
   const attemptId = params.id as Id<"attempts">;
@@ -24,7 +25,7 @@ export default function Page({ params }: { params: { id: string } }) {
         <header className="fixed h-14 sm:h-16 top-0 left-0 w-full bg-white bg-opacity-90 backdrop-blur-lg p-4 shadow-lg flex items-center justify-center z-10">
           {metadata && (
             <Link
-              href={`/${metadata.courseSlug}`}
+              href={`/${metadata.course.slug}`}
               title="Back"
               className="absolute top-0 left-0 sm:w-16 sm:h-16 w-14 h-14 flex items-center justify-center"
             >
@@ -33,28 +34,25 @@ export default function Page({ params }: { params: { id: string } }) {
           )}
 
           <h1 className="text-lg sm:text-xl font-medium text-center">
-            {metadata?.exerciseName ?? (
+            {metadata?.exercise.name ?? (
               <div className="animate-pulse h-7 bg-slate-200 rounded w-56" />
             )}
           </h1>
 
-          {metadata &&
-            ((metadata.status === "exercise" && metadata.text === null) ||
-              metadata.isAdmin) &&
-            !metadata.isDue && (
-              <RestartButton exerciseId={metadata.exerciseId} />
-            )}
+          {/* @TODO Add a restart button for quiz exercises for non-admins */}
+          {metadata && metadata.isAdmin && !metadata.isDue && (
+            <RestartButton exerciseId={metadata.exercise.id} />
+          )}
         </header>
+
+        <div className="h-14"></div>
 
         {metadata && (
           <>
-            <div className="h-14"></div>
-
             {!metadata.isSolutionShown &&
               (metadata.quiz ? (
                 <QuizExercise
                   attemptId={attemptId}
-                  title={metadata.exerciseName}
                   questions={metadata.quiz}
                   lastSubmission={metadata.lastQuizSubmission}
                   succeeded={metadata.status === "quizCompleted"}
@@ -102,7 +100,6 @@ export default function Page({ params }: { params: { id: string } }) {
 
                     <QuizExercise
                       attemptId={attemptId}
-                      title={metadata.exerciseName}
                       questions={metadata.quiz!}
                       lastSubmission={metadata.lastQuizSubmission}
                       succeeded={metadata.status === "quizCompleted"}
@@ -117,6 +114,21 @@ export default function Page({ params }: { params: { id: string } }) {
       </div>
     </div>
   );
+}
+
+type Step = Awaited<ReturnType<typeof getStepData>>;
+function Step(step: Step, attemptId: Id<"attempts">) {
+  const { variant } = step;
+  switch (variant) {
+    case "quiz":
+      return <QuizExercise attemptId={attemptId} />;
+    case "read":
+      return <ReadingExercise attemptId={attemptId} text={step.text} />;
+    case "explain":
+      return <ExplainExercise />;
+    default:
+      throw new Error(`Unknown exercise type ${variant}`);
+  }
 }
 
 function RestartButton({ exerciseId }: { exerciseId: Id<"exercises"> }) {

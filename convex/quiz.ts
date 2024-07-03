@@ -20,7 +20,6 @@ function indexes(count: number) {
 function batchIndex(
   userId: Id<"users">,
   stepId: Id<"steps">,
-  registration: Doc<"registrations">,
   batchesCount: number,
 ) {
   // Assign a random batch based on the user ID
@@ -29,17 +28,13 @@ function batchIndex(
 }
 
 export function shownQuestions(
-  quiz: { batches: { randomize?: boolean; questions: Question[] }[] } | null,
+  quiz: { batches: { randomize?: boolean; questions: Question[] }[] },
   userId: Id<"users">,
   stepId: Id<"steps">,
-  registration: Doc<"registrations">,
 ): Question[] {
-  if (quiz === null) return [];
-
   if (quiz.batches.length === 0) throw new ConvexError("No quiz batches");
 
-  const batch =
-    quiz.batches[batchIndex(userId, stepId, registration, quiz.batches.length)];
+  const batch = quiz.batches[batchIndex(userId, stepId, quiz.batches.length)];
 
   if (batch.randomize === false) return batch.questions;
 
