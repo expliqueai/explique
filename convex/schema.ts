@@ -116,6 +116,20 @@ export default defineSchema(
         ),
       ),
     }).index("by_attempt", ["attemptId"]),
+    saDatabase: defineTable({
+      storageIds: v.array(
+        v.object({
+          pageNumber: v.number(),
+          storageId: v.id("_storage"),
+        }),
+      ),
+      courseId: v.id("courses"),
+      name: v.string(),
+      week: v.number(),
+    })
+      .index("by_course", ["courseId"])
+      .index("by_week", ["week"])
+      .index("by_name", ["name"]),
     reports: defineTable({
       attemptId: v.id("attempts"),
       messageId: v.id("messages"),
