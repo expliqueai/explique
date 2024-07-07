@@ -78,8 +78,24 @@ export const deleteFile = mutationWithAuth({
             courseSlug,
             "admin",
         );
+
+        const files = await ctx.db
+            .query("saDatabase")
+            .withIndex("by_course", (q) =>
+                q.eq("courseId", course._id),
+            )
+            .collect()
+        
+        const file = files.find(file => file.name === name);
+        if (file === undefined) return;
+        for (const storageId of file.storageIds) {
+            await ctx.storage.delete(storageId.storageId);
+        }
+        
+        return await ctx.db.delete(file._id);
     },
 });
+
 
 export const generateUploadUrl = mutationWithAuth({
     args: {},
@@ -109,7 +125,7 @@ export const getUrl = queryWithAuth({
             .collect()
         
         const file = files.find(file => file.name === name);
-        const storageId = file?.storageIds.find(obj => obj.pageNumber === 0)?.storageId;
+        const storageId = file?.storageIds.find(obj => obj.pageNumber === 1)?.storageId;
         if (file === undefined || storageId === undefined) {
             return null;
         } else {

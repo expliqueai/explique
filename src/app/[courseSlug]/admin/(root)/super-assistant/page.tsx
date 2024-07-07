@@ -61,6 +61,7 @@ export default function AdminSuperAssistantPage() {
                   title="Delete"
                   onClick={async (e) => {
                     e.preventDefault();
+                    await deleteFile({courseSlug:courseSlug, name:file.name});
                   }}
                 >
                   <TrashIcon className="w-5 h-5" />
@@ -179,7 +180,7 @@ function OpenFile({
 }) {
   const courseSlug = useCourseSlug();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const getUrl = useQuery(api.admin.sadatabase.getUrl, { courseSlug:courseSlug, name:filename });
+  const url = useQuery(api.admin.sadatabase.getUrl, { courseSlug:courseSlug, name:filename });
 
   return (
     <>
@@ -194,8 +195,8 @@ function OpenFile({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       >
-        {getUrl &&
-          <img src={getUrl} height="300px" width="auto" />
+        {url &&
+          <img src={url} height="300px" width="auto" />
         }
       </Modal>
     </>
