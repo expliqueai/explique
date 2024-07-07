@@ -84,6 +84,7 @@ function UploadFile({}: {}) {
   const [week, setWeek] = useState("");
   const courseSlug = useCourseSlug();
   const [file, setFile] = useState<File | null>(null);
+  const get = useQuery(api.admin.sadatabase.get, { courseSlug:courseSlug, name:file?.name });
 
   async function handleUploadFile() {
     const storageIds = [];
@@ -131,16 +132,17 @@ function UploadFile({}: {}) {
           onSubmit={async (e) => {
             e.preventDefault();
             if (file === null) return;
-            const weekNumber = (week === "" ? -1 : Number(week));
-            const storageIds = await handleUploadFile();
-            setFile(null);
-            const worked = await uploadFile({ courseSlug:courseSlug, week:(!isNaN(weekNumber) && weekNumber >= 0 ? weekNumber : -1), name:file?file.name:"", storageIds:storageIds });
-            if (!worked) {
+            if (get === true) {
               toast.error("A file with this name already exists.");
+              setFile(null);
             } else {
-              toast.success("The file has been uploaded. Thank you!");
               setIsModalOpen(false);
+              const weekNumber = (week === "" ? -1 : Number(week));
+              const storageIds = await handleUploadFile();
+              setFile(null);
               setWeek("");
+              await uploadFile({ courseSlug:courseSlug, week:(!isNaN(weekNumber) && weekNumber >= 0 ? weekNumber : -1), name:file?file.name:"", storageIds:storageIds });
+              toast.success("The file has been uploaded. Thank you!");
             }
           }}
         >

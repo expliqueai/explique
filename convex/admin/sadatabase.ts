@@ -39,6 +39,32 @@ export const list = queryWithAuth({
     },
 });
 
+export const get = queryWithAuth({
+    args: {
+        courseSlug: v.string(),
+        name: v.optional(v.string()),
+    },
+    handler: async (ctx, { courseSlug, name }) => {
+        if (name === undefined) return false;
+
+        const { course } = await getCourseRegistration(
+            ctx.db,
+            ctx.session,
+            courseSlug,
+            "admin",
+        );
+
+        const files = await ctx.db
+            .query("saDatabase")
+            .withIndex("by_course", (q) =>
+            q.eq("courseId", course._id),
+            )
+            .collect();
+        
+        return files.some((file) => file.name === name);
+    }
+})
+
 export const built = queryWithAuth({
     args: {
       courseSlug: v.string(),
@@ -51,14 +77,12 @@ export const built = queryWithAuth({
         "admin",
       );
   
-      const file = await db
+      return await db
         .query("saDatabase")
         .withIndex("by_course", (q) =>
           q.eq("courseId", course._id),
         )
         .first();
-  
-      return (file !== null);
     },
 });
 
@@ -80,23 +104,12 @@ export const uploadFile = mutationWithAuth({
             "admin",
         );
 
-        const files = await ctx.db
-            .query("saDatabase")
-            .withIndex("by_course", (q) =>
-                q.eq("courseId", course._id),
-            )
-            .collect()
-        
-        if (files.find(file => file.name === name) !== undefined) return false;
-
         await ctx.db.insert("saDatabase", {
             courseId: course._id,
             name: name,
             week: week,
             storageIds: storageIds
         });
-
-        return true;
     },
 });
 

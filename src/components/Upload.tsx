@@ -1,5 +1,6 @@
 import { ReactNode, useId } from "react";
 import { CloudArrowUpIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
 
 export default function Upload({
   value,

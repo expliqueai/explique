@@ -1,22 +1,15 @@
 "use client";
 
 import { api } from "../../../../convex/_generated/api";
+import { useState } from "react";
 import {
   CheckIcon,
   ChevronUpDownIcon,
-  QuestionMarkCircleIcon,
-  XMarkIcon,
 } from "@heroicons/react/24/outline";
-import {
-  CheckIcon as CheckIconSmall,
-  XMarkIcon as XMarkIconSmall,
-} from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import { useQuery } from "@/usingSession";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { formatTimestampHumanFormat, timeFromNow } from "@/util/date";
-import Tooltip from "@/components/Tooltip";
 import { useIdentity } from "@/components/SessionProvider";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import {
@@ -26,8 +19,9 @@ import {
   ListboxOptions,
   Transition,
 } from "@headlessui/react";
-import { ExerciseLink } from "@/components/ExerciseLink";
 import { TabBar } from "@/components/TabBar";
+import Upload from "@/components/Upload";
+
 
 function Login() {
   const router = useRouter();
@@ -234,7 +228,7 @@ function NoSuperAssistant() {
   return (
     <div className="flex h-full items-center justify-center" >
       <h2 className="font-medium text-3xl tracking-tight">
-        There is no Super-Assistant built for this course.
+        There is no Super-Assistant available for this course.
       </h2>
     </div>
   );
@@ -242,24 +236,12 @@ function NoSuperAssistant() {
 
 
 function SuperAssistant() {
+  const [file, setFile] = useState<File | null>(null);
+
   return (
-    <div className="grid gap-12">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div className="animate-pulse" key={i}>
-          <div className="flex flex-wrap h-9">
-            <div className="bg-slate-200 rounded flex-1 mr-[20%]" />
-            <div className="bg-slate-200 rounded-full w-36" />
-          </div>
-
-          <div className="h-6 my-4 bg-slate-200 rounded w-72" />
-
-          <div className="grid gap-6 md:grid-cols-2">
-            {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="pb-[57.14%] bg-slate-200 rounded-3xl" />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
+    <Upload
+      value={file}
+      onChange={(value) => setFile(value)}
+    />
   );
 }
