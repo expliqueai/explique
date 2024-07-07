@@ -203,7 +203,7 @@ export default function CoursePage() {
       </div>
       <div className="relative p-6 sm:p-10 flex justify-center shadow-[0_-10px_10px_-3px_rgba(0_0_0_/_0.08)]">
         <div className="max-w-6xl flex-1">
-          {(user?.isAdmin || user?.isSuperadmin) && (
+          {user && (
             <TabBar
               items={[
                 { label: "Super-Assistant", href: `/${courseSlug}/super-assistant` },

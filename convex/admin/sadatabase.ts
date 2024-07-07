@@ -39,6 +39,29 @@ export const list = queryWithAuth({
     },
 });
 
+export const built = queryWithAuth({
+    args: {
+      courseSlug: v.string(),
+    },
+    handler: async ({ db, session, storage }, { courseSlug }) => {
+      const { course } = await getCourseRegistration(
+        db,
+        session,
+        courseSlug,
+        "admin",
+      );
+  
+      const file = await db
+        .query("saDatabase")
+        .withIndex("by_course", (q) =>
+          q.eq("courseId", course._id),
+        )
+        .first();
+  
+      return (file !== null);
+    },
+});
+
 export const uploadFile = mutationWithAuth({
     args: {
         courseSlug: v.string(),
@@ -56,13 +79,24 @@ export const uploadFile = mutationWithAuth({
             courseSlug,
             "admin",
         );
+
+        const files = await ctx.db
+            .query("saDatabase")
+            .withIndex("by_course", (q) =>
+                q.eq("courseId", course._id),
+            )
+            .collect()
         
+        if (files.find(file => file.name === name) !== undefined) return false;
+
         await ctx.db.insert("saDatabase", {
             courseId: course._id,
             name: name,
             week: week,
             storageIds: storageIds
-        })
+        });
+
+        return true;
     },
 });
 
@@ -125,7 +159,7 @@ export const getUrl = queryWithAuth({
             .collect()
         
         const file = files.find(file => file.name === name);
-        const storageId = file?.storageIds.find(obj => obj.pageNumber === 1)?.storageId;
+        const storageId = file?.storageIds.find(obj => obj.pageNumber === 0)?.storageId;
         if (file === undefined || storageId === undefined) {
             return null;
         } else {

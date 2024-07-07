@@ -182,6 +182,7 @@ function isDefined<T>(argument: T | false): argument is T {
 export default function CoursePage() {
   const courseSlug = useCourseSlug();
   const user = useQuery(api.courses.getRegistration, { courseSlug });
+  const built = useQuery(api.admin.sadatabase.built, { courseSlug });
 
   return (
     <>
@@ -203,7 +204,7 @@ export default function CoursePage() {
       </div>
       <div className="relative p-6 sm:p-10 flex justify-center shadow-[0_-10px_10px_-3px_rgba(0_0_0_/_0.08)]">
         <div className="max-w-6xl flex-1">
-          {(user?.isAdmin || user?.isSuperadmin) && (
+          {user && (
             <TabBar
               items={[
                 { label: "Super-Assistant", href: `/${courseSlug}/super-assistant` },
@@ -220,7 +221,7 @@ export default function CoursePage() {
             />
           )}
 
-          <NoSuperAssistant />
+          {built ? <SuperAssistant /> : <NoSuperAssistant />}
           <div className="h-10" />
         </div>
       </div>
@@ -231,23 +232,10 @@ export default function CoursePage() {
 
 function NoSuperAssistant() {
   return (
-    <div className="grid gap-12">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div className="animate-pulse" key={i}>
-          <div className="flex flex-wrap h-9">
-            <div className="bg-slate-200 rounded flex-1 mr-[20%]" />
-            <div className="bg-slate-200 rounded-full w-36" />
-          </div>
-
-          <div className="h-6 my-4 bg-slate-200 rounded w-72" />
-
-          <div className="grid gap-6 md:grid-cols-2">
-            {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="pb-[57.14%] bg-slate-200 rounded-3xl" />
-            ))}
-          </div>
-        </div>
-      ))}
+    <div className="flex h-full items-center justify-center" >
+      <h2 className="font-medium text-3xl tracking-tight">
+        There is no Super-Assistant built for this course.
+      </h2>
     </div>
   );
 }

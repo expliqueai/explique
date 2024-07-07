@@ -97,9 +97,9 @@ function UploadFile({}: {}) {
       });
 
       const filename = file.name.split(".")[0];
-      const pages = await PdfToImg(file, {imgType: "png", pages:"all", returnType:"buffer"});
+      const pages = await PdfToImg(file, {imgType: "jpg", pages:"all", returnType:"buffer"});
       for (let index in pages) {
-        const page = new File([pages[index]], `${filename}_page${index}.png`, {type:"image/png"});
+        const page = new File([pages[index]], `${filename}_page${index}.jpg`, {type:"image/jpg"});
         const pageUploaded = await startUpload([page]);
         const pageStorageId = pageUploaded.map(({response}) => ((response as any).storageId))[0];
         storageIds.push({
@@ -131,13 +131,17 @@ function UploadFile({}: {}) {
           onSubmit={async (e) => {
             e.preventDefault();
             if (file === null) return;
-            setIsModalOpen(false);
             const weekNumber = (week === "" ? -1 : Number(week));
             const storageIds = await handleUploadFile();
-            setWeek("");
             setFile(null);
-            await uploadFile({ courseSlug:courseSlug, week:(!isNaN(weekNumber) && weekNumber >= 0 ? weekNumber : -1), name:file?file.name:"", storageIds:storageIds });
-            toast.success("The file has been uploaded. Thank you!");
+            const worked = await uploadFile({ courseSlug:courseSlug, week:(!isNaN(weekNumber) && weekNumber >= 0 ? weekNumber : -1), name:file?file.name:"", storageIds:storageIds });
+            if (!worked) {
+              toast.error("A file with this name already exists.");
+            } else {
+              toast.success("The file has been uploaded. Thank you!");
+              setIsModalOpen(false);
+              setWeek("");
+            }
           }}
         >
           <Upload
@@ -184,21 +188,11 @@ function OpenFile({
 
   return (
     <>
-      <button
-        className="text-blue-600 underline"
-        onClick={() => setIsModalOpen(true)}
-        >
+      {url &&
+        <a href={url} download className="text-blue-600 underline">
           {filename}
-      </button>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      >
-        {url &&
-          <img src={url} height="300px" width="auto" />
-        }
-      </Modal>
+        </a>
+      }
     </>
   );
 }
