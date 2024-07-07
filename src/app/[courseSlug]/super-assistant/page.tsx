@@ -467,6 +467,132 @@ function ExerciseLinkWithMenu({ feedback }: { feedback: Exercise }) {
 //   );
 // }
 
+// function SuperAssistant() {
+//   const [file, setFile] = useState<File | null>(null);
+//   const courseSlug = useCourseSlug();
+//   const weeks = useQuery(api.admin.exercises.list, { courseSlug });
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+
+//   const [destinationWeek, setDestinationWeek] = useState<Id<"exercises"> | null>(
+//     null,
+//   );
+
+//   if (!weeks) return <div>Loading...</div>;
+
+//   return (
+//     <>
+//       <Title>
+//         <span className="flex-1">Welcome to the super-assistant</span>
+//       </Title>
+//       <div>
+//         <h2 className="text-3xl font-medium flex mb-4 gap-3 flex-wrap items-center">
+//           <div className="flex-1">
+//           <span className="flex-1 text-xl">Get feedback</span>
+//             <div className="mt-4 grid gap-6 md:grid-cols-2">
+//               {weeks.map((week: Week) =>
+//                 week.exercises.map((exercise: Exercise) => (
+//                   <ExerciseLinkWithMenu feedback={exercise} key={exercise.id} />
+//                 ))
+//               )}
+
+//             <div className="relative pb-[57.14%]">
+//                   <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
+//                     <button
+//                       className="flex items-center h-full px-4 transition-colors rounded-3xl border-blue-900 border-2  hover:bg-slate-200 hover:text-slate-800 font-medium"
+//                       type="button"
+//                       onClick={() => { setIsModalOpen(true); }}
+//                     >
+//                       <PlusIcon className="w-6 h-6 mb-2" />
+//                       <span>Get feedback on an exercise</span>
+//                     </button>
+//                   </div>
+//                 </div>
+//             </div>
+//           </div>
+  
+//           <div className="w-1 bg-gray-400 h-auto self-stretch"></div>
+
+//           <div className="flex-1">
+//           <span className="flex-1 text-xl">Still stuck ? Go to the super-assistant</span>
+//             <div className="mt-4 grid gap-6 md:grid-cols-2">
+//                 {weeks.map((week: Week) =>
+//                   week.exercises.map((exercise: Exercise) => (
+//                     <ExerciseLinkWithMenu feedback={exercise} key={exercise.id} />
+//                   ))
+//                 )}
+//                 <div className="relative pb-[57.14%]">
+//                   <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
+//                     <button
+//                       className="flex items-center h-full px-4 transition-colors rounded-3xl border-blue-900 border-2  hover:bg-slate-200 hover:text-slate-800 font-medium"
+//                       type="button"
+//                       onClick={() => { setIsModalOpen(true); }}
+//                     >
+//                       <PlusIcon className="w-6 h-6 mr-2" />
+//                       <span>Go directly to chat</span>
+//                     </button>
+//                   </div>
+//                 </div>
+//               </div>
+//           </div>
+//         </h2>
+//       </div>
+
+
+//       <Modal
+//         isOpen={isModalOpen}
+//         onClose={() => setIsModalOpen(false)}
+//         title="Upload your attempting solution."
+//       >
+//         {/* <form
+//           onSubmit={async (e) => {
+//             e.preventDefault();
+//             if (file === null) return;
+//             setIsModalOpen(false);
+//             const weekNumber = (week === "" ? -1 : Number(week));
+//             const storageIds = await handleUploadFile();
+//             setWeek("");
+//             setFile(null);
+//             await uploadFile({ courseSlug:courseSlug, week:(!isNaN(weekNumber) && weekNumber >= 0 ? weekNumber : -1), name:file?file.name:"", storageIds:storageIds });
+//             toast.success("The file has been uploaded. Thank you!");
+//           }}
+//         > */}
+//         <form>
+//           <Upload
+//             value={file}
+//             onChange={(value) => setFile(value)}
+//           />
+//           {/* <Input
+//             label="Specify week (optional):"
+//             placeholder="Week number"
+//             value={week}
+//             onChange={(value) => setWeek(value)}
+//           /> */}
+//           <div className="flex justify-end gap-2">
+//             <Button
+//               type="button"
+//               onClick={() => {
+//                 setIsModalOpen(false);
+//                 //setWeek("");
+//                 setFile(null);
+//               }}
+//               variant="secondary"
+//               size="sm"
+//             >
+//               Cancel
+//             </Button>
+//             <Button type="submit" size="sm">
+//               Add file
+//             </Button>
+//           </div>
+//         </form>
+//       </Modal>
+
+//     </>
+//   );
+// }
+
+
+
 function SuperAssistant() {
   const [file, setFile] = useState<File | null>(null);
   const courseSlug = useCourseSlug();
@@ -487,7 +613,7 @@ function SuperAssistant() {
       <div>
         <h2 className="text-3xl font-medium flex mb-4 gap-3 flex-wrap items-center">
           <div className="flex-1">
-          <span className="flex-1 text-xl">Get feedback</span>
+            <span className="flex-1 text-xl">Get feedback</span>
             <div className="mt-4 grid gap-6 md:grid-cols-2">
               {weeks.map((week: Week) =>
                 week.exercises.map((exercise: Exercise) => (
@@ -495,84 +621,63 @@ function SuperAssistant() {
                 ))
               )}
 
-            <div className="relative pb-[57.14%]">
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
-                    <button
-                      className="flex items-center h-full px-4 transition-colors rounded-full hover:bg-slate-200 hover:text-slate-800 font-medium"
-                      type="button"
-                      onClick={() => { setIsModalOpen(true); }}
-                    >
-                      <PlusIcon className="w-6 h-6 mr-2" />
-                      <span>Get feedback on an exercise</span>
-                    </button>
-                  </div>
+              <div className="relative pb-[57.14%]">
+                <div className="absolute inset-0 flex items-center justify-center text-sky-700 text-xl gap-2">
+                  <button
+                    className="flex flex-col items-center justify-center h-full px-4 transition-colors rounded-3xl border-blue-900 border-2 hover:bg-slate-200 hover:text-slate-800 font-medium"
+                    type="button"
+                    onClick={() => { setIsModalOpen(true); }}
+                  >
+                    <PlusIcon className="w-6 h-6 mb-2" />
+                    <span>Get feedback on an exercise</span>
+                  </button>
                 </div>
+              </div>
             </div>
           </div>
-  
+
           <div className="w-1 bg-gray-400 h-auto self-stretch"></div>
 
           <div className="flex-1">
-          <span className="flex-1 text-xl">Still stuck ? Go to the super-assistant</span>
+            <span className="flex-1 text-xl">Still stuck? Go to the super-assistant</span>
             <div className="mt-4 grid gap-6 md:grid-cols-2">
-                {weeks.map((week: Week) =>
-                  week.exercises.map((exercise: Exercise) => (
-                    <ExerciseLinkWithMenu feedback={exercise} key={exercise.id} />
-                  ))
-                )}
-                <div className="relative pb-[57.14%]">
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
-                    <button
-                      className="flex items-center h-full px-4 transition-colors rounded-full hover:bg-slate-200 hover:text-slate-800 font-medium"
-                      type="button"
-                      onClick={() => { setIsModalOpen(true); }}
-                    >
-                      <PlusIcon className="w-6 h-6 mr-2" />
-                      <span>Go directly to chat</span>
-                    </button>
-                  </div>
+              {weeks.map((week: Week) =>
+                week.exercises.map((exercise: Exercise) => (
+                  <ExerciseLinkWithMenu feedback={exercise} key={exercise.id} />
+                ))
+              )}
+              <div className="relative pb-[57.14%]">
+                <div className="absolute inset-0 flex items-center justify-center text-sky-700 text-xl gap-2">
+                  <button
+                    className="flex flex-col items-center justify-center h-full px-4 transition-colors rounded-3xl border-blue-900 border-2 hover:bg-slate-200 hover:text-slate-800 font-medium"
+                    type="button"
+                    onClick={() => { setIsModalOpen(true); }}
+                  >
+                    <PlusIcon className="w-6 h-6 mb-2" />
+                    <span>Go directly to chat</span>
+                  </button>
                 </div>
               </div>
+            </div>
           </div>
         </h2>
       </div>
-
 
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Upload your attempting solution."
       >
-        {/* <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (file === null) return;
-            setIsModalOpen(false);
-            const weekNumber = (week === "" ? -1 : Number(week));
-            const storageIds = await handleUploadFile();
-            setWeek("");
-            setFile(null);
-            await uploadFile({ courseSlug:courseSlug, week:(!isNaN(weekNumber) && weekNumber >= 0 ? weekNumber : -1), name:file?file.name:"", storageIds:storageIds });
-            toast.success("The file has been uploaded. Thank you!");
-          }}
-        > */}
         <form>
           <Upload
             value={file}
             onChange={(value) => setFile(value)}
           />
-          {/* <Input
-            label="Specify week (optional):"
-            placeholder="Week number"
-            value={week}
-            onChange={(value) => setWeek(value)}
-          /> */}
           <div className="flex justify-end gap-2">
             <Button
               type="button"
               onClick={() => {
                 setIsModalOpen(false);
-                //setWeek("");
                 setFile(null);
               }}
               variant="secondary"
@@ -586,7 +691,6 @@ function SuperAssistant() {
           </div>
         </form>
       </Modal>
-
     </>
   );
 }
