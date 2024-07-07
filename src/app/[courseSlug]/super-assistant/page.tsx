@@ -23,6 +23,40 @@ import { TabBar } from "@/components/TabBar";
 import Upload from "@/components/Upload";
 
 
+import Title from "@/components/typography";
+
+
+import { ExerciseLink } from "@/components/ExerciseLink";
+import { DropdownMenu, DropdownMenuItem } from "@/components/DropdownMenu";
+import { Button } from "@/components/Button";
+import { Modal } from "@/components/Modal";
+import { Id } from "../../../../convex/_generated/dataModel";
+import { useMutation } from "@/usingSession";
+import { toast } from "sonner";
+import Link from "next/link";
+
+import { PlusIcon } from "@heroicons/react/20/solid";
+
+
+type Exercise = {
+  id: Id<"exercises">;
+  name: string;
+  image: {
+    thumbnails: { type: string; sizes?: string; src: string }[];
+  } | null;
+};
+
+type Week = {
+  _id: Id<"weeks">;
+  exercises: Exercise[];
+  _creationTime: number;
+  endDateExtraTime: number;
+  cacheInvalidation?: number;
+};
+
+
+
+
 function Login() {
   const router = useRouter();
   const courseSlug = useCourseSlug();
@@ -235,13 +269,324 @@ function NoSuperAssistant() {
 }
 
 
-function SuperAssistant() {
-  const [file, setFile] = useState<File | null>(null);
+
+function ExerciseLinkWithMenu({ feedback }: { feedback: Exercise }) {
+  const courseSlug = useCourseSlug();
+  const deleteExercise = useMutation(api.admin.exercises.softDelete);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const [destinationCourse, setDestinationCourse] =
+    useState<Id<"courses"> | null>(null);
+  const [destinationWeek, setDestinationWeek] = useState<Id<"weeks"> | null>(
+    null,
+  );
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
 
   return (
-    <Upload
-      value={file}
-      onChange={(value) => setFile(value)}
-    />
+    <>
+      <ExerciseLink
+        href={`/${courseSlug}/admin/exercises/${feedback.id}`}
+        name={feedback.name}
+        image={feedback.image}
+        corner={
+          <div className="p-4">
+            <div className="pointer-events-auto">
+              <DropdownMenu variant="overlay">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setIsDeleteModalOpen(true);
+                  }}
+                  variant="danger"
+                >
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenu>
+            </div>
+          </div>
+        }
+      />
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title={`Delete “${feedback.name}”?`}
+      >
+        <div className="mt-2">
+          <p className="text-sm text-gray-500">
+            Are you sure that you want to delete this feedback{" "}
+            <strong className="font-semibold text-gray-600">
+              “{feedback.name}”
+            </strong>
+            ? This action cannot be undone.
+          </p>
+        </div>
+        <div className="mt-4 flex gap-2 justify-end">
+          <Button
+            onClick={() => setIsDeleteModalOpen(false)}
+            variant="secondary"
+            size="sm"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={async () => {
+              setIsDeleteModalOpen(false);
+              await deleteExercise({
+                id: feedback.id,
+                courseSlug,
+              });
+              toast.success("Exercise deleted successfully");
+            }}
+            variant="danger"
+            size="sm"
+          >
+            Delete
+          </Button>
+        </div>
+      </Modal>
+    </>
+  );
+}
+
+
+
+
+// function SuperAssistant() {
+//   const [file, setFile] = useState<File | null>(null);
+//   const courseSlug = useCourseSlug();
+//   const weeks = useQuery(api.admin.exercises.list, {
+//     courseSlug,
+//   }); // assuming weeks == our feedbacks
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+
+//   const [destinationWeek, setDestinationWeek] = useState<Id<"exercises"> | null>(
+//     null,
+//   );
+
+//   return (
+//     <>
+//       <Title>
+//         <span className="flex-1">Welcome to the super-assistant</span>
+//       </Title>
+//       <div>
+//         <h2 className="text-3xl font-medium flex mb-4 gap-3 flex-wrap items-center">
+//           <div className="flex-1">
+//             <div className="mt-4 grid gap-6 md:grid-cols-2">
+//             {weeks?.map((week: Week) =>
+//                  week.exercises.map((exercise: Exercise) => (
+//                   <ExerciseLinkWithMenu feedback={exercise} key={exercise.id} />
+//                 ))
+//               )}
+              
+//               {/* Change this to a modal */}
+//               {/* <Link
+//                 href={`/${courseSlug}/admin/exercises/new/${weeks._id}`}
+//                 className="block rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
+//               >
+//                 <div className="relative pb-[57.14%]">
+//                   <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
+//                     <PlusIcon className="w-6 h-6" />
+//                     <span>Create a new Feedback</span>
+//                   </div>
+//                 </div>
+//               </Link> */}
+//                <div className="relative pb-[57.14%]">
+//                   <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
+//                   <button
+//                     className="flex [&>svg]:w-6 [&>svg]:h-6 [&>svg]:mr-2 items-center h-12 px-4 transition-colors rounded-full hover:bg-slate-200 hover:text-slate-800 font-medium [&>svg]:transition-colors"
+//                     type="button"
+//                     onClick={() => { setIsModalOpen(true); }}
+//                     >
+//                     <PlusIcon className="w-6 h-6" />
+//                     <span>Create a new Feedback</span>
+                      
+//                   </button>
+//                   <Modal
+//                     isOpen={isModalOpen}
+//                     onClose={() => setIsModalOpen(false)}
+//                     title="Upload a new file to the knowledge database."
+//                   >
+//                     <form>
+//                     {/* <form
+//                       onSubmit={async (e) => {
+//                         e.preventDefault();
+//                         if (file === null) return;
+//                         const weekNumber = (week === "" ? -1 : Number(week));
+//                         const storageIds = await handleUploadFile();
+//                         setFile(null);
+//                         const worked = await uploadFile({ courseSlug:courseSlug, week:(!isNaN(weekNumber) && weekNumber >= 0 ? weekNumber : -1), name:file?file.name:"", storageIds:storageIds });
+//                         if (!worked) {
+//                           toast.error("A file with this name already exists.");
+//                         } else {
+//                           toast.success("The file has been uploaded. Thank you!");
+//                           setIsModalOpen(false);
+//                           setWeek("");
+//                         }
+//                       }}
+//                     > */}
+//                       <Upload
+//                         value={file}
+//                         onChange={(value) => setFile(value)}
+//                       />
+//                       {/* <Input
+//                         label="Specify a name (optional):"
+//                         placeholder="Name number"
+//                         value={name}
+//                         onChange={(value) => setName(name)}
+//                       /> */}
+//                       <div className="flex justify-end gap-2">
+//                         <Button
+//                           type="button"
+//                           onClick={() => {
+//                             // setIsModalOpen(false);
+//                             // setWeek("");
+//                             setFile(null);
+//                           }}
+//                           variant="secondary"
+//                           size="sm"
+//                         >
+//                           Cancel
+//                         </Button>
+//                         <Button type="submit" size="sm">
+//                           Add file
+//                         </Button>
+//                       </div>
+//                     </form>
+//                   </Modal>
+//                     <PlusIcon className="w-6 h-6" />
+//                     <span>Create a new Feedback</span>
+//                   </div>
+//                 </div>
+//             </div>
+//           </div>
+//           <div className="w-1 bg-gray-400"></div>
+//           <div className="flex-1"></div>
+//         </h2>
+//       </div>
+//       {/* <Upload value={file} onChange={(value) => setFile(value)} /> */}
+//     </>
+//   );
+// }
+
+function SuperAssistant() {
+  const [file, setFile] = useState<File | null>(null);
+  const courseSlug = useCourseSlug();
+  const weeks = useQuery(api.admin.exercises.list, { courseSlug });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [destinationWeek, setDestinationWeek] = useState<Id<"exercises"> | null>(
+    null,
+  );
+
+  if (!weeks) return <div>Loading...</div>;
+
+  return (
+    <>
+      <Title>
+        <span className="flex-1">Welcome to the super-assistant</span>
+      </Title>
+      <div>
+        <h2 className="text-3xl font-medium flex mb-4 gap-3 flex-wrap items-center">
+          <div className="flex-1">
+          <span className="flex-1 text-xl">Get feedback</span>
+            <div className="mt-4 grid gap-6 md:grid-cols-2">
+              {weeks.map((week: Week) =>
+                week.exercises.map((exercise: Exercise) => (
+                  <ExerciseLinkWithMenu feedback={exercise} key={exercise.id} />
+                ))
+              )}
+
+            <div className="relative pb-[57.14%]">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
+                    <button
+                      className="flex items-center h-full px-4 transition-colors rounded-full hover:bg-slate-200 hover:text-slate-800 font-medium"
+                      type="button"
+                      onClick={() => { setIsModalOpen(true); }}
+                    >
+                      <PlusIcon className="w-6 h-6 mr-2" />
+                      <span>Get feedback on an exercise</span>
+                    </button>
+                  </div>
+                </div>
+            </div>
+          </div>
+  
+          <div className="w-1 bg-gray-400 h-auto self-stretch"></div>
+
+          <div className="flex-1">
+          <span className="flex-1 text-xl">Still stuck ? Go to the super-assistant</span>
+            <div className="mt-4 grid gap-6 md:grid-cols-2">
+                {weeks.map((week: Week) =>
+                  week.exercises.map((exercise: Exercise) => (
+                    <ExerciseLinkWithMenu feedback={exercise} key={exercise.id} />
+                  ))
+                )}
+                <div className="relative pb-[57.14%]">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
+                    <button
+                      className="flex items-center h-full px-4 transition-colors rounded-full hover:bg-slate-200 hover:text-slate-800 font-medium"
+                      type="button"
+                      onClick={() => { setIsModalOpen(true); }}
+                    >
+                      <PlusIcon className="w-6 h-6 mr-2" />
+                      <span>Go directly to chat</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </h2>
+      </div>
+
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Upload your attempting solution."
+      >
+        {/* <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (file === null) return;
+            setIsModalOpen(false);
+            const weekNumber = (week === "" ? -1 : Number(week));
+            const storageIds = await handleUploadFile();
+            setWeek("");
+            setFile(null);
+            await uploadFile({ courseSlug:courseSlug, week:(!isNaN(weekNumber) && weekNumber >= 0 ? weekNumber : -1), name:file?file.name:"", storageIds:storageIds });
+            toast.success("The file has been uploaded. Thank you!");
+          }}
+        > */}
+        <form>
+          <Upload
+            value={file}
+            onChange={(value) => setFile(value)}
+          />
+          {/* <Input
+            label="Specify week (optional):"
+            placeholder="Week number"
+            value={week}
+            onChange={(value) => setWeek(value)}
+          /> */}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              onClick={() => {
+                setIsModalOpen(false);
+                //setWeek("");
+                setFile(null);
+              }}
+              variant="secondary"
+              size="sm"
+            >
+              Cancel
+            </Button>
+            <Button type="submit" size="sm">
+              Add file
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+    </>
   );
 }
