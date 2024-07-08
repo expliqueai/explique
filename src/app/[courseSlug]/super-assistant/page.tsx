@@ -57,9 +57,7 @@ type Week = {
 
 type Feedback = { 
   id : Id<"feedbacks">;
-  image: {
-    thumbnails: { type: string; sizes?: string; src: string }[];
-  } | null;
+  image: Id<"images"> | null;
 }
 
 function Login() {
@@ -292,7 +290,7 @@ function ExerciseLinkWithMenu({ feedback }: { feedback: Feedback }) {
       <ExerciseLink
         href={`/${courseSlug}/admin/exercises/${feedback.id}`}
         name= "Feedback"
-        image={feedback.image}
+        image= {null} //{feedback.image}
         corner={
           <div className="p-4">
             <div className="pointer-events-auto">
