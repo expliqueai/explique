@@ -57,7 +57,7 @@ type Week = {
 
 type Feedback = { 
   id : Id<"feedbacks">;
-  image: Id<"images"> | null;
+  image: Id<"_storage"> | null;
 }
 
 function Login() {
@@ -462,6 +462,9 @@ function SuperAssistant() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
   const generateFeedback = useMutation(api.feedback.generateFeedback);
+  const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
+  const { startUpload } = useUploadFiles(generateUploadUrl);
+  
 
 
 
@@ -469,16 +472,6 @@ function SuperAssistant() {
 
   if (!feedbacks) return <div>Loading...</div>;
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (file === null) return;
-   
-    // Upload the solution and generate feedback
-    const feedbackId = await generateFeedback({ courseSlug, file });
-    
-    // Navigate to the feedback page
-    router.push(`/${courseSlug}/feedback/}`);
-  };
 
   return (
     <>
@@ -537,7 +530,26 @@ function SuperAssistant() {
         onClose={() => setIsModalOpen(false)}
         title="Upload your tentative solution."
       >
-        <form onSubmit={handleFormSubmit}>
+        <form onSubmit={
+          async (e) => {
+            e.preventDefault();
+            if (file === null) return;
+            const uploaded = await startUpload([file]);
+            const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
+           
+
+            await generateFeedback({ courseSlug:courseSlug, content:"", storageIds:storageId });
+          
+            // Upload the solution and generate feedback
+            //const feedbackId = await generateFeedback({ courseSlug, storageId });
+  
+            
+            // Navigate to the feedback page
+            router.push(`/${courseSlug}/feedback/}`);
+            //await uploadFile({ courseSlug:courseSlug, week:(!isNaN(weekNumber) && weekNumber >= 0 ? weekNumber : -1), name:file?file.name:"", storageIds:storageIds });
+            setIsModalOpen(false);
+            toast.success("Your solution has been uploaded. Please wait for it to be reviewed");
+          }}>
           <Upload
             value={file}
             onChange={(value) => setFile(value)}

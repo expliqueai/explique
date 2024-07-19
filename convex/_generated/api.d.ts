@@ -34,6 +34,7 @@ import type * as chat from "../chat.js";
 import type * as courses from "../courses.js";
 import type * as crons from "../crons.js";
 import type * as exercises from "../exercises.js";
+import type * as feedback from "../feedback.js";
 import type * as internal_seed from "../internal/seed.js";
 import type * as quiz from "../quiz.js";
 import type * as superadmin_courses from "../superadmin/courses.js";
@@ -69,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   courses: typeof courses;
   crons: typeof crons;
   exercises: typeof exercises;
+  feedback: typeof feedback;
   "internal/seed": typeof internal_seed;
   quiz: typeof quiz;
   "superadmin/courses": typeof superadmin_courses;

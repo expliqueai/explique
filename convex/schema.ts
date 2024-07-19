@@ -120,7 +120,7 @@ export default defineSchema(
       feedbacks: defineTable({
         courseId: v.id("courses"),
         content: v.string(),
-        image: v.optional(v.id("images")),
+        image: v.optional(v.id("_storage")),
       }).index("by_course", ["courseId"]),
 
 
