@@ -288,7 +288,7 @@ function ExerciseLinkWithMenu({ feedback }: { feedback: Feedback }) {
   return (
     <>
       <ExerciseLink
-        href={`/${courseSlug}/admin/exercises/${feedback.id}`}
+        href={`/${courseSlug}/super-assistant/${feedback.id}`}
         name= "Feedback"
         image= {null} //{feedback.image}
         corner={
@@ -538,14 +538,22 @@ function SuperAssistant() {
             const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
            
 
-            await generateFeedback({ courseSlug:courseSlug, content:"", storageIds:storageId });
+            const feedbackId = await generateFeedback({ courseSlug, storageIds:storageId });
           
             // Upload the solution and generate feedback
             //const feedbackId = await generateFeedback({ courseSlug, storageId });
   
             
             // Navigate to the feedback page
-            router.push(`/${courseSlug}/feedback/}`);
+            //router.push(`/${courseSlug}/feedback/}`);
+            //router.push(`/${courseSlug}/super-assistant/${feedbackId}`);
+
+            if (feedbackId) {
+              router.push(`/${courseSlug}/super-assistant/${feedbackId}`);
+            } else {
+              toast.error("Failed to generate feedback");
+            }
+
             //await uploadFile({ courseSlug:courseSlug, week:(!isNaN(weekNumber) && weekNumber >= 0 ? weekNumber : -1), name:file?file.name:"", storageIds:storageIds });
             setIsModalOpen(false);
             toast.success("Your solution has been uploaded. Please wait for it to be reviewed");

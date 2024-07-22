@@ -3,6 +3,11 @@ import { queryWithAuth, mutationWithAuth } from "./auth/withAuth";
 import { getCourseRegistration } from "./courses";
 import { Doc, Id } from "./_generated/dataModel";
 import { generateId } from "lucia";
+import OpenAI from "openai";
+import openai from "openai";
+import { Completions } from "openai/resources";
+import { internalAction, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 
 
@@ -63,21 +68,37 @@ export const listFeedbacks = queryWithAuth({
   export const generateFeedback = mutationWithAuth({
     args: {
         courseSlug: v.string(),
-        content: v.string(),
         storageIds: v.id("_storage"),
     },
-    handler: async (ctx, { courseSlug, content, storageIds }) => {
+    handler: async (ctx, { courseSlug, storageIds }) => {
+
         const { course } = await getCourseRegistration(
             ctx.db,
             ctx.session,
             courseSlug,
         );
 
-        await ctx.db.insert("feedbacks", {
+        const fileUrl = await ctx.storage.getUrl(storageIds);
+        
+
+        const feedbackId = await ctx.db.insert("feedbacks", {
             courseId: course._id,
-            content: content,
-            image: storageIds
-        });
+            content: "Generating feedback...",
+            image: storageIds,
+          });
+    
+          if (fileUrl) {
+          // Schedule the action to generate feedback
+            await ctx.scheduler.runAfter(0, internal.feedback.generateFeedbackFromOpenAI, {
+                courseId: course._id,
+                fileUrl : fileUrl,
+                storageId: storageIds,
+                feedbackId: feedbackId,
+            });
+        } 
+    
+          return feedbackId;
+    
     },
 });
 
@@ -117,3 +138,60 @@ export const generateUploadUrl = mutationWithAuth({
 //         }
 //     },
 //   });
+
+export const generateFeedbackFromOpenAI = internalAction({
+    args: {
+      fileUrl: v.string(),
+      courseId: v.id("courses"),
+      storageId: v.id("_storage"),
+      feedbackId: v.id("feedbacks"),
+    },
+    handler: async (ctx, { fileUrl, courseId, storageId, feedbackId }) => {
+      const prompt = `Analyze the following image and provide feedback: ${fileUrl}`;
+      
+      const openai = new OpenAI();
+      const response = await openai.chat.completions.create(
+        {
+          model: "gpt-4o",
+          messages: [{ role: "system", content: prompt }],
+          temperature: 0.3,
+          stream: false,
+        },
+        {
+          timeout: 3 * 60 * 1000, // 3 minutes
+        }
+      );
+  
+      const finalResponse = response.choices[0]?.message?.content ?? "";
+  
+      // Update the feedback entry with the generated content
+      await ctx.runMutation(internal.feedback.updateFeedback, {
+        feedbackId,
+        response: finalResponse,
+      });
+    },
+  });
+  
+  export const updateFeedback = internalMutation({
+    args: {
+      feedbackId: v.id("feedbacks"),
+      response: v.string(),
+    },
+    handler: async (ctx, { feedbackId, response }) => {
+      await ctx.db.patch(feedbackId, {
+        content: response,
+      });
+    },
+  });
+
+
+export const getFeedback = queryWithAuth({
+    args: { feedbackId: v.id('feedbacks') },
+    handler: async (ctx, { feedbackId }) => {
+      const feedback = await ctx.db.get(feedbackId);
+      if (!feedback) {
+        throw new Error('Feedback not found');
+      }
+      return feedback;
+    },
+  });
