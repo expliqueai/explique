@@ -26,11 +26,9 @@ export const list = queryWithAuth({
   
       const result = [];
       for (const file of files) {
-        const date = new Date(file._creationTime);
-
         result.push({
           name: file.name,
-          creationTime: date.toUTCString(),
+          creationTime: file._creationTime,
           week: file.week,
         });
       }

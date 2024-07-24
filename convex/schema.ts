@@ -116,14 +116,11 @@ export default defineSchema(
         ),
       ),
     }).index("by_attempt", ["attemptId"]),
-
-      feedbacks: defineTable({
-        courseId: v.id("courses"),
-        content: v.string(),
-        image: v.optional(v.id("_storage")),
-      }).index("by_course", ["courseId"]),
-
-
+    feedbacks: defineTable({
+      courseId: v.id("courses"),
+      content: v.string(),
+      image: v.optional(v.id("_storage")),
+    }).index("by_course", ["courseId"]),
     saDatabase: defineTable({
       storageIds: v.array(
         v.object({

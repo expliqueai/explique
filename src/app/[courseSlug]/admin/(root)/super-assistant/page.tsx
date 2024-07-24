@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import Upload from "@/components/Upload";
 import PdfToImg from "pdftoimg-js/browser";
 import { useUploadFiles } from "@xixixao/uploadstuff/react";
+import { formatTimestampHumanFormat } from "@/util/date";
+
 
 
 export default function AdminSuperAssistantPage() {
@@ -53,7 +55,7 @@ export default function AdminSuperAssistantPage() {
                 <OpenFile filename={file.name} />
               </td>
               <td className="px-2 py-3">{(file.week === -1) ? "No week assigned" : "Week " + file.week}</td>
-              <td className="px-2 py-3">{file.creationTime}</td>
+              <td className="px-2 py-3">{formatTimestampHumanFormat(file.creationTime)}</td>
               <td>
                 <button
                   className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white"

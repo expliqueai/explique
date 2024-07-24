@@ -2,30 +2,17 @@
 
 import { api } from "../../../../convex/_generated/api";
 import { useState } from "react";
-import {
-  CheckIcon,
-  ChevronUpDownIcon,
-} from "@heroicons/react/24/outline";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useQuery } from "@/usingSession";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useIdentity } from "@/components/SessionProvider";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
-import {
-  Listbox,
-  ListboxButton,
-  ListboxOption,
-  ListboxOptions,
-  Transition,
-} from "@headlessui/react";
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from "@headlessui/react";
 import { TabBar } from "@/components/TabBar";
 import Upload from "@/components/Upload";
-
-
 import Title from "@/components/typography";
-
-
 import { ExerciseLink } from "@/components/ExerciseLink";
 import { DropdownMenu, DropdownMenuItem } from "@/components/DropdownMenu";
 import { Button } from "@/components/Button";
@@ -34,7 +21,6 @@ import { Id } from "../../../../convex/_generated/dataModel";
 import { useMutation } from "@/usingSession";
 import { toast } from "sonner";
 import Link from "next/link";
-
 import { PlusIcon } from "@heroicons/react/20/solid";
 import { useUploadFiles } from "@xixixao/uploadstuff/react";
 
@@ -352,109 +338,6 @@ function ExerciseLinkWithMenu({ feedback }: { feedback: Feedback }) {
 
 
 
-
-
-// function SuperAssistant() {
-//   const [file, setFile] = useState<File | null>(null);
-//   const courseSlug = useCourseSlug();
-//   //const weeks = useQuery(api.admin.exercises.list, { courseSlug });
-//   const feedbacks = useQuery(api.feedback.listFeedbacks, { courseSlug });
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-
-//   // const [destinationWeek, setDestinationWeek] = useState<Id<"exercises"> | null>(
-//   //   null,
-//   // );
-
-//   if (!feedbacks) return <div></div>;
-
-//   return (
-//     <>
-//       <Title>
-//         <span className="flex-1">Welcome to the super-assistant !</span>
-//       </Title>
-//       <div>
-//         <h2 className="text-3xl font-medium flex mb-4 gap-3 flex-wrap items-center">
-//           <div className="flex-1">
-//             <span className="flex-1 text-xl">Get feedback</span>
-//             <div className="mt-4 grid gap-6 md:grid-cols-2">
-//             {feedbacks.map(feedback => (
-//               <ExerciseLinkWithMenu feedback={feedback} key={feedback.id} />
-//             ))}
-
-//               <div className="relative pb-[57.14%]">
-//                 <div className="absolute inset-0 flex items-center justify-center text-sky-700 text-xl gap-2">
-//                   <button
-//                     className="flex flex-col items-center justify-center h-full px-4 transition-colors rounded-3xl border-blue-900 border-2 hover:bg-slate-200 hover:text-slate-800 font-medium"
-//                     type="button"
-//                     onClick={() => { setIsModalOpen(true); }}
-//                   >
-//                     <PlusIcon className="w-6 h-6 mb-2" />
-//                     <span>Get feedback on an exercise</span>
-//                   </button>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-
-//           <div className="w-1 bg-gray-400 h-auto self-stretch"></div>
-
-//           <div className="flex-1">
-//             <span className="flex-1 text-xl">Still stuck? Go to the super-assistant</span>
-//             <div className="mt-4 grid gap-6 md:grid-cols-2">
-//             {feedbacks.map(feedback => (
-//               <ExerciseLinkWithMenu feedback={feedback} key={feedback.id} />
-//             ))}
-//               <div className="relative pb-[57.14%]">
-//                 <div className="absolute inset-0 flex items-center justify-center text-sky-700 text-xl gap-2">
-//                   <button
-//                     className="flex flex-col items-center justify-center h-full px-4 transition-colors rounded-3xl border-blue-900 border-2 hover:bg-slate-200 hover:text-slate-800 font-medium"
-//                     type="button"
-//                     onClick={() => { setIsModalOpen(true); }}
-//                   >
-//                     {/* <PlusIcon className="w-6 h-6 mb-2" /> */}
-//                     <span>Chat with the assistant</span>
-//                   </button>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         </h2>
-//       </div>
-
-//       <Modal
-//         isOpen={isModalOpen}
-//         onClose={() => setIsModalOpen(false)}
-//         title="Upload your attempting solution."
-//       >
-//         <form>
-//           <Upload
-//             value={file}
-//             onChange={(value) => setFile(value)}
-//           />
-//           <div className="flex justify-end gap-2">
-//             <Button
-//               type="button"
-//               onClick={() => {
-//                 setIsModalOpen(false);
-//                 setFile(null);
-//               }}
-//               variant="secondary"
-//               size="sm"
-//             >
-//               Cancel
-//             </Button>
-//             <Button type="submit" size="sm">
-//               Upload my solution
-//             </Button>
-//           </div>
-//         </form>
-//       </Modal>
-//     </>
-//   );
-// }
-
-
-
 function SuperAssistant() {
   const [file, setFile] = useState<File | null>(null);
   const courseSlug = useCourseSlug();
@@ -465,13 +348,7 @@ function SuperAssistant() {
   const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
   const { startUpload } = useUploadFiles(generateUploadUrl);
   
-
-
-
-
-
   if (!feedbacks) return <div>Loading...</div>;
-
 
   return (
     <>

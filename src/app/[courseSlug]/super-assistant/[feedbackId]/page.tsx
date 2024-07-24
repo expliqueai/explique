@@ -6,7 +6,12 @@ import { api } from "../../../../../convex/_generated/api";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { useEffect } from "react";
-import { toast } from "sonner";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
+import { useIdentity } from "@/components/SessionProvider";
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from "@headlessui/react";
+import { TabBar } from "@/components/TabBar";
+
 
 type FeedbackProps = {
   params: {
@@ -14,30 +19,6 @@ type FeedbackProps = {
     feedbackId: Id<"feedbacks">;
   };
 };
-
-
-
-import {
-  CheckIcon,
-  ChevronUpDownIcon,
-} from "@heroicons/react/24/outline";
-import clsx from "clsx";
-
-
-import { useIdentity } from "@/components/SessionProvider";
-import {
-  Listbox,
-  ListboxButton,
-  ListboxOption,
-  ListboxOptions,
-  Transition,
-} from "@headlessui/react";
-import { TabBar } from "@/components/TabBar";
-
-
-
-
-
 
 type Exercise = {
   id: Id<"exercises">;
@@ -59,6 +40,7 @@ type Feedback = {
   id : Id<"feedbacks">;
   image: Id<"_storage"> | null;
 }
+
 
 function Login() {
   const router = useRouter();
@@ -260,7 +242,6 @@ export default function CoursePage({ params: { courseSlug, feedbackId } }: Feedb
 }
 
 
-
 function NoSuperAssistant() {
   return (
     <div className="flex h-full items-center justify-center" >
@@ -270,8 +251,6 @@ function NoSuperAssistant() {
     </div>
   );
 }
-
-
 
 
 export const FeedbackPageFunction = ({ params: { courseSlug, feedbackId } }: FeedbackProps) => {
