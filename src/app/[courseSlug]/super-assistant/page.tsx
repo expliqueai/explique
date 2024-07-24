@@ -20,26 +20,9 @@ import { Modal } from "@/components/Modal";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { useMutation } from "@/usingSession";
 import { toast } from "sonner";
-import Link from "next/link";
 import { PlusIcon } from "@heroicons/react/20/solid";
 import { useUploadFiles } from "@xixixao/uploadstuff/react";
 
-
-type Exercise = {
-  id: Id<"exercises">;
-  name: string;
-  image: {
-    thumbnails: { type: string; sizes?: string; src: string }[];
-  } | null;
-};
-
-type Week = {
-  _id: Id<"weeks">;
-  exercises: Exercise[];
-  _creationTime: number;
-  endDateExtraTime: number;
-  cacheInvalidation?: number;
-};
 
 type Feedback = { 
   id : Id<"feedbacks">;
@@ -196,7 +179,7 @@ function isDefined<T>(argument: T | false): argument is T {
   return argument !== false;
 }
 
-export default function CoursePage() {
+export default function SuperAssistantPage() {
   const courseSlug = useCourseSlug();
   const user = useQuery(api.courses.getRegistration, { courseSlug });
   const built = useQuery(api.admin.sadatabase.built, { courseSlug });
@@ -258,8 +241,7 @@ function NoSuperAssistant() {
 }
 
 
-
-function ExerciseLinkWithMenu({ feedback }: { feedback: Feedback }) {
+function FeedbackLink({ feedback }: { feedback: Feedback }) {
   const courseSlug = useCourseSlug();
   const deleteExercise = useMutation(api.admin.exercises.softDelete);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -348,55 +330,56 @@ function SuperAssistant() {
   const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
   const { startUpload } = useUploadFiles(generateUploadUrl);
   
-  if (!feedbacks) return <div>Loading...</div>;
+  if (!feedbacks) return <LoadingGrid />;
 
   return (
     <>
       <Title>
-        <span className="flex-1">Welcome to the super-assistant !</span>
+        <span className="flex-1">Welcome to the Super-Assistant!</span>
       </Title>
       <div>
         <h2 className="text-3xl font-medium flex mb-4 gap-3 flex-wrap items-center">
           <div className="flex-1">
-            <span className="flex-1 text-xl">Get feedback</span>
+            <span className="flex-1 text-xl">Get feedback on an exercise</span>
             <div className="mt-4 grid gap-6 md:grid-cols-2">
-              {feedbacks.map(feedback => (
-                <ExerciseLinkWithMenu feedback={feedback} key={feedback.id} />
-              ))}
-              <div className="relative pb-[57.14%]">
-                <div className="absolute inset-0 flex items-center justify-center text-sky-700 text-xl gap-2">
-                  <button
-                    className="flex flex-col items-center justify-center h-full px-4 transition-colors rounded-3xl border-blue-900 border-2 hover:bg-slate-200 hover:text-slate-800 font-medium"
-                    type="button"
-                    onClick={() => { setIsModalOpen(true); }}
-                  >
+              <button
+                className="block rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
+                type="button"
+                onClick={() => { setIsModalOpen(true); }}
+              >
+                <div className="relative pb-[57.14%]">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
                     <PlusIcon className="w-6 h-6 mb-2" />
-                    <span>Get feedback on an exercise</span>
-                  </button>
+                    <span>New feedback</span>
+                  </div>
                 </div>
-              </div>
+              </button>
+              {feedbacks.map(feedback => (
+                <FeedbackLink feedback={feedback} key={feedback.id} />
+              ))}
             </div>
           </div>
 
           <div className="w-1 bg-gray-400 h-auto self-stretch"></div>
 
           <div className="flex-1">
-            <span className="flex-1 text-xl">Still stuck? Go to the super-assistant</span>
+            <span className="flex-1 text-xl">Still stuck? Chat with the Super-Assistant</span>
             <div className="mt-4 grid gap-6 md:grid-cols-2">
-              {feedbacks.map(feedback => (
-                <ExerciseLinkWithMenu feedback={feedback} key={feedback.id} />
-              ))}
-              <div className="relative pb-[57.14%]">
-                <div className="absolute inset-0 flex items-center justify-center text-sky-700 text-xl gap-2">
-                  <button
-                    className="flex flex-col items-center justify-center h-full px-4 transition-colors rounded-3xl border-blue-900 border-2 hover:bg-slate-200 hover:text-slate-800 font-medium"
-                    type="button"
-                    onClick={() => { setIsModalOpen(true); }}
-                  >
-                    <span>Chat with the assistant</span>
-                  </button>
+              <button
+                className="block rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
+                type="button"
+                onClick={() => { setIsModalOpen(true); }}
+              >
+                <div className="relative pb-[57.14%]">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
+                    <PlusIcon className="w-6 h-6 mb-2" />
+                    <span>New chat</span>
+                  </div>
                 </div>
-              </div>
+              </button>
+              {feedbacks.map(feedback => (
+                <FeedbackLink feedback={feedback} key={feedback.id} />
+              ))}
             </div>
           </div>
         </h2>
@@ -458,5 +441,28 @@ function SuperAssistant() {
         </form>
       </Modal>
     </>
+  );
+}
+
+function LoadingGrid() {
+  return (
+    <div className="grid gap-12">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div className="animate-pulse" key={i}>
+          <div className="flex flex-wrap h-9">
+            <div className="bg-slate-200 rounded flex-1 mr-[20%]" />
+            <div className="bg-slate-200 rounded-full w-36" />
+          </div>
+
+          <div className="h-6 my-4 bg-slate-200 rounded w-72" />
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="pb-[57.14%] bg-slate-200 rounded-3xl" />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useQuery } from "@/usingSession";
-import { api } from "../../../../../convex/_generated/api";
+import { api } from "../../../../../../convex/_generated/api";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
-import { Id } from "../../../../../convex/_generated/dataModel";
+import { Id } from "../../../../../../convex/_generated/dataModel";
 import { useEffect } from "react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
