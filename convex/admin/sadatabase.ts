@@ -4,6 +4,8 @@ import {
     queryWithAuth,
 } from "../auth/withAuth";
 import { getCourseRegistration } from "../courses";
+import { internalQuery } from "../_generated/server";
+
 
 export const list = queryWithAuth({
     args: {
@@ -177,4 +179,35 @@ export const getUrl = queryWithAuth({
             return await ctx.storage.getUrl(storageId);
         }
     },
-  });
+});
+
+export const getUrls = internalQuery({
+    args: {
+        courseId: v.id("courses"),
+    },
+    handler: async (ctx, { courseId }) => {
+
+        const files = await ctx.db
+            .query("saDatabase")
+            .withIndex("by_course", (q) =>
+                q.eq("courseId", courseId),
+            )
+            .collect()
+        
+        const urls = [];
+        for (const file of files) {
+            if (file === undefined) continue;
+            for (const storageId of file.storageIds) {
+                if (storageId.pageNumber === 0 || storageId.storageId === undefined) {
+                    continue;
+                } else {
+                    const url = await ctx.storage.getUrl(storageId.storageId);
+                    if (url === null) continue;
+                    urls.push(url);
+                }  
+            }
+        }
+
+        return urls;
+    },
+});

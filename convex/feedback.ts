@@ -1,13 +1,14 @@
 import { ConvexError, v } from "convex/values";
-import { queryWithAuth, mutationWithAuth } from "./auth/withAuth";
+import { queryWithAuth, mutationWithAuth, actionWithAuth } from "./auth/withAuth";
 import { getCourseRegistration } from "./courses";
 import OpenAI from "openai";
 import { internalAction, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { api } from "../convex/_generated/api";
 
 
 
-export const listFeedbacks = queryWithAuth({
+export const list = queryWithAuth({
   args: {
     courseSlug: v.string(),
   },
@@ -17,49 +18,195 @@ export const listFeedbacks = queryWithAuth({
 
     const feedbacks = await db
       .query("feedbacks")
-      .withIndex("by_course", (q) => q.eq("courseId", course._id))
+      .withIndex("by_key", (q) => q.eq("userId", session.user._id).eq("courseId", course._id))
       .collect();
 
     return feedbacks.map(fb => ({
       id: fb._id,
-      feedback: fb.content,
-      image: fb.image ?? null,
+      creationTime: fb._creationTime,
+      status: fb.status,
+      image: fb.image,
     }));
   },
 });
 
 
+export const generateFirstMessages = internalAction({
+  args: {
+    fileUrl: v.string(),
+    courseId: v.id("courses"),
+    userId: v.id("users"),
+    storageId: v.id("_storage"),
+    feedbackId: v.id("feedbacks"),
+  },
+  handler: async (ctx, { fileUrl, courseId, storageId, feedbackId }) => {
+
+    const messages : OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
+
+    const message1 = "\
+      You are an assistant for a course. You are given the exercises and corresponding solutions.\
+      \
+      A student is coming to you because they have tried to solve one of the exercises. Their tentative solution will be given to you.\
+      \
+      The exercises are numbered. Look for the problem statement and the solution to this exercise in what was first given to you to correct the student's \
+      tentative solution. Never give the solution to the student, except if what they have done is completely correct and there is no error at all.\
+      \
+      If they have completely done the exercise, you have to correct their tentative solution. In the case that the student wrote pseudocode, convert the pseudocode to python \
+      and test it. If what they have done is not correct according to the solution given to you, you must respond with \"This is not correct.\" and then give a list of what is \
+      wrong in their solution (one sentence per incorrect thing). Then, give them one small tip on how they could improve their solution. If what they did is correct, tell them \
+      \"Good job! Here is what the solution looks like: \" and then give them the solution to the exercise.\
+      \
+      If the student has tried to do the exercise but is stuck and hasn't completely done it, first tell them \"This is a good start.\" if what they started to do is a good start \
+      to solve the problem and then give them one hint on how to continue in the right direction. Otherwise, if what they started to do is wrong, tell them \"You might want to \
+      rethink your solution.\", then tell them what is wrong with what they have done so far (one sentence per incorrect thing) and reformulate the problem statement for them.";
+
+    await ctx.runMutation(
+      internal.feedbackmessages.insertMessage,
+      {
+        feedbackId:feedbackId,
+        role:"system",
+        content:message1,
+      }
+    );
+    messages.push({
+      role:"system",
+      content:message1,
+    });
+
+    const urls = await ctx.runQuery(internal.admin.sadatabase.getUrls, { courseId:courseId });
+    const message2 : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
+    message2.push({
+      type:"text",
+      text:"Here is the solution to the exercises. If I ask for the solution but my tentative solution is not perfect, tell me \"I cannot give you the solution.\" and don't give me the solution.",
+    });
+    for (const url of urls) {
+      message2.push({
+        type:"image_url",
+        image_url:{
+          url:url,
+        },
+      });
+    };
+
+    await ctx.runMutation(
+      internal.feedbackmessages.insertMessage,
+      {
+        feedbackId:feedbackId,
+        role:"user",
+        content:message2,
+      }
+    );
+    messages.push({
+      role:"user",
+      content:message2,
+    });
+
+    const message3 : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
+    message3.push({
+      type:"text",
+      text:"Here is my tentative solution. Tell me what exercise I am working on. And then, please give me feedback.",
+    });
+    message3.push({
+      type:"image_url",
+      image_url:{
+        url:fileUrl,
+      },
+    });
+
+    await ctx.runMutation(
+      internal.feedbackmessages.insertMessage,
+      {
+        feedbackId:feedbackId,
+        role:"user",
+        content:message3,
+      }
+    );
+    messages.push({
+      role:"user",
+      content:message3,
+    });
+
+    const openai = new OpenAI();
+
+    const feedback = await openai.chat.completions.create(
+      {
+        model: "gpt-4o",
+        messages: messages,
+        temperature: 0.3,
+        stream: false,
+      },
+      {
+        timeout: 3 * 60 * 1000, // 3 minutes
+      }
+    );
+    const message4 = feedback.choices[0]?.message?.content ?? "";
+
+    await ctx.runMutation(
+      internal.feedbackmessages.insertMessage,
+      {
+        feedbackId:feedbackId,
+        role:"assistant",
+        content:message4,
+      }
+    );
+  },
+});
+
 export const generateFeedback = mutationWithAuth({
   args: {
-      courseSlug: v.string(),
-      storageIds: v.id("_storage"),
-  },
-  handler: async (ctx, { courseSlug, storageIds }) => {
+    courseSlug: v.string(),
+    storageId: v.id("_storage"),
+  }, 
+  handler: async (ctx, { courseSlug, storageId }) => {
+    if (!ctx.session) throw new ConvexError("Not logged in");
+    const userId = ctx.session.user._id;
 
     const { course } = await getCourseRegistration(
-        ctx.db,
-        ctx.session,
-        courseSlug,
+      ctx.db,
+      ctx.session,
+      courseSlug,
     );
-
-    const fileUrl = await ctx.storage.getUrl(storageIds);
     
     const feedbackId = await ctx.db.insert("feedbacks", {
-        courseId: course._id,
-        content: "Generating feedback...",
-        image: storageIds,
-      });
+      userId: userId,
+      status: "feedback",
+      courseId: course._id,
+      image: storageId,
+    });
+
+    const fileUrl = await ctx.storage.getUrl(storageId);
 
     if (fileUrl) {      // schedule the action to generate feedback
-      await ctx.scheduler.runAfter(0, internal.feedback.generateFeedbackFromOpenAI, {
-          courseId: course._id,
-          fileUrl : fileUrl,
-          storageId: storageIds,
-          feedbackId: feedbackId,
+      await ctx.scheduler.runAfter(0, internal.feedback.generateFirstMessages, {
+        fileUrl: fileUrl,
+        courseId: course._id,
+        userId: userId,
+        storageId: storageId,
+        feedbackId: feedbackId,
       });
-    } 
+    };
 
     return feedbackId;
+  },
+});
+
+export const getImage = queryWithAuth({
+  args: {
+    feedbackId: v.id("feedbacks"),
+  },
+  handler: async (ctx, { feedbackId }) => {
+    const feedback = await ctx.db.get(feedbackId);
+    if (feedback === null) return null;
+    return await ctx.storage.getUrl(feedback.image);
+  }
+})
+
+export const get = queryWithAuth({
+  args: {
+    feedbackId: v.id("feedbacks"),
+  },
+  handler: async (ctx, { feedbackId }) => {
+    return await ctx.db.get(feedbackId);
   },
 });
 
@@ -71,61 +218,15 @@ export const generateUploadUrl = mutationWithAuth({
   },
 });
 
-
-export const generateFeedbackFromOpenAI = internalAction({
-  args: {
-    fileUrl: v.string(),
-    courseId: v.id("courses"),
-    storageId: v.id("_storage"),
-    feedbackId: v.id("feedbacks"),
-  },
-  handler: async (ctx, { fileUrl, courseId, storageId, feedbackId }) => {
-
-    const prompt = `Analyze the following image and provide feedback: ${fileUrl}`;
-    const openai = new OpenAI();
-
-    const response = await openai.chat.completions.create(
-      {
-        model: "gpt-4o",
-        messages: [{ role: "system", content: prompt }],
-        temperature: 0.3,
-        stream: false,
-      },
-      {
-        timeout: 3 * 60 * 1000, // 3 minutes
-      }
-    );
-
-    const finalResponse = response.choices[0]?.message?.content ?? "";
-
-    // Update the feedback entry with the generated content
-    await ctx.runMutation(internal.feedback.updateFeedback, {
-      feedbackId,
-      response: finalResponse,
-    });
-  },
-});
-  
-export const updateFeedback = internalMutation({
+export const goToChat = mutationWithAuth({
   args: {
     feedbackId: v.id("feedbacks"),
-    response: v.string(),
   },
-  handler: async (ctx, { feedbackId, response }) => {
-    await ctx.db.patch(feedbackId, {
-      content: response,
-    });
-  },
-});
-
-
-export const getFeedback = queryWithAuth({
-  args: { feedbackId: v.id('feedbacks') },
   handler: async (ctx, { feedbackId }) => {
-    const feedback = await ctx.db.get(feedbackId);
-    if (!feedback) {
-      throw new Error('Feedback not found');
-    }
-    return feedback;
+
+    await ctx.db.patch(feedbackId, {
+      status:"chat",
+    });
+
   },
 });

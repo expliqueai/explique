@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import OpenAI from "openai";
 
 export const exerciseAdminSchema = {
   name: v.string(),
@@ -117,10 +118,52 @@ export default defineSchema(
       ),
     }).index("by_attempt", ["attemptId"]),
     feedbacks: defineTable({
+      status: v.union(
+        v.literal("feedback"),
+        v.literal("chat"),
+      ),
       courseId: v.id("courses"),
+      userId: v.id("users"),
+      image: v.id("_storage"),
+    }).index("by_key", ["userId", "courseId"]),
+    feedbackMessages: defineTable({
+      feedbackId: v.id("feedbacks"),
+      role: v.union(v.literal("user"), v.literal("system"), v.literal("assistant")),
+      content: v.union(v.string(), v.array(v.union(
+        v.object({ 
+          type:v.literal("text"), 
+          text:v.string(),
+        }), v.object({
+          type:v.literal("image_url"),
+          image_url:v.object({ url:v.string() }),
+        })
+      ))),
+      appearance: v.optional(
+        v.union(
+          v.literal("finished"),
+          v.literal("feedback"),
+          v.literal("typing"),
+          v.literal("error"),
+        ),
+      ),
+    }).index("by_feedback", ["feedbackId"]),
+    chats: defineTable({
+      courseId: v.id("courses"),
+      userId: v.id("users"),
+    }).index("by_key", ["userId", "courseId"]),
+    chatMessages: defineTable({
+      chatId: v.id("chats"),
+      role: v.union(v.literal("user"), v.literal("system"), v.literal("assistant")),
       content: v.string(),
-      image: v.optional(v.id("_storage")),
-    }).index("by_course", ["courseId"]),
+      appearance: v.optional(
+        v.union(
+          v.literal("finished"),
+          v.literal("feedback"),
+          v.literal("typing"),
+          v.literal("error"),
+        ),
+      ),
+    }).index("by_chat", ["chatId"]),
     saDatabase: defineTable({
       storageIds: v.array(
         v.object({

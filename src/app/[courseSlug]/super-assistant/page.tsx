@@ -13,7 +13,7 @@ import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } fro
 import { TabBar } from "@/components/TabBar";
 import Upload from "@/components/Upload";
 import Title from "@/components/typography";
-import { ExerciseLink } from "@/components/ExerciseLink";
+import { FeedbackLink } from "@/components/FeedbackLink";
 import { DropdownMenu, DropdownMenuItem } from "@/components/DropdownMenu";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
@@ -22,12 +22,17 @@ import { useMutation } from "@/usingSession";
 import { toast } from "sonner";
 import { PlusIcon } from "@heroicons/react/20/solid";
 import { useUploadFiles } from "@xixixao/uploadstuff/react";
+import { formatTimestampHumanFormat } from "@/util/date";
+
 
 
 type Feedback = { 
   id : Id<"feedbacks">;
-  image: Id<"_storage"> | null;
+  creationTime: number;
+  status: "chat" | "feedback";
+  image: Id<"_storage">;
 }
+
 
 function Login() {
   const router = useRouter();
@@ -241,24 +246,18 @@ function NoSuperAssistant() {
 }
 
 
-function FeedbackLink({ feedback }: { feedback: Feedback }) {
+function Feedback({ feedback }: { feedback: Feedback }) {
   const courseSlug = useCourseSlug();
   const deleteExercise = useMutation(api.admin.exercises.softDelete);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-  const [destinationCourse, setDestinationCourse] =
-    useState<Id<"courses"> | null>(null);
-  const [destinationWeek, setDestinationWeek] = useState<Id<"weeks"> | null>(
-    null,
-  );
-  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
+  const imageUrl = useQuery(api.feedback.getImage, { feedbackId:feedback.id });
 
   return (
     <>
-      <ExerciseLink
-        href={`/${courseSlug}/super-assistant/${feedback.id}`}
-        name= "Feedback"
-        image= {null} //{feedback.image}
+      <FeedbackLink
+        href={`/${courseSlug}/super-assistant/feedback/${feedback.id}`}
+        name= {formatTimestampHumanFormat(feedback.creationTime)}
+        image= {imageUrl}
         corner={
           <div className="p-4">
             <div className="pointer-events-auto">
@@ -323,7 +322,7 @@ function FeedbackLink({ feedback }: { feedback: Feedback }) {
 function SuperAssistant() {
   const [file, setFile] = useState<File | null>(null);
   const courseSlug = useCourseSlug();
-  const feedbacks = useQuery(api.feedback.listFeedbacks, { courseSlug });
+  const feedbacks = useQuery(api.feedback.list, { courseSlug });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
   const generateFeedback = useMutation(api.feedback.generateFeedback);
@@ -355,7 +354,7 @@ function SuperAssistant() {
                 </div>
               </button>
               {feedbacks.map(feedback => (
-                <FeedbackLink feedback={feedback} key={feedback.id} />
+                <Feedback feedback={feedback} key={feedback.id} />
               ))}
             </div>
           </div>
@@ -378,7 +377,7 @@ function SuperAssistant() {
                 </div>
               </button>
               {feedbacks.map(feedback => (
-                <FeedbackLink feedback={feedback} key={feedback.id} />
+                <Feedback feedback={feedback} key={feedback.id} />
               ))}
             </div>
           </div>
@@ -396,28 +395,18 @@ function SuperAssistant() {
             if (file === null) return;
             const uploaded = await startUpload([file]);
             const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
-           
-
-            const feedbackId = await generateFeedback({ courseSlug, storageIds:storageId });
-          
-            // Upload the solution and generate feedback
-            //const feedbackId = await generateFeedback({ courseSlug, storageId });
-  
-            
-            // Navigate to the feedback page
-            //router.push(`/${courseSlug}/feedback/}`);
-            //router.push(`/${courseSlug}/super-assistant/${feedbackId}`);
+            const feedbackId = await generateFeedback({ courseSlug, storageId:storageId });
 
             if (feedbackId) {
-              router.push(`/${courseSlug}/super-assistant/${feedbackId}`);
+              router.push(`/${courseSlug}/super-assistant/feedback/${feedbackId}`);
+              toast.success("Your solution has been uploaded. Please wait for it to be reviewed.");
             } else {
-              toast.error("Failed to generate feedback");
+              toast.error("Failed to generate feedback.");
             }
 
-            //await uploadFile({ courseSlug:courseSlug, week:(!isNaN(weekNumber) && weekNumber >= 0 ? weekNumber : -1), name:file?file.name:"", storageIds:storageIds });
             setIsModalOpen(false);
-            toast.success("Your solution has been uploaded. Please wait for it to be reviewed");
-          }}>
+          }
+        }>
           <Upload
             value={file}
             onChange={(value) => setFile(value)}
@@ -435,7 +424,7 @@ function SuperAssistant() {
               Cancel
             </Button>
             <Button type="submit" size="sm">
-              Upload my solution
+              Generate feedback
             </Button>
           </div>
         </form>
