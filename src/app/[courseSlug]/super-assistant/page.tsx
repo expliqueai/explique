@@ -13,7 +13,8 @@ import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } fro
 import { TabBar } from "@/components/TabBar";
 import Upload from "@/components/Upload";
 import Title from "@/components/typography";
-import { FeedbackLink } from "@/components/FeedbackLink";
+import { FeedbackLink } from "@/components/super-assistant/FeedbackLink";
+import { ChatLink } from "@/components/super-assistant/ChatLink";
 import { DropdownMenu, DropdownMenuItem } from "@/components/DropdownMenu";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
@@ -23,6 +24,7 @@ import { toast } from "sonner";
 import { PlusIcon } from "@heroicons/react/20/solid";
 import { useUploadFiles } from "@xixixao/uploadstuff/react";
 import { formatTimestampHumanFormat } from "@/util/date";
+import Input from "@/components/Input";
 
 
 
@@ -31,6 +33,13 @@ type Feedback = {
   creationTime: number;
   status: "chat" | "feedback";
   image: Id<"_storage">;
+}
+
+
+type Chat = {
+  id: Id<"chats">;
+  creationTime: number;
+  name: string | undefined;
 }
 
 
@@ -226,7 +235,7 @@ export default function SuperAssistantPage() {
             />
           )}
 
-          {built ? <SuperAssistant /> : <NoSuperAssistant />}
+          {built === undefined ? <LoadingGrid /> : built ? <SuperAssistant /> : <NoSuperAssistant />}
           <div className="h-10" />
         </div>
       </div>
@@ -315,7 +324,77 @@ function Feedback({ feedback }: { feedback: Feedback }) {
       </Modal>
     </>
   );
-}
+};
+
+
+function Chat({ chat }: { chat: Chat }) {
+  const courseSlug = useCourseSlug();
+  const deleteChat = useMutation(api.admin.exercises.softDelete);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  return (
+    <>
+      <ChatLink
+        href={`/${courseSlug}/super-assistant/chat/${chat.id}`}
+        name= {chat.name ? chat.name : formatTimestampHumanFormat(chat.creationTime)}
+        corner={
+          <div className="p-4">
+            <div className="pointer-events-auto">
+              <DropdownMenu variant="overlay">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setIsDeleteModalOpen(true);
+                  }}
+                  variant="danger"
+                >
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenu>
+            </div>
+          </div>
+        }
+      />
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title={`Delete “chat”?`}
+      >
+        <div className="mt-2">
+          <p className="text-sm text-gray-500">
+            Are you sure that you want to delete this chat{" "}
+            <strong className="font-semibold text-gray-600">
+              “chat”
+            </strong>
+            ? This action cannot be undone.
+          </p>
+        </div>
+        <div className="mt-4 flex gap-2 justify-end">
+          <Button
+            onClick={() => setIsDeleteModalOpen(false)}
+            variant="secondary"
+            size="sm"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={async () => {
+              setIsDeleteModalOpen(false);
+              // TO BE UPDATED WITH deleteChat await deleteExercise({
+              //   id: chat.id,
+              //   courseSlug,
+              // });
+              toast.success("Chat deleted successfully");
+            }}
+            variant="danger"
+            size="sm"
+          >
+            Delete
+          </Button>
+        </div>
+      </Modal>
+    </>
+  );
+};
 
 
 
@@ -323,28 +402,31 @@ function SuperAssistant() {
   const [file, setFile] = useState<File | null>(null);
   const courseSlug = useCourseSlug();
   const feedbacks = useQuery(api.feedback.list, { courseSlug });
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const chats = useQuery(api.sachat.list, { courseSlug });
+  const [isModal1Open, setIsModal1Open] = useState(false);
+  const [isModal2Open, setIsModal2Open] = useState(false);
+  const [chatName, setChatName] = useState("");
+  const [statement, setStatement] = useState("");
   const router = useRouter();
   const generateFeedback = useMutation(api.feedback.generateFeedback);
   const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
   const { startUpload } = useUploadFiles(generateUploadUrl);
+  const generateChat = useMutation(api.sachat.generateChat);
   
-  if (!feedbacks) return <LoadingGrid />;
-
   return (
     <>
       <Title>
         <span className="flex-1">Welcome to the Super-Assistant!</span>
       </Title>
       <div>
-        <h2 className="text-3xl font-medium flex mb-4 gap-3 flex-wrap items-center">
+        <h2 className="text-3xl font-medium flex mb-4 gap-3 flex-wrap items-start">
           <div className="flex-1">
             <span className="flex-1 text-xl">Get feedback on an exercise</span>
             <div className="mt-4 grid gap-6 md:grid-cols-2">
               <button
                 className="block rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
                 type="button"
-                onClick={() => { setIsModalOpen(true); }}
+                onClick={() => { setIsModal1Open(true); }}
               >
                 <div className="relative pb-[57.14%]">
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
@@ -353,7 +435,7 @@ function SuperAssistant() {
                   </div>
                 </div>
               </button>
-              {feedbacks.map(feedback => (
+              {feedbacks?.map(feedback => (
                 <Feedback feedback={feedback} key={feedback.id} />
               ))}
             </div>
@@ -367,7 +449,7 @@ function SuperAssistant() {
               <button
                 className="block rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
                 type="button"
-                onClick={() => { setIsModalOpen(true); }}
+                onClick={() => { setIsModal2Open(true); }}
               >
                 <div className="relative pb-[57.14%]">
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
@@ -376,8 +458,8 @@ function SuperAssistant() {
                   </div>
                 </div>
               </button>
-              {feedbacks.map(feedback => (
-                <Feedback feedback={feedback} key={feedback.id} />
+              {chats?.map(chat => (
+                <Chat chat={chat} key={chat.id} />
               ))}
             </div>
           </div>
@@ -385,8 +467,8 @@ function SuperAssistant() {
       </div>
 
       <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isModal1Open}
+        onClose={() => setIsModal1Open(false)}
         title="Upload your tentative solution."
       >
         <form onSubmit={
@@ -404,7 +486,7 @@ function SuperAssistant() {
               toast.error("Failed to generate feedback.");
             }
 
-            setIsModalOpen(false);
+            setIsModal1Open(false);
           }
         }>
           <Upload
@@ -415,7 +497,7 @@ function SuperAssistant() {
             <Button
               type="button"
               onClick={() => {
-                setIsModalOpen(false);
+                setIsModal1Open(false);
                 setFile(null);
               }}
               variant="secondary"
@@ -425,6 +507,60 @@ function SuperAssistant() {
             </Button>
             <Button type="submit" size="sm">
               Generate feedback
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isModal2Open}
+        onClose={() => setIsModal2Open(false)}
+        title="Start a chat with the Super-Assistant."
+      >
+        <form onSubmit={
+          async (e) => {
+            e.preventDefault();
+            const chatId = await generateChat({ courseSlug, reason:statement, name:chatName });
+
+            if (chatId) {
+              router.push(`/${courseSlug}/super-assistant/chat/${chatId}`);
+              toast.success("A new chat is being generated, please wait.");
+            } else {
+              toast.error("Failed to generate chat.");
+            }
+
+            setIsModal2Open(false);
+          }
+        }>
+          <div className="h-6"></div>
+          <Input
+            label="Name this new chat (optional):"
+            placeholder="Name"
+            value={chatName}
+            onChange={(value) => setChatName(value)}
+          />
+          <Input
+            label="Specify the exercise and what clarification you need:"
+            placeholder="Reason for new chat"
+            value={statement}
+            onChange={(value) => setStatement(value)}
+            required
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              onClick={() => {
+                setIsModal2Open(false);
+                setChatName("");
+                setStatement("");
+              }}
+              variant="secondary"
+              size="sm"
+            >
+              Cancel
+            </Button>
+            <Button type="submit" size="sm">
+              Generate new chat
             </Button>
           </div>
         </form>

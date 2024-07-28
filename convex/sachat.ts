@@ -1,0 +1,177 @@
+import { ConvexError, v } from "convex/values";
+import { queryWithAuth, mutationWithAuth, actionWithAuth } from "./auth/withAuth";
+import { getCourseRegistration } from "./courses";
+import OpenAI from "openai";
+import { internalAction, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
+import { api } from "../convex/_generated/api";
+
+
+export const list = queryWithAuth({
+  args: {
+    courseSlug: v.string(),
+  },
+  handler: async ({ db, session }, { courseSlug }) => {
+    if (!session) throw new ConvexError("Not logged in");
+    const { course } = await getCourseRegistration(db, session, courseSlug);
+
+    const chats = await db
+      .query("chats")
+      .withIndex("by_key", (q) => q.eq("userId", session.user._id).eq("courseId", course._id))
+      .collect();
+
+    return chats.map(chat => ({
+      id: chat._id,
+      creationTime: chat._creationTime,
+      name: chat.name,
+    }));
+  },
+});
+
+
+export const generateChat = mutationWithAuth({
+    args: {
+      courseSlug: v.string(),
+      reason: v.string(),
+      name: v.string(),
+    }, 
+    handler: async (ctx, { courseSlug, reason, name }) => {
+        if (!ctx.session) throw new ConvexError("Not logged in");
+        const userId = ctx.session.user._id;
+    
+        const { course } = await getCourseRegistration(
+            ctx.db,
+            ctx.session,
+            courseSlug,
+        );
+        
+        const chatId = await ctx.db.insert("chats", {
+            userId: userId,
+            courseId: course._id,
+            name: (name !== "") ? name : undefined,
+        });
+    
+        await ctx.scheduler.runAfter(0, internal.sachat.generateFirstMessages, {
+            courseId: course._id,
+            userId: userId,
+            chatId: chatId,
+            reason:reason,
+        });
+  
+        return chatId;
+    },
+});
+
+
+export const generateFirstMessages = internalAction({
+    args: {
+      courseId: v.id("courses"),
+      userId: v.id("users"),
+      chatId: v.id("chats"),
+      reason: v.string(),
+    },
+    handler: async (ctx, { courseId, userId, chatId, reason }) => {
+  
+      const messages : OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
+  
+      const instructions = "\
+        You are an assistant for a course. You are given the exercises and corresponding solutions.\
+        \
+        A student is coming to you because they have tried to solve one of the exercises but is stuck. They need help to start it.\
+        \
+        First make sure that the student understood the problem statement and what is asked in the exercise. Then, if they are still stuck, you can give them hints on how to start the \
+        exercise. But never give them the solution to the exercise, even if they ask for it. Your answer should be short and only contain between 1 and 5 sentences.";
+  
+      messages.push({
+        role:"system",
+        content:instructions,
+      });
+
+      const urls = await ctx.runQuery(internal.admin.sadatabase.getUrls, { courseId:courseId });
+      const message1 : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
+      message1.push({
+        type:"text",
+        text:"Here is the solution to the exercises. If I ask for the solution but my tentative solution is not perfect, tell me \"I cannot give you the solution.\" and don't give me the solution.",
+      });
+      for (const url of urls) {
+        message1.push({
+            type:"image_url",
+            image_url:{
+            url:url,
+            },
+        });
+      };
+
+      await ctx.runMutation(
+      internal.sachatmessages.insertMessage,
+      {
+        chatId:chatId,
+        assistant:false,
+        content:message1,
+      }
+      );
+      messages.push({
+        role:"user",
+        content:message1,
+      });
+  
+      await ctx.runMutation(
+        internal.sachatmessages.insertMessage,
+        {
+          chatId:chatId,
+          assistant:false,
+          content:reason,
+        }
+      );
+      messages.push({
+        role:"user",
+        content:reason,
+      });
+
+      const assistantMessageId = await ctx.runMutation(
+        internal.sachatmessages.insertMessage,
+        {
+          chatId:chatId,
+          assistant:true,
+          content:"",
+          appearance:"typing",
+        }
+      );
+  
+      const openai = new OpenAI();
+  
+      const answer = await openai.chat.completions.create(
+        {
+          model: "gpt-4o",
+          messages: messages,
+          temperature: 0.3,
+          stream: false,
+        },
+        {
+          timeout: 3 * 60 * 1000, // 3 minutes
+        }
+      );
+      const message2 = answer.choices[0]?.message?.content ?? "";
+
+      await ctx.runMutation(
+        internal.sachatmessages.writeSystemResponse,
+        {
+            chatId:chatId,
+            assistantMessageId:assistantMessageId,
+            content:message2,
+        }
+      );
+    },
+});
+
+
+export const getName = queryWithAuth({
+    args: {
+        chatId: v.id("chats"),
+    },
+    handler: async (ctx, { chatId }) => {
+        const chat = await ctx.db.get(chatId);
+        return chat?.name;
+    },
+});
+

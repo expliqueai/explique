@@ -150,11 +150,20 @@ export default defineSchema(
     chats: defineTable({
       courseId: v.id("courses"),
       userId: v.id("users"),
+      name: v.optional(v.string()),
     }).index("by_key", ["userId", "courseId"]),
     chatMessages: defineTable({
       chatId: v.id("chats"),
-      role: v.union(v.literal("user"), v.literal("system"), v.literal("assistant")),
-      content: v.string(),
+      assistant: v.boolean(),
+      content: v.union(v.string(), v.array(v.union(
+        v.object({ 
+          type:v.literal("text"), 
+          text:v.string(),
+        }), v.object({
+          type:v.literal("image_url"),
+          image_url:v.object({ url:v.string() }),
+        })
+      ))),
       appearance: v.optional(
         v.union(
           v.literal("finished"),

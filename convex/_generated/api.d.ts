@@ -38,6 +38,8 @@ import type * as feedback from "../feedback.js";
 import type * as feedbackmessages from "../feedbackmessages.js";
 import type * as internal_seed from "../internal/seed.js";
 import type * as quiz from "../quiz.js";
+import type * as sachat from "../sachat.js";
+import type * as sachatmessages from "../sachatmessages.js";
 import type * as superadmin_courses from "../superadmin/courses.js";
 import type * as superadmin_util from "../superadmin/util.js";
 import type * as weeks from "../weeks.js";
@@ -75,6 +77,8 @@ declare const fullApi: ApiFromModules<{
   feedbackmessages: typeof feedbackmessages;
   "internal/seed": typeof internal_seed;
   quiz: typeof quiz;
+  sachat: typeof sachat;
+  sachatmessages: typeof sachatmessages;
   "superadmin/courses": typeof superadmin_courses;
   "superadmin/util": typeof superadmin_util;
   weeks: typeof weeks;
