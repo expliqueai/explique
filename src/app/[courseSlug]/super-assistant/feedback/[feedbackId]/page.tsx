@@ -5,10 +5,11 @@ import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import React from 'react'
 import Link from "next/link";
-import Markdown from 'react-markdown'
+import Markdown from "@/components/Markdown";
 import { ArrowLeftIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { ArrowRightIcon } from "@heroicons/react/16/solid";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import Feedback from "@/components/super-assistant/Feedback";
 
 
 type FeedbackProps = {
@@ -27,7 +28,7 @@ export default function FeedbackPage({ params: { courseSlug, feedbackId } }: Fee
 
   return (
     <>
-      {feedback?.status === "feedback" && (
+      
         <div className="p-6">
           <div className="max-w-xl mx-auto">
             <header className="fixed h-14 sm:h-16 top-0 left-0 w-full bg-white bg-opacity-90 backdrop-blur-lg p-4 shadow-lg flex items-center justify-center z-10">
@@ -46,44 +47,46 @@ export default function FeedbackPage({ params: { courseSlug, feedbackId } }: Fee
 
             <div className="h-14"></div>
 
-            {(imageUrl !== null && imageUrl !== undefined) && (
-              <picture>
-                <img
-                  className="p-4"
-                  src={imageUrl}
-                  alt={""}
-                />
-              </picture>
-            )}
-
-            {feedbackMessage === null || feedbackMessage === undefined ? (
-              <h1>Feedback loading...</h1>
-            ) : (
+            { feedback?.status === "feedback" ? (
               <>
-                <Markdown>{feedbackMessage}</Markdown>
-          
-                <footer className="flex justify-center mt-8">
-                  <div className="flex flex-col gap-2 items-center">
-                    <PrimaryButton
-                      onClick={async () => {
-                        await goToChat({ feedbackId });
-                      }}
-                    >
-                      Chat with the Super-Assistant
-                      <ArrowRightIcon className="w-5 h-5" />
-                    </PrimaryButton>
-                  </div>
-                </footer>
+                {(imageUrl !== null && imageUrl !== undefined) && (
+                  <picture>
+                    <img
+                      className="p-4"
+                      src={imageUrl}
+                      alt={""}
+                    />
+                  </picture>
+                )}
+
+                {feedbackMessage === null || feedbackMessage === undefined ? (
+                  <h1>Feedback loading...</h1>
+                ) : (
+                  <>
+                    <Markdown text={feedbackMessage} />
+
+                    <footer className="flex justify-center mt-8">
+                      <div className="flex flex-col gap-2 items-center">
+                        <PrimaryButton
+                          onClick={async () => {
+                            await goToChat({ feedbackId });
+                          }}
+                        >
+                          Chat with the Super-Assistant
+                          <ArrowRightIcon className="w-5 h-5" />
+                        </PrimaryButton>
+                      </div>
+                    </footer>
+                  </>
+                )}
               </>
+            ) : (
+              <Feedback feedbackId={feedbackId} />
             )}
 
           </div>
         </div>
-      )}
-
-      {feedback?.status === "chat" && (
-        <p>Welcome to the chat.</p>
-      )}
+      
     </>
   );
 }

@@ -43,7 +43,7 @@ export const generateFirstMessages = internalAction({
 
     const messages : OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
 
-    const message1 = "\
+    const instructions = "\
       You are an assistant for a course. You are given the exercises and corresponding solutions.\
       \
       A student is coming to you because they have tried to solve one of the exercises. Their tentative solution will be given to you.\
@@ -60,27 +60,19 @@ export const generateFirstMessages = internalAction({
       to solve the problem and then give them one hint on how to continue in the right direction. Otherwise, if what they started to do is wrong, tell them \"You might want to \
       rethink your solution.\", then tell them what is wrong with what they have done so far (one sentence per incorrect thing) and reformulate the problem statement for them.";
 
-    await ctx.runMutation(
-      internal.feedbackmessages.insertMessage,
-      {
-        feedbackId:feedbackId,
-        role:"system",
-        content:message1,
-      }
-    );
     messages.push({
       role:"system",
-      content:message1,
+      content:instructions,
     });
 
     const urls = await ctx.runQuery(internal.admin.sadatabase.getUrls, { courseId:courseId });
-    const message2 : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
-    message2.push({
+    const message1 : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
+    message1.push({
       type:"text",
       text:"Here is the solution to the exercises. If I ask for the solution but my tentative solution is not perfect, tell me \"I cannot give you the solution.\" and don't give me the solution.",
     });
     for (const url of urls) {
-      message2.push({
+      message1.push({
         type:"image_url",
         image_url:{
           url:url,
@@ -93,20 +85,20 @@ export const generateFirstMessages = internalAction({
       {
         feedbackId:feedbackId,
         role:"user",
-        content:message2,
+        content:message1,
       }
     );
     messages.push({
       role:"user",
-      content:message2,
+      content:message1,
     });
 
-    const message3 : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
-    message3.push({
+    const message2 : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
+    message2.push({
       type:"text",
       text:"Here is my tentative solution. Tell me what exercise I am working on. And then, please give me feedback.",
     });
-    message3.push({
+    message2.push({
       type:"image_url",
       image_url:{
         url:fileUrl,
@@ -118,12 +110,12 @@ export const generateFirstMessages = internalAction({
       {
         feedbackId:feedbackId,
         role:"user",
-        content:message3,
+        content:message2,
       }
     );
     messages.push({
       role:"user",
-      content:message3,
+      content:message2,
     });
 
     const openai = new OpenAI();
@@ -139,14 +131,14 @@ export const generateFirstMessages = internalAction({
         timeout: 3 * 60 * 1000, // 3 minutes
       }
     );
-    const message4 = feedback.choices[0]?.message?.content ?? "";
+    const message3 = feedback.choices[0]?.message?.content ?? "";
 
     await ctx.runMutation(
       internal.feedbackmessages.insertMessage,
       {
         feedbackId:feedbackId,
         role:"assistant",
-        content:message4,
+        content:message3,
       }
     );
   },
