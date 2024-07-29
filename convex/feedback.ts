@@ -166,7 +166,7 @@ export const generateFeedback = mutationWithAuth({
       status: "feedback",
       courseId: course._id,
       image: storageId,
-      name : name,
+      name : (name !== "") ? name : undefined,
     });
 
     const fileUrl = await ctx.storage.getUrl(storageId);
@@ -213,6 +213,7 @@ export const generateUploadUrl = mutationWithAuth({
   },
 });
 
+
 export const goToChat = mutationWithAuth({
   args: {
     feedbackId: v.id("feedbacks"),
@@ -248,78 +249,62 @@ export const deleteFeedback = mutationWithAuth({
       if (feedback.courseId !== course._id) {
         throw new ConvexError("Unauthorized to delete this feedback");
       }
+
+      if (!ctx.session) {
+        throw new ConvexError("Logged out");
+      }
+
+      if (feedback.userId !== ctx.session.user._id) {
+        throw new ConvexError("Forbidden");
+      }
   
       if (feedback.image) {
         await ctx.storage.delete(feedback.image);
       }
+
+      await ctx.scheduler.runAfter(0, 
+        internal.feedbackmessages.deleteMessages,
+        {
+          feedbackId:feedback._id,
+        }
+      );      
   
       await ctx.db.delete(id);
-
     },
-  });
+});
 
-  export const deleteChat = mutationWithAuth({
-    args: {
-      id: v.id("chats"),
-      courseSlug: v.string(),
-    },
-    handler: async (ctx, { id, courseSlug }) => {
-      const { course } = await getCourseRegistration(
-        ctx.db,
-        ctx.session,
-        courseSlug,
-      );
-  
-      const chat = await ctx.db.get(id);
-      if (!chat) {
-        throw new ConvexError("Chat not found");
-      }
-  
-      if (chat.courseId !== course._id) {
-        throw new ConvexError("Unauthorized to delete this chat");
-      }
 
-    const messages = await ctx.db
-      .query("chatMessages")
-      .withIndex("by_chat", (q) => q.eq("chatId", id))
-      .collect();
+export const rename = mutationWithAuth({
+  args: {
+    id: v.id("feedbacks"),
+    newName: v.string(),
+    courseSlug: v.string(),
+  },
+  handler: async (ctx, { id, newName, courseSlug }) => {
+    const { course } = await getCourseRegistration(
+      ctx.db,
+      ctx.session,
+      courseSlug,
+    );
 
-    // Delete each associated message
-    for (const message of messages) {
-      await ctx.db.delete(message._id);
+    const feedback = await ctx.db.get(id);
+    if (!feedback) {
+      throw new ConvexError("Feedback not found");
     }
 
-      await ctx.db.delete(id);
+    if (feedback.courseId !== course._id) {
+      throw new ConvexError("Unauthorized to update this feedback");
+    }
 
-    },
-  });
+    if (!ctx.session) {
+      throw new ConvexError("Logged out");
+    }
 
+    if (feedback.userId !== ctx.session.user._id) {
+      throw new ConvexError("Forbidden");
+    }
 
-
-  export const updateFeedbackName = mutationWithAuth({
-    args: {
-      id: v.id("feedbacks"),
-      newName: v.string(),
-      courseSlug: v.string(),
-    },
-    handler: async (ctx, { id, newName, courseSlug }) => {
-      const { course } = await getCourseRegistration(
-        ctx.db,
-        ctx.session,
-        courseSlug,
-      );
-  
-      const feedback = await ctx.db.get(id);
-      if (!feedback) {
-        throw new ConvexError("Feedback not found");
-      }
-  
-      if (feedback.courseId !== course._id) {
-        throw new ConvexError("Unauthorized to update this feedback");
-      }
-  
-      await ctx.db.patch(id, { name: newName });
-  
-      return { success: true };
-    },
-  });
+    await ctx.db.patch(id, { name:newName });
+    return { success:true };
+  },
+});

@@ -296,3 +296,22 @@ export const sendMessage = mutationWithAuth({
       
     },
 });
+
+
+export const deleteMessages = internalMutation({
+  args: {
+    feedbackId: v.id("feedbacks"),
+  },
+  handler: async (ctx, { feedbackId }) => {
+    const messages = await ctx
+                            .db
+                            .query("feedbackMessages")
+                            .withIndex("by_feedback", (x) => x.eq("feedbackId", feedbackId))
+                            .collect();
+    
+    const ids = messages.map(({ _id }) => _id);
+    for (const id of ids) {
+      ctx.db.delete(id);
+    }
+  },
+});

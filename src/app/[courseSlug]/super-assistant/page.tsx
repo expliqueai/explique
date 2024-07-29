@@ -256,10 +256,10 @@ function NoSuperAssistant() {
 }
 
 
-function Feedback({ feedback }: { feedback: Feedback }) {
+function Feedback({ feedback }: { feedback:Feedback }) {
   const courseSlug = useCourseSlug();
   const deleteFeedback = useMutation(api.feedback.deleteFeedback);
-  const updateFeedbackName = useMutation(api.feedback.updateFeedbackName);
+  const renameFeedback = useMutation(api.feedback.rename);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
   const [newName, setNewName] = useState(feedback.name || formatTimestampHumanFormat(feedback.creationTime));
@@ -269,7 +269,7 @@ function Feedback({ feedback }: { feedback: Feedback }) {
     <>
       <FeedbackLink
         href={`/${courseSlug}/super-assistant/feedback/${feedback.id}`}
-        name={newName}
+        name={feedback.name || formatTimestampHumanFormat(feedback.creationTime)}
         image= {imageUrl}
         corner={
           <div className="p-4">
@@ -277,19 +277,19 @@ function Feedback({ feedback }: { feedback: Feedback }) {
               <DropdownMenu variant="overlay">
                 <DropdownMenuItem
                   onClick={() => {
+                    setIsEditNameModalOpen(true);
+                  }}
+                  variant="default"
+                >
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
                     setIsDeleteModalOpen(true);
                   }}
                   variant="danger"
                 >
                   Delete
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setIsEditNameModalOpen(true);
-                  }}
-                  variant="default"
-                >
-                  Edit Name
                 </DropdownMenuItem>
               </DropdownMenu>
             </div>
@@ -299,15 +299,11 @@ function Feedback({ feedback }: { feedback: Feedback }) {
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        title={`Delete “feedback”?`}
+        title={`Delete feedback?`}
       >
         <div className="mt-2">
           <p className="text-sm text-gray-500">
-            Are you sure that you want to delete this feedback{" "}
-            <strong className="font-semibold text-gray-600">
-              “feedback”
-            </strong>
-            ? This action cannot be undone.
+            Are you sure that you want to delete this feedback? This action cannot be undone.
           </p>
         </div>
         <div className="mt-4 flex gap-2 justify-end">
@@ -321,8 +317,7 @@ function Feedback({ feedback }: { feedback: Feedback }) {
           <Button
             onClick={async () => {
               setIsDeleteModalOpen(false);
-              deleteFeedback({id : feedback.id, courseSlug : courseSlug});
-              toast.success("Feedback deleted successfully");
+              deleteFeedback({ id:feedback.id, courseSlug:courseSlug });
             }}
             variant="danger"
             size="sm"
@@ -334,11 +329,11 @@ function Feedback({ feedback }: { feedback: Feedback }) {
       <Modal
         isOpen={isEditNameModalOpen}
         onClose={() => setIsEditNameModalOpen(false)}
-        title={`Edit Name of the “feedback”?`}
+        title={`Rename feedback?`}
       >
         <div className="mt-4">
           <Input
-            label="New Name"
+            label="New name:"
             placeholder="Enter new name"
             value={newName}
             onChange={(value) => setNewName(value)}
@@ -346,7 +341,10 @@ function Feedback({ feedback }: { feedback: Feedback }) {
         </div>
         <div className="mt-4 flex gap-2 justify-end">
           <Button
-            onClick={() => setIsEditNameModalOpen(false)}
+            onClick={() => {
+              setIsEditNameModalOpen(false);
+              setNewName(feedback.name || formatTimestampHumanFormat(feedback.creationTime));
+            }}
             variant="secondary"
             size="sm"
           >
@@ -354,14 +352,17 @@ function Feedback({ feedback }: { feedback: Feedback }) {
           </Button>
           <Button
             onClick={async () => {
-              await updateFeedbackName({ id: feedback.id, newName: newName, courseSlug:courseSlug });
               setIsEditNameModalOpen(false);
-              toast.success("Name changed successfully");
+              if (newName !== (feedback.name || formatTimestampHumanFormat(feedback.creationTime)) && newName !== "") {
+                await renameFeedback({ id:feedback.id, newName:newName, courseSlug:courseSlug });
+              } else {
+                setNewName(feedback.name || formatTimestampHumanFormat(feedback.creationTime));
+              }
             }}
             variant="primary"
             size="sm"
           >
-            Change the name
+            Rename
           </Button>
         </div>
       </Modal>
@@ -372,20 +373,29 @@ function Feedback({ feedback }: { feedback: Feedback }) {
 
 function Chat({ chat }: { chat: Chat }) {
   const courseSlug = useCourseSlug();
-  const deleteChat = useMutation(api.feedback.deleteChat);
+  const deleteChat = useMutation(api.sachat.deleteChat);
+  const renameChat = useMutation(api.sachat.rename);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
-  const [newName, setNewName] = useState("");
+  const [newName, setNewName] = useState(chat.name || formatTimestampHumanFormat(chat.creationTime));
 
   return (
     <>
       <ChatLink
         href={`/${courseSlug}/super-assistant/chat/${chat.id}`}
-        name= {chat.name ? chat.name : formatTimestampHumanFormat(chat.creationTime)}
+        name={chat.name ? chat.name : formatTimestampHumanFormat(chat.creationTime)}
         corner={
           <div className="p-4">
             <div className="pointer-events-auto">
               <DropdownMenu variant="overlay">
+              <DropdownMenuItem
+                  onClick={() => {
+                    setIsEditNameModalOpen(true);
+                  }}
+                  variant="default"
+                >
+                  Rename
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     setIsDeleteModalOpen(true);
@@ -393,14 +403,6 @@ function Chat({ chat }: { chat: Chat }) {
                   variant="danger"
                 >
                   Delete
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setIsEditNameModalOpen(true);
-                  }}
-                  variant="default"
-                >
-                  Edit Name
                 </DropdownMenuItem>
               </DropdownMenu>
             </div>
@@ -410,15 +412,11 @@ function Chat({ chat }: { chat: Chat }) {
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        title={`Delete “chat”?`}
+        title={`Delete chat?`}
       >
         <div className="mt-2">
           <p className="text-sm text-gray-500">
-            Are you sure that you want to delete this chat{" "}
-            <strong className="font-semibold text-gray-600">
-              “chat”
-            </strong>
-            ? This action cannot be undone.
+            Are you sure that you want to delete this chat? This action cannot be undone.
           </p>
         </div>
         <div className="mt-4 flex gap-2 justify-end">
@@ -432,8 +430,7 @@ function Chat({ chat }: { chat: Chat }) {
           <Button
             onClick={async () => {
               setIsDeleteModalOpen(false);
-              deleteChat({id : chat.id, courseSlug : courseSlug});
-              toast.success("Chat deleted successfully");
+              deleteChat({ id:chat.id, courseSlug:courseSlug });
             }}
             variant="danger"
             size="sm"
@@ -442,15 +439,14 @@ function Chat({ chat }: { chat: Chat }) {
           </Button>
         </div>
       </Modal>
-
       <Modal
         isOpen={isEditNameModalOpen}
         onClose={() => setIsEditNameModalOpen(false)}
-        title={`Edit Name of the “chat”?`}
+        title={`Rename chat?`}
       >
         <div className="mt-4">
           <Input
-            label="New Name"
+            label="New name:"
             placeholder="Enter new name"
             value={newName}
             onChange={(value) => setNewName(value)}
@@ -458,7 +454,10 @@ function Chat({ chat }: { chat: Chat }) {
         </div>
         <div className="mt-4 flex gap-2 justify-end">
           <Button
-            onClick={() => setIsEditNameModalOpen(false)}
+            onClick={() => {
+              setIsEditNameModalOpen(false);
+              setNewName(chat.name || formatTimestampHumanFormat(chat.creationTime));
+            }}
             variant="secondary"
             size="sm"
           >
@@ -466,15 +465,17 @@ function Chat({ chat }: { chat: Chat }) {
           </Button>
           <Button
             onClick={async () => {
-              //await updateFeedbackName({ id: feedback.id, newName });
-              chat.name = newName;
               setIsEditNameModalOpen(false);
-              toast.success("Name changed successfully");
+              if (newName !== (chat.name || formatTimestampHumanFormat(chat.creationTime)) && newName !== "") {
+                await renameChat({ id:chat.id, newName:newName, courseSlug:courseSlug });
+              } else {
+                setNewName(chat.name || formatTimestampHumanFormat(chat.creationTime));
+              }
             }}
             variant="primary"
             size="sm"
           >
-            Change the name
+            Rename
           </Button>
         </div>
       </Modal>
@@ -557,7 +558,7 @@ function SuperAssistant() {
       <Modal
         isOpen={isModal1Open}
         onClose={() => setIsModal1Open(false)}
-        title="Upload your tentative solution."
+        title="Upload your tentative solution to get feedback."
       >
         <form onSubmit={
           async (e) => {
@@ -565,7 +566,7 @@ function SuperAssistant() {
             if (file === null) return;
             const uploaded = await startUpload([file]);
             const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
-            const feedbackId = await generateFeedback({ courseSlug, storageId:storageId, name: feedbackName});
+            const feedbackId = await generateFeedback({ courseSlug, storageId:storageId, name:feedbackName});
 
             if (feedbackId) {
               router.push(`/${courseSlug}/super-assistant/feedback/${feedbackId}`);
@@ -576,10 +577,16 @@ function SuperAssistant() {
 
             setIsModal1Open(false);
           }
-        }>
+        }>          
           <Upload
             value={file}
             onChange={(value) => setFile(value)}
+          />
+          <Input
+            label="Name this new feedback (optional):"
+            placeholder="Name"
+            value={feedbackName}
+            onChange={(value) => setFeedbackName(value)}
           />
           <div className="flex justify-end gap-2">
             <Button
@@ -587,6 +594,7 @@ function SuperAssistant() {
               onClick={() => {
                 setIsModal1Open(false);
                 setFile(null);
+                setFeedbackName("");
               }}
               variant="secondary"
               size="sm"

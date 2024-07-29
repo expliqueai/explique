@@ -40,7 +40,7 @@ export default function FeedbackPage({ params: { courseSlug, feedbackId } }: Fee
               </Link>
 
               <h1 className="text-lg sm:text-xl font-medium text-center">
-                Feedback
+                {feedback?.name ? feedback.name : "Feedback"}
               </h1>
             </header>
 
