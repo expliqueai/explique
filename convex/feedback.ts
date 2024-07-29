@@ -26,6 +26,7 @@ export const list = queryWithAuth({
       creationTime: fb._creationTime,
       status: fb.status,
       image: fb.image,
+      name: fb.name,
     }));
   },
 });
@@ -148,8 +149,9 @@ export const generateFeedback = mutationWithAuth({
   args: {
     courseSlug: v.string(),
     storageId: v.id("_storage"),
+    name: v.string(),
   }, 
-  handler: async (ctx, { courseSlug, storageId }) => {
+  handler: async (ctx, { courseSlug, storageId, name }) => {
     if (!ctx.session) throw new ConvexError("Not logged in");
     const userId = ctx.session.user._id;
 
@@ -164,6 +166,7 @@ export const generateFeedback = mutationWithAuth({
       status: "feedback",
       courseId: course._id,
       image: storageId,
+      name : name,
     });
 
     const fileUrl = await ctx.storage.getUrl(storageId);
@@ -288,5 +291,35 @@ export const deleteFeedback = mutationWithAuth({
 
       await ctx.db.delete(id);
 
+    },
+  });
+
+
+
+  export const updateFeedbackName = mutationWithAuth({
+    args: {
+      id: v.id("feedbacks"),
+      newName: v.string(),
+      courseSlug: v.string(),
+    },
+    handler: async (ctx, { id, newName, courseSlug }) => {
+      const { course } = await getCourseRegistration(
+        ctx.db,
+        ctx.session,
+        courseSlug,
+      );
+  
+      const feedback = await ctx.db.get(id);
+      if (!feedback) {
+        throw new ConvexError("Feedback not found");
+      }
+  
+      if (feedback.courseId !== course._id) {
+        throw new ConvexError("Unauthorized to update this feedback");
+      }
+  
+      await ctx.db.patch(id, { name: newName });
+  
+      return { success: true };
     },
   });

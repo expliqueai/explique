@@ -125,6 +125,7 @@ export default defineSchema(
       courseId: v.id("courses"),
       userId: v.id("users"),
       image: v.id("_storage"),
+      name:  v.optional(v.string()),
     }).index("by_key", ["userId", "courseId"]),
     feedbackMessages: defineTable({
       feedbackId: v.id("feedbacks"),

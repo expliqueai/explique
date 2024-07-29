@@ -33,6 +33,7 @@ type Feedback = {
   creationTime: number;
   status: "chat" | "feedback";
   image: Id<"_storage">;
+  name: string | undefined;
 }
 
 
@@ -258,14 +259,17 @@ function NoSuperAssistant() {
 function Feedback({ feedback }: { feedback: Feedback }) {
   const courseSlug = useCourseSlug();
   const deleteFeedback = useMutation(api.feedback.deleteFeedback);
+  const updateFeedbackName = useMutation(api.feedback.updateFeedbackName);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
+  const [newName, setNewName] = useState(feedback.name || formatTimestampHumanFormat(feedback.creationTime));
   const imageUrl = useQuery(api.feedback.getImage, { feedbackId:feedback.id });
 
   return (
     <>
       <FeedbackLink
         href={`/${courseSlug}/super-assistant/feedback/${feedback.id}`}
-        name= {formatTimestampHumanFormat(feedback.creationTime)}
+        name={newName}
         image= {imageUrl}
         corner={
           <div className="p-4">
@@ -278,6 +282,14 @@ function Feedback({ feedback }: { feedback: Feedback }) {
                   variant="danger"
                 >
                   Delete
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setIsEditNameModalOpen(true);
+                  }}
+                  variant="default"
+                >
+                  Edit Name
                 </DropdownMenuItem>
               </DropdownMenu>
             </div>
@@ -319,6 +331,40 @@ function Feedback({ feedback }: { feedback: Feedback }) {
           </Button>
         </div>
       </Modal>
+      <Modal
+        isOpen={isEditNameModalOpen}
+        onClose={() => setIsEditNameModalOpen(false)}
+        title={`Edit Name of the “feedback”?`}
+      >
+        <div className="mt-4">
+          <Input
+            label="New Name"
+            placeholder="Enter new name"
+            value={newName}
+            onChange={(value) => setNewName(value)}
+          />
+        </div>
+        <div className="mt-4 flex gap-2 justify-end">
+          <Button
+            onClick={() => setIsEditNameModalOpen(false)}
+            variant="secondary"
+            size="sm"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={async () => {
+              await updateFeedbackName({ id: feedback.id, newName: newName, courseSlug:courseSlug });
+              setIsEditNameModalOpen(false);
+              toast.success("Name changed successfully");
+            }}
+            variant="primary"
+            size="sm"
+          >
+            Change the name
+          </Button>
+        </div>
+      </Modal>
     </>
   );
 };
@@ -328,6 +374,8 @@ function Chat({ chat }: { chat: Chat }) {
   const courseSlug = useCourseSlug();
   const deleteChat = useMutation(api.feedback.deleteChat);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
+  const [newName, setNewName] = useState("");
 
   return (
     <>
@@ -345,6 +393,14 @@ function Chat({ chat }: { chat: Chat }) {
                   variant="danger"
                 >
                   Delete
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setIsEditNameModalOpen(true);
+                  }}
+                  variant="default"
+                >
+                  Edit Name
                 </DropdownMenuItem>
               </DropdownMenu>
             </div>
@@ -386,6 +442,43 @@ function Chat({ chat }: { chat: Chat }) {
           </Button>
         </div>
       </Modal>
+
+      <Modal
+        isOpen={isEditNameModalOpen}
+        onClose={() => setIsEditNameModalOpen(false)}
+        title={`Edit Name of the “chat”?`}
+      >
+        <div className="mt-4">
+          <Input
+            label="New Name"
+            placeholder="Enter new name"
+            value={newName}
+            onChange={(value) => setNewName(value)}
+          />
+        </div>
+        <div className="mt-4 flex gap-2 justify-end">
+          <Button
+            onClick={() => setIsEditNameModalOpen(false)}
+            variant="secondary"
+            size="sm"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={async () => {
+              //await updateFeedbackName({ id: feedback.id, newName });
+              chat.name = newName;
+              setIsEditNameModalOpen(false);
+              toast.success("Name changed successfully");
+            }}
+            variant="primary"
+            size="sm"
+          >
+            Change the name
+          </Button>
+        </div>
+      </Modal>
+
     </>
   );
 };
@@ -406,6 +499,7 @@ function SuperAssistant() {
   const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
   const { startUpload } = useUploadFiles(generateUploadUrl);
   const generateChat = useMutation(api.sachat.generateChat);
+  const [feedbackName, setFeedbackName] = useState(""); 
   
   return (
     <>
@@ -471,7 +565,7 @@ function SuperAssistant() {
             if (file === null) return;
             const uploaded = await startUpload([file]);
             const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
-            const feedbackId = await generateFeedback({ courseSlug, storageId:storageId });
+            const feedbackId = await generateFeedback({ courseSlug, storageId:storageId, name: feedbackName});
 
             if (feedbackId) {
               router.push(`/${courseSlug}/super-assistant/feedback/${feedbackId}`);
