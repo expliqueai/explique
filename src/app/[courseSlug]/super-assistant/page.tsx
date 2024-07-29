@@ -257,7 +257,7 @@ function NoSuperAssistant() {
 
 function Feedback({ feedback }: { feedback: Feedback }) {
   const courseSlug = useCourseSlug();
-  const deleteExercise = useMutation(api.admin.exercises.softDelete);
+  const deleteFeedback = useMutation(api.feedback.deleteFeedback);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const imageUrl = useQuery(api.feedback.getImage, { feedbackId:feedback.id });
 
@@ -309,6 +309,7 @@ function Feedback({ feedback }: { feedback: Feedback }) {
           <Button
             onClick={async () => {
               setIsDeleteModalOpen(false);
+              deleteFeedback({id : feedback.id, courseSlug : courseSlug});
               // TO BE UPDATED WITH deleteFeedback await deleteExercise({
               //   id: feedback.id,
               //   courseSlug,

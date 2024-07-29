@@ -222,3 +222,35 @@ export const goToChat = mutationWithAuth({
 
   },
 });
+
+
+
+export const deleteFeedback = mutationWithAuth({
+    args: {
+      id: v.id("feedbacks"),
+      courseSlug: v.string(),
+    },
+    handler: async (ctx, { id, courseSlug }) => {
+      const { course } = await getCourseRegistration(
+        ctx.db,
+        ctx.session,
+        courseSlug,
+      );
+  
+      const feedback = await ctx.db.get(id);
+      if (!feedback) {
+        throw new ConvexError("Feedback not found");
+      }
+
+      if (feedback.courseId !== course._id) {
+        throw new ConvexError("Unauthorized to delete this feedback");
+      }
+  
+      if (feedback.image) {
+        await ctx.storage.delete(feedback.image);
+      }
+  
+      await ctx.db.delete(id);
+
+    },
+  });
