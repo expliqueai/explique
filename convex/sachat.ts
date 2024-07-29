@@ -24,7 +24,7 @@ export const list = queryWithAuth({
       id: chat._id,
       creationTime: chat._creationTime,
       name: chat.name,
-    }));
+    })).reverse();
   },
 });
 
@@ -103,12 +103,12 @@ export const generateFirstMessages = internalAction({
       };
 
       await ctx.runMutation(
-      internal.sachatmessages.insertMessage,
-      {
-        chatId:chatId,
-        assistant:false,
-        content:message1,
-      }
+        internal.sachatmessages.insertMessage,
+        {
+          chatId:chatId,
+          assistant:false,
+          content:message1,
+        }
       );
       messages.push({
         role:"user",

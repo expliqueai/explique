@@ -27,7 +27,7 @@ export const list = queryWithAuth({
       status: fb.status,
       image: fb.image,
       name: fb.name,
-    }));
+    })).reverse();
   },
 });
 

@@ -20,8 +20,8 @@ export const insertMessage = internalMutation({
         ))),
         appearance: v.optional(v.union(v.literal("finished"), v.literal("feedback"), v.literal("typing"), v.literal("error"))),
     },
-    handler: async ({ db }, { chatId, assistant, content }) => {
-        return await db.insert("chatMessages", { chatId, content, assistant });
+    handler: async ({ db }, { chatId, assistant, content, appearance }) => {
+        return await db.insert("chatMessages", { chatId, content, assistant, appearance });
     },
 });
 
