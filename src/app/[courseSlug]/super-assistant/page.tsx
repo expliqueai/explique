@@ -310,10 +310,6 @@ function Feedback({ feedback }: { feedback: Feedback }) {
             onClick={async () => {
               setIsDeleteModalOpen(false);
               deleteFeedback({id : feedback.id, courseSlug : courseSlug});
-              // TO BE UPDATED WITH deleteFeedback await deleteExercise({
-              //   id: feedback.id,
-              //   courseSlug,
-              // });
               toast.success("Feedback deleted successfully");
             }}
             variant="danger"
@@ -330,7 +326,7 @@ function Feedback({ feedback }: { feedback: Feedback }) {
 
 function Chat({ chat }: { chat: Chat }) {
   const courseSlug = useCourseSlug();
-  const deleteChat = useMutation(api.admin.exercises.softDelete);
+  const deleteChat = useMutation(api.feedback.deleteChat);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   return (
@@ -380,10 +376,7 @@ function Chat({ chat }: { chat: Chat }) {
           <Button
             onClick={async () => {
               setIsDeleteModalOpen(false);
-              // TO BE UPDATED WITH deleteChat await deleteExercise({
-              //   id: chat.id,
-              //   courseSlug,
-              // });
+              deleteChat({id : chat.id, courseSlug : courseSlug});
               toast.success("Chat deleted successfully");
             }}
             variant="danger"

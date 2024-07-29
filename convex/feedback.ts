@@ -254,3 +254,39 @@ export const deleteFeedback = mutationWithAuth({
 
     },
   });
+
+  export const deleteChat = mutationWithAuth({
+    args: {
+      id: v.id("chats"),
+      courseSlug: v.string(),
+    },
+    handler: async (ctx, { id, courseSlug }) => {
+      const { course } = await getCourseRegistration(
+        ctx.db,
+        ctx.session,
+        courseSlug,
+      );
+  
+      const chat = await ctx.db.get(id);
+      if (!chat) {
+        throw new ConvexError("Chat not found");
+      }
+  
+      if (chat.courseId !== course._id) {
+        throw new ConvexError("Unauthorized to delete this chat");
+      }
+
+    const messages = await ctx.db
+      .query("chatMessages")
+      .withIndex("by_chat", (q) => q.eq("chatId", id))
+      .collect();
+
+    // Delete each associated message
+    for (const message of messages) {
+      await ctx.db.delete(message._id);
+    }
+
+      await ctx.db.delete(id);
+
+    },
+  });
