@@ -21,7 +21,7 @@ import { PlusIcon } from "@heroicons/react/20/solid";
 import { useUploadFiles } from "@xixixao/uploadstuff/react";
 import { formatTimestampHumanFormat } from "@/util/date";
 import Input from "@/components/Input";
-import { createColumnHelper, flexRender, getCoreRowModel, useReactTable, Column, RowData, SortingFn, SortingState, getSortedRowModel } from '@tanstack/react-table';
+import { createColumnHelper, flexRender, getCoreRowModel, useReactTable, Column, RowData, SortingFn, SortingState, getSortedRowModel, ColumnFiltersState, getFilteredRowModel } from '@tanstack/react-table';
 import * as React from 'react';
 
 
@@ -492,6 +492,7 @@ function Table() {
   const list : Row[] | undefined = useQuery(api.feedback.data, { courseSlug });
   const [data, setData] = useState(() => list ? [...list] : []);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -501,8 +502,9 @@ function Table() {
   const columnHelper = createColumnHelper<Row>();
   const columns = [
     columnHelper.accessor("type", {
+      id: "type",
       cell: info => <span className="px-3 text-slate-400">{info.getValue()}</span>,
-      header: "Type",
+      header: "",
       meta: {
         filterVariant: "select"
       },
@@ -513,11 +515,15 @@ function Table() {
       header: "Name",
       sortUndefined: "last",
       sortDescFirst: false,
+      meta: {
+        filterVariant: "text"
+      },
     }),
     columnHelper.accessor("creationTime", {
       cell: info => <span className="px-3 text-slate-400">{formatTimestampHumanFormat(info.getValue())}</span>,
       header: "Creation time",
       sortingFn: sortCreationTimeFn,
+      enableColumnFilter: false,
     }),
     columnHelper.accessor(row => {const res : RowObject = {type:row.type, id:row.id}; return res;}, {
       id: "modify",
@@ -535,7 +541,10 @@ function Table() {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
-    state: { sorting },
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    filterFns: {},
+    state: { sorting, columnFilters },
     getRowId: originalRow => originalRow.id,
   });
 
@@ -548,7 +557,7 @@ function Table() {
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id} className="border-b border-solid border-gray-400">
                   {headerGroup.headers.map(header => (
-                    <th key={header.id} className="p-2 text-gray-500 text-left">
+                    <th key={header.id} className="p-2 pl-3 text-gray-500 text-left">
                       {header.isPlaceholder
                         ? null
                         : (
@@ -579,12 +588,12 @@ function Table() {
                                   header.column.columnDef.header,
                                   header.getContext()
                                 )}
+                                {header.column.getCanFilter() && header.id === "type" ? (
+                                  <div>
+                                    <Filter column={header.column} />
+                                  </div>
+                                ) : null}
                               </div>
-                              {header.column.getCanFilter() ? (
-                                <div>
-                                  <Filter column={header.column} />
-                                </div>
-                              ) : null}
                             </div>
                           </>
                         )}
@@ -619,7 +628,7 @@ function Table() {
 declare module '@tanstack/react-table' {
   //allows us to define custom properties for our columns
   interface ColumnMeta<TData extends RowData, TValue> {
-    filterVariant?: 'text' | 'range' | 'select'
+    filterVariant?: 'text' | 'select'
   }
 }
 
@@ -627,38 +636,13 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   const columnFilterValue = column.getFilterValue()
   const { filterVariant } = column.columnDef.meta ?? {}
 
-  return filterVariant === 'range' ? (
-    <div>
-      <div className="flex space-x-2">
-        {/* See faceted column filters example for min max values functionality */}
-        <DebouncedInput
-          type="number"
-          value={(columnFilterValue as [number, number])?.[0] ?? ''}
-          onChange={value =>
-            column.setFilterValue((old: [number, number]) => [value, old?.[1]])
-          }
-          placeholder={`Min`}
-          className="w-24 border shadow rounded"
-        />
-        <DebouncedInput
-          type="number"
-          value={(columnFilterValue as [number, number])?.[1] ?? ''}
-          onChange={value =>
-            column.setFilterValue((old: [number, number]) => [old?.[0], value])
-          }
-          placeholder={`Max`}
-          className="w-24 border shadow rounded"
-        />
-      </div>
-      <div className="h-1" />
-    </div>
-  ) : filterVariant === 'select' ? (
+  return filterVariant === 'select' ? (
     <select
       onChange={e => column.setFilterValue(e.target.value)}
       value={columnFilterValue?.toString()}
-    >
-      {/* See faceted column filters example for dynamic select options */}
-      <option value="">All</option>
+      className="bg-slate-200 border rounded-md"
+    >   
+      <option value="">both</option>
       <option value="feedback">feedback</option>
       <option value="chat">chat</option>
     </select>
@@ -670,7 +654,6 @@ function Filter({ column }: { column: Column<any, unknown> }) {
       type="text"
       value={(columnFilterValue ?? '') as string}
     />
-    // See faceted column filters example for datalist search suggestions
   )
 }
 
