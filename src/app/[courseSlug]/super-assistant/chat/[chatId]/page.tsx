@@ -37,7 +37,7 @@ export default function ChatPage({ params: { courseSlug, chatId } }: ChatProps) 
               </Link>
 
               <h1 className="text-lg sm:text-xl font-medium text-center">
-                {chatName ? chatName : "Chat"}
+                {chatName === undefined ? "" : chatName ? chatName : "Chat"}
               </h1>
             </header>
 

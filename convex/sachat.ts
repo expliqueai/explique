@@ -7,27 +7,15 @@ import { internal } from "./_generated/api";
 import { api } from "../convex/_generated/api";
 
 
-export const list = queryWithAuth({
+export const getCreationTime = queryWithAuth({
   args: {
-    courseSlug: v.string(),
+    chatId: v.id("chats"),
   },
-  handler: async ({ db, session }, { courseSlug }) => {
-    if (!session) throw new ConvexError("Not logged in");
-    const { course } = await getCourseRegistration(db, session, courseSlug);
-
-    const chats = await db
-      .query("chats")
-      .withIndex("by_key", (q) => q.eq("userId", session.user._id).eq("courseId", course._id))
-      .collect();
-
-    return chats.map(chat => ({
-      id: chat._id,
-      creationTime: chat._creationTime,
-      name: chat.name,
-    })).reverse();
+  handler: async ({ db }, { chatId }) => {
+    const chat = await db.get(chatId);
+    return chat?._creationTime;
   },
 });
-
 
 export const generateChat = mutationWithAuth({
     args: {

@@ -1,20 +1,16 @@
 "use client";
 
 import { api } from "../../../../convex/_generated/api";
-import { useState } from "react";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
+import { useState, useEffect } from "react";
+import { CheckIcon, ChevronUpDownIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useQuery } from "@/usingSession";
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useIdentity } from "@/components/SessionProvider";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from "@headlessui/react";
 import { TabBar } from "@/components/TabBar";
 import Upload from "@/components/Upload";
-import Title from "@/components/typography";
-import { FeedbackLink } from "@/components/super-assistant/FeedbackLink";
-import { ChatLink } from "@/components/super-assistant/ChatLink";
 import { DropdownMenu, DropdownMenuItem } from "@/components/DropdownMenu";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
@@ -25,23 +21,8 @@ import { PlusIcon } from "@heroicons/react/20/solid";
 import { useUploadFiles } from "@xixixao/uploadstuff/react";
 import { formatTimestampHumanFormat } from "@/util/date";
 import Input from "@/components/Input";
-
-
-
-type Feedback = { 
-  id : Id<"feedbacks">;
-  creationTime: number;
-  status: "chat" | "feedback";
-  image: Id<"_storage">;
-  name: string | undefined;
-}
-
-
-type Chat = {
-  id: Id<"chats">;
-  creationTime: number;
-  name: string | undefined;
-}
+import { createColumnHelper, flexRender, getCoreRowModel, useReactTable, Column, RowData, SortingFn, SortingState, getSortedRowModel } from '@tanstack/react-table';
+import * as React from 'react';
 
 
 function Login() {
@@ -256,46 +237,44 @@ function NoSuperAssistant() {
 }
 
 
-function Feedback({ feedback }: { feedback:Feedback }) {
+function EditFeedback({ feedbackId }: { feedbackId:Id<"feedbacks"> }) {
   const courseSlug = useCourseSlug();
   const deleteFeedback = useMutation(api.feedback.deleteFeedback);
   const renameFeedback = useMutation(api.feedback.rename);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
-  const [newName, setNewName] = useState(feedback.name || formatTimestampHumanFormat(feedback.creationTime));
-  const imageUrl = useQuery(api.feedback.getImage, { feedbackId:feedback.id });
+  const name = useQuery(api.feedback.getName, { feedbackId });
+  const [newName, setNewName] = useState(name || "");
+
+  useEffect(() => {
+    name && setNewName(name);
+  }, [name]);
 
   return (
     <>
-      <FeedbackLink
-        href={`/${courseSlug}/super-assistant/feedback/${feedback.id}`}
-        name={feedback.name || formatTimestampHumanFormat(feedback.creationTime)}
-        image= {imageUrl}
-        corner={
-          <div className="p-4">
-            <div className="pointer-events-auto">
-              <DropdownMenu variant="overlay">
-                <DropdownMenuItem
-                  onClick={() => {
-                    setIsEditNameModalOpen(true);
-                  }}
-                  variant="default"
-                >
-                  Rename
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setIsDeleteModalOpen(true);
-                  }}
-                  variant="danger"
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenu>
-            </div>
-          </div>
-        }
-      />
+      <div className="p-2 pr-4">
+        <div className="pointer-events-auto">
+          <DropdownMenu variant="ghost" horizontal={true}>
+            <DropdownMenuItem
+              onClick={() => {
+                setIsEditNameModalOpen(true);
+              }}
+              variant="default"
+            >
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setIsDeleteModalOpen(true);
+              }}
+              variant="danger"
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenu>
+        </div>
+      </div>
+
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
@@ -317,7 +296,7 @@ function Feedback({ feedback }: { feedback:Feedback }) {
           <Button
             onClick={async () => {
               setIsDeleteModalOpen(false);
-              deleteFeedback({ id:feedback.id, courseSlug:courseSlug });
+              deleteFeedback({ id:feedbackId, courseSlug:courseSlug });
             }}
             variant="danger"
             size="sm"
@@ -343,7 +322,7 @@ function Feedback({ feedback }: { feedback:Feedback }) {
           <Button
             onClick={() => {
               setIsEditNameModalOpen(false);
-              setNewName(feedback.name || formatTimestampHumanFormat(feedback.creationTime));
+              setNewName(name || "");
             }}
             variant="secondary"
             size="sm"
@@ -353,10 +332,10 @@ function Feedback({ feedback }: { feedback:Feedback }) {
           <Button
             onClick={async () => {
               setIsEditNameModalOpen(false);
-              if (newName !== (feedback.name || formatTimestampHumanFormat(feedback.creationTime)) && newName !== "") {
-                await renameFeedback({ id:feedback.id, newName:newName, courseSlug:courseSlug });
+              if (newName !== name) {
+                await renameFeedback({ id:feedbackId, newName:newName, courseSlug:courseSlug });
               } else {
-                setNewName(feedback.name || formatTimestampHumanFormat(feedback.creationTime));
+                setNewName(name || "");
               }
             }}
             variant="primary"
@@ -371,44 +350,44 @@ function Feedback({ feedback }: { feedback:Feedback }) {
 };
 
 
-function Chat({ chat }: { chat: Chat }) {
+function EditChat({ chatId }: { chatId: Id<"chats"> }) {
   const courseSlug = useCourseSlug();
   const deleteChat = useMutation(api.sachat.deleteChat);
   const renameChat = useMutation(api.sachat.rename);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
-  const [newName, setNewName] = useState(chat.name || formatTimestampHumanFormat(chat.creationTime));
+  const name = useQuery(api.sachat.getName, { chatId });
+  const [newName, setNewName] = useState(name || "");
+
+  useEffect(() => {
+    name && setNewName(name);
+  }, [name]);
 
   return (
     <>
-      <ChatLink
-        href={`/${courseSlug}/super-assistant/chat/${chat.id}`}
-        name={chat.name ? chat.name : formatTimestampHumanFormat(chat.creationTime)}
-        corner={
-          <div className="p-4">
-            <div className="pointer-events-auto">
-              <DropdownMenu variant="overlay">
-              <DropdownMenuItem
-                  onClick={() => {
-                    setIsEditNameModalOpen(true);
-                  }}
-                  variant="default"
-                >
-                  Rename
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setIsDeleteModalOpen(true);
-                  }}
-                  variant="danger"
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenu>
-            </div>
-          </div>
-        }
-      />
+      <div className="p-2 pr-4">
+        <div className="pointer-events-auto">
+          <DropdownMenu variant="ghost" horizontal={true}>
+          <DropdownMenuItem
+              onClick={() => {
+                setIsEditNameModalOpen(true);
+              }}
+              variant="default"
+            >
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setIsDeleteModalOpen(true);
+              }}
+              variant="danger"
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenu>
+        </div>
+      </div>
+    
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
@@ -430,7 +409,7 @@ function Chat({ chat }: { chat: Chat }) {
           <Button
             onClick={async () => {
               setIsDeleteModalOpen(false);
-              deleteChat({ id:chat.id, courseSlug:courseSlug });
+              deleteChat({ id:chatId, courseSlug:courseSlug });
             }}
             variant="danger"
             size="sm"
@@ -456,7 +435,7 @@ function Chat({ chat }: { chat: Chat }) {
           <Button
             onClick={() => {
               setIsEditNameModalOpen(false);
-              setNewName(chat.name || formatTimestampHumanFormat(chat.creationTime));
+              setNewName(name || "");
             }}
             variant="secondary"
             size="sm"
@@ -466,10 +445,10 @@ function Chat({ chat }: { chat: Chat }) {
           <Button
             onClick={async () => {
               setIsEditNameModalOpen(false);
-              if (newName !== (chat.name || formatTimestampHumanFormat(chat.creationTime)) && newName !== "") {
-                await renameChat({ id:chat.id, newName:newName, courseSlug:courseSlug });
+              if (newName !== name) {
+                await renameChat({ id:chatId, newName:newName, courseSlug:courseSlug });
               } else {
-                setNewName(chat.name || formatTimestampHumanFormat(chat.creationTime));
+                setNewName(name || "");
               }
             }}
             variant="primary"
@@ -485,12 +464,251 @@ function Chat({ chat }: { chat: Chat }) {
 };
 
 
+type Row = {
+  id: string
+  creationTime: number
+  name: string | undefined
+  type: string
+}
+
+type RowObject = {
+  type: string
+  id: string
+}
+
+const sortCreationTimeFn: SortingFn<Row> = (rowA, rowB, _columnId) => {
+  const dateA = new Date(rowA.original.creationTime);
+  const dateB = new Date(rowB.original.creationTime);
+  return dateA.getFullYear() < dateB.getFullYear() ? -1 : dateA.getFullYear() > dateB.getFullYear() ? 1 : 
+    dateA.getMonth() < dateB.getMonth() ? -1 : dateA.getMonth() > dateB.getMonth() ? 1 : 
+      dateA.getDate() < dateB.getDate() ? -1 : dateA.getDate() > dateB.getDate() ? 1 : 
+        dateA.getHours() < dateB.getHours() ? -1 : dateA.getHours() > dateB.getHours() ? 1 : 
+          dateA.getMinutes() < dateB.getMinutes() ? -1 : dateA.getMinutes() > dateB.getMinutes() ? 1 : 
+            0;
+}
+
+function Table() {
+  const courseSlug = useCourseSlug();
+  const list : Row[] | undefined = useQuery(api.feedback.data, { courseSlug });
+  const [data, setData] = useState(() => list ? [...list] : []);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    list ? setData([...list]) : setData([]);
+  }, [list]);
+
+  const columnHelper = createColumnHelper<Row>();
+  const columns = [
+    columnHelper.accessor("type", {
+      cell: info => <span className="px-3 text-slate-400">{info.getValue()}</span>,
+      header: "Type",
+      meta: {
+        filterVariant: "select"
+      },
+      enableSorting: false,
+    }),
+    columnHelper.accessor(row => row.name ? row.name : "", {
+      cell: info => <span className="px-3">{info.getValue()}</span>,
+      header: "Name",
+      sortUndefined: "last",
+      sortDescFirst: false,
+    }),
+    columnHelper.accessor("creationTime", {
+      cell: info => <span className="px-3 text-slate-400">{formatTimestampHumanFormat(info.getValue())}</span>,
+      header: "Creation time",
+      sortingFn: sortCreationTimeFn,
+    }),
+    columnHelper.accessor(row => {const res : RowObject = {type:row.type, id:row.id}; return res;}, {
+      id: "modify",
+      cell: info => <span className="text-right pointer-events-auto" onClick={(e) => e.stopPropagation()}>{info.getValue().type === "feedback" ? <EditFeedback feedbackId={info.getValue().id as Id<"feedbacks">} /> : <EditChat chatId={info.getValue().id as Id<"chats">}/>}</span>,
+      header: "",
+      size: 2,
+      enableSorting: false,
+      enableColumnFilter: false,
+    })
+  ];
+
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setSorting,
+    state: { sorting },
+    getRowId: originalRow => originalRow.id,
+  });
+
+  return (
+    <>
+      {data.length !== 0 && (
+        <div className="p-2">
+          <table className="w-full">
+            <thead>
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id} className="border-b border-solid border-gray-400">
+                  {headerGroup.headers.map(header => (
+                    <th key={header.id} className="p-2 text-gray-500 text-left">
+                      {header.isPlaceholder
+                        ? null
+                        : (
+                          <>
+                            <div
+                              className={
+                                header.column.getCanSort()
+                                  ? "cursor-pointer select-none"
+                                  : ""
+                              }
+                              onClick={header.column.getToggleSortingHandler()}
+                              title={
+                                header.column.getCanSort()
+                                  ? header.column.getNextSortingOrder() === "asc"
+                                    ? "Sort ascending"
+                                    : header.column.getNextSortingOrder() === "desc"
+                                      ? "Sort descending"
+                                      : "Clear sort"
+                                  : undefined
+                              }
+                            >
+                              <div className="flex items-center justify-items-center">
+                                {{
+                                  asc: <div className="pr-3"><ChevronUpIcon className="border rounded-md bg-gray-500 text-white font-bold w-6 h-6 p-px" /></div>,
+                                  desc: <div className="pr-3"><ChevronDownIcon className="border rounded-md bg-gray-500 text-white font-bold w-6 h-6 p-px" /></div>,
+                                }[header.column.getIsSorted() as string] ?? null}
+                                {flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                              </div>
+                              {header.column.getCanFilter() ? (
+                                <div>
+                                  <Filter column={header.column} />
+                                </div>
+                              ) : null}
+                            </div>
+                          </>
+                        )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map(row => (
+                <tr 
+                  className="hover:bg-sky-300 hover:cursor-pointer border-b border-solid border-gray-200" 
+                  key={row.id} 
+                  onClick={() => {router.push(row.original.type === "feedback" ? `/${courseSlug}/super-assistant/feedback/${row.id}` : `/${courseSlug}/super-assistant/chat/${row.id}`)}}
+                >
+                  {row.getVisibleCells().map(cell => (
+                    <td key={cell.id} className="">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+};
+
+
+declare module '@tanstack/react-table' {
+  //allows us to define custom properties for our columns
+  interface ColumnMeta<TData extends RowData, TValue> {
+    filterVariant?: 'text' | 'range' | 'select'
+  }
+}
+
+function Filter({ column }: { column: Column<any, unknown> }) {
+  const columnFilterValue = column.getFilterValue()
+  const { filterVariant } = column.columnDef.meta ?? {}
+
+  return filterVariant === 'range' ? (
+    <div>
+      <div className="flex space-x-2">
+        {/* See faceted column filters example for min max values functionality */}
+        <DebouncedInput
+          type="number"
+          value={(columnFilterValue as [number, number])?.[0] ?? ''}
+          onChange={value =>
+            column.setFilterValue((old: [number, number]) => [value, old?.[1]])
+          }
+          placeholder={`Min`}
+          className="w-24 border shadow rounded"
+        />
+        <DebouncedInput
+          type="number"
+          value={(columnFilterValue as [number, number])?.[1] ?? ''}
+          onChange={value =>
+            column.setFilterValue((old: [number, number]) => [old?.[0], value])
+          }
+          placeholder={`Max`}
+          className="w-24 border shadow rounded"
+        />
+      </div>
+      <div className="h-1" />
+    </div>
+  ) : filterVariant === 'select' ? (
+    <select
+      onChange={e => column.setFilterValue(e.target.value)}
+      value={columnFilterValue?.toString()}
+    >
+      {/* See faceted column filters example for dynamic select options */}
+      <option value="">All</option>
+      <option value="feedback">feedback</option>
+      <option value="chat">chat</option>
+    </select>
+  ) : (
+    <DebouncedInput
+      className="w-36 border shadow rounded"
+      onChange={value => column.setFilterValue(value)}
+      placeholder={`Search...`}
+      type="text"
+      value={(columnFilterValue ?? '') as string}
+    />
+    // See faceted column filters example for datalist search suggestions
+  )
+}
+
+
+// A typical debounced input react component
+function DebouncedInput({
+  value: initialValue,
+  onChange,
+  debounce = 500,
+  ...props
+}: {
+  value: string | number
+  onChange: (value: string | number) => void
+  debounce?: number
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'>) {
+  const [value, setValue] = React.useState(initialValue)
+
+  React.useEffect(() => {
+    setValue(initialValue)
+  }, [initialValue])
+
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      onChange(value)
+    }, debounce)
+
+    return () => clearTimeout(timeout)
+  }, [value])
+
+  return (
+    <input {...props} value={value} onChange={e => setValue(e.target.value)} />
+  )
+}
+
 
 function SuperAssistant() {
   const [file, setFile] = useState<File | null>(null);
   const courseSlug = useCourseSlug();
-  const feedbacks = useQuery(api.feedback.list, { courseSlug });
-  const chats = useQuery(api.sachat.list, { courseSlug });
   const [isModal1Open, setIsModal1Open] = useState(false);
   const [isModal2Open, setIsModal2Open] = useState(false);
   const [chatName, setChatName] = useState("");
@@ -504,55 +722,44 @@ function SuperAssistant() {
   
   return (
     <>
-      <Title>
-        <span className="flex-1">Welcome to the Super-Assistant!</span>
-      </Title>
-      <div>
-        <h2 className="text-3xl font-medium flex mb-4 gap-3 flex-wrap items-start">
-          <div className="flex-1">
-            <span className="flex-1 text-xl">Get feedback on an exercise</span>
-            <div className="mt-4 grid gap-6 md:grid-cols-2">
-              <button
-                className="block rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
-                type="button"
-                onClick={() => { setIsModal1Open(true); }}
-              >
-                <div className="relative pb-[57.14%]">
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
-                    <PlusIcon className="w-6 h-6 mb-2" />
-                    <span>New feedback</span>
-                  </div>
+      <div className="text-3xl font-medium flex mb-4 gap-3 flex-wrap mt-10">
+        <div className="flex-1 justify-center items-center">
+          <span className="flex-1 text-xl">Get feedback on an exercise</span>
+          <div className="mt-4">
+            <button
+              className="block rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
+              type="button"
+              onClick={() => { setIsModal1Open(true); }}
+            >
+              <div className="p-8 pr-10 pl-10">
+                <div className="flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
+                  <PlusIcon className="w-6 h-6 mb-2" />
+                  <span>New feedback</span>
                 </div>
-              </button>
-              {feedbacks?.map(feedback => (
-                <Feedback feedback={feedback} key={feedback.id} />
-              ))}
-            </div>
+              </div>
+            </button>
           </div>
+        </div>
 
-          <div className="w-1 bg-gray-400 h-auto self-stretch"></div>
+        <div className="w-1 bg-gray-400 h-auto self-stretch"></div>
 
-          <div className="flex-1">
-            <span className="flex-1 text-xl">Still stuck? Chat with the Super-Assistant</span>
-            <div className="mt-4 grid gap-6 md:grid-cols-2">
-              <button
-                className="block rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
-                type="button"
-                onClick={() => { setIsModal2Open(true); }}
-              >
-                <div className="relative pb-[57.14%]">
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
-                    <PlusIcon className="w-6 h-6 mb-2" />
-                    <span>New chat</span>
-                  </div>
+        <div className="flex-1 justify-center items-center">
+          <span className="flex-1 text-xl">Still stuck? Chat with the Super-Assistant</span>
+          <div className="mt-4">
+            <button
+              className="rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
+              type="button"
+              onClick={() => { setIsModal2Open(true); }}
+            >
+              <div className="p-8 pr-16 pl-16">
+                <div className="flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
+                  <PlusIcon className="w-6 h-6 mb-2" />
+                  <span>New chat</span>
                 </div>
-              </button>
-              {chats?.map(chat => (
-                <Chat chat={chat} key={chat.id} />
-              ))}
-            </div>
+              </div>
+            </button>
           </div>
-        </h2>
+        </div>
       </div>
 
       <Modal
@@ -661,6 +868,8 @@ function SuperAssistant() {
           </div>
         </form>
       </Modal>
+
+      <Table />
     </>
   );
 }

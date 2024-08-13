@@ -5,10 +5,29 @@ import OpenAI from "openai";
 import { internalAction, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { api } from "../convex/_generated/api";
+import { Id } from "../convex/_generated/dataModel";
 
+export const getName = queryWithAuth({
+  args: {
+    feedbackId: v.id("feedbacks"),
+  },
+  handler: async ({ db }, { feedbackId }) => {
+    const feedback = await db.get(feedbackId);
+    return feedback?.name;
+  },
+});
 
+export const getCreationTime = queryWithAuth({
+  args: {
+    feedbackId: v.id("feedbacks"),
+  },
+  handler: async ({ db }, { feedbackId }) => {
+    const feedback = await db.get(feedbackId);
+    return feedback?._creationTime;
+  },
+});
 
-export const list = queryWithAuth({
+export const data = queryWithAuth({
   args: {
     courseSlug: v.string(),
   },
@@ -21,13 +40,32 @@ export const list = queryWithAuth({
       .withIndex("by_key", (q) => q.eq("userId", session.user._id).eq("courseId", course._id))
       .collect();
 
-    return feedbacks.map(fb => ({
-      id: fb._id,
-      creationTime: fb._creationTime,
-      status: fb.status,
-      image: fb.image,
-      name: fb.name,
-    })).reverse();
+    const chats = await db
+      .query("chats")
+      .withIndex("by_key", (q) => q.eq("userId", session.user._id).eq("courseId", course._id))
+      .collect();
+
+    const result : {id:string, creationTime:number, name:string|undefined, type:string}[] = [];
+
+    for (const fb of feedbacks) {
+      result.push({
+        id: fb._id,
+        creationTime: fb._creationTime,
+        name: fb.name,
+        type: "feedback",
+      });
+    };
+
+    for (const chat of chats) {
+      result.push({
+        id: chat._id,
+        creationTime: chat._creationTime,
+        name: chat.name,
+        type: "chat",
+      });
+    };
+
+    return result;
   },
 });
 
