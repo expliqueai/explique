@@ -254,7 +254,11 @@ export const sendMessage = mutationWithAuth({
         message,
         chatId,
       });
-      
+
+      const timestamp = Date.now();
+      await ctx.db.patch(chatId, {
+        lastModified: timestamp,
+      });
     },
 });
 

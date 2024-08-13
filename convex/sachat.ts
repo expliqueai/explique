@@ -37,7 +37,14 @@ export const generateChat = mutationWithAuth({
             userId: userId,
             courseId: course._id,
             name: (name !== "") ? name : undefined,
+            lastModified: 0,
         });
+
+        const chat = await ctx.db.get(chatId);
+
+        await ctx.db.patch(chatId, {
+          lastModified: chat?._creationTime,
+        })
     
         await ctx.scheduler.runAfter(0, internal.sachat.generateFirstMessages, {
             courseId: course._id,

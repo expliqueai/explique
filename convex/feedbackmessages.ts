@@ -294,6 +294,10 @@ export const sendMessage = mutationWithAuth({
         feedbackId,
       });
       
+      const timestamp = Date.now();
+      await ctx.db.patch(feedbackId, {
+        lastModified: timestamp,
+      });
     },
 });
 

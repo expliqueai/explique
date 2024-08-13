@@ -21,7 +21,19 @@ import { PlusIcon } from "@heroicons/react/20/solid";
 import { useUploadFiles } from "@xixixao/uploadstuff/react";
 import { formatTimestampHumanFormat } from "@/util/date";
 import Input from "@/components/Input";
-import { createColumnHelper, flexRender, getCoreRowModel, useReactTable, Column, RowData, SortingFn, SortingState, getSortedRowModel, ColumnFiltersState, getFilteredRowModel } from '@tanstack/react-table';
+import { 
+  createColumnHelper, 
+  flexRender, 
+  getCoreRowModel, 
+  useReactTable, 
+  Column, 
+  RowData, 
+  SortingFn, 
+  SortingState, 
+  getSortedRowModel, 
+  ColumnFiltersState, 
+  getFilteredRowModel } from '@tanstack/react-table';
+import Title from "@/components/typography";
 import * as React from 'react';
 
 
@@ -467,6 +479,7 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
 type Row = {
   id: string
   creationTime: number
+  lastModified: number
   name: string | undefined
   type: string
 }
@@ -479,12 +492,13 @@ type RowObject = {
 const sortCreationTimeFn: SortingFn<Row> = (rowA, rowB, _columnId) => {
   const dateA = new Date(rowA.original.creationTime);
   const dateB = new Date(rowB.original.creationTime);
-  return dateA.getFullYear() < dateB.getFullYear() ? -1 : dateA.getFullYear() > dateB.getFullYear() ? 1 : 
-    dateA.getMonth() < dateB.getMonth() ? -1 : dateA.getMonth() > dateB.getMonth() ? 1 : 
-      dateA.getDate() < dateB.getDate() ? -1 : dateA.getDate() > dateB.getDate() ? 1 : 
-        dateA.getHours() < dateB.getHours() ? -1 : dateA.getHours() > dateB.getHours() ? 1 : 
-          dateA.getMinutes() < dateB.getMinutes() ? -1 : dateA.getMinutes() > dateB.getMinutes() ? 1 : 
-            0;
+  return dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
+}
+
+const sortLastModifiedFn: SortingFn<Row> = (rowA, rowB, _columnId) => {
+  const dateA = new Date(rowA.original.lastModified);
+  const dateB = new Date(rowB.original.lastModified);
+  return dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
 }
 
 function Table() {
@@ -523,6 +537,12 @@ function Table() {
       cell: info => <span className="px-3 text-slate-400">{formatTimestampHumanFormat(info.getValue())}</span>,
       header: "Creation time",
       sortingFn: sortCreationTimeFn,
+      enableColumnFilter: false,
+    }),
+    columnHelper.accessor("lastModified", {
+      cell: info => <span className="px-3 text-slate-400">{formatTimestampHumanFormat(info.getValue())}</span>,
+      header: "Last modified",
+      sortingFn: sortLastModifiedFn,
       enableColumnFilter: false,
     }),
     columnHelper.accessor(row => {const res : RowObject = {type:row.type, id:row.id}; return res;}, {
@@ -681,6 +701,7 @@ function DebouncedInput({
     }, debounce)
 
     return () => clearTimeout(timeout)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
   return (
@@ -705,10 +726,10 @@ function SuperAssistant() {
   
   return (
     <>
-      <div className="text-3xl font-medium flex mb-4 gap-3 flex-wrap mt-10">
-        <div className="flex-1 justify-center items-center">
-          <span className="flex-1 text-xl">Get feedback on an exercise</span>
-          <div className="mt-4">
+      <div className="flex flex-row text-3xl font-medium mb-16 gap-3 mt-16">
+        <div className="basis-1/2 justify-items-center">
+          <p className="text-xl text-center">Get feedback on an exercise</p>
+          <div className="grid mt-4 justify-items-center">
             <button
               className="block rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
               type="button"
@@ -726,9 +747,9 @@ function SuperAssistant() {
 
         <div className="w-1 bg-gray-400 h-auto self-stretch"></div>
 
-        <div className="flex-1 justify-center items-center">
-          <span className="flex-1 text-xl">Still stuck? Chat with the Super-Assistant</span>
-          <div className="mt-4">
+        <div className="basis-1/2 justify-items-center">
+          <p className="text-xl text-center">Still stuck? Chat with the Super-Assistant</p>
+          <div className="grid mt-4 justify-items-center">
             <button
               className="rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
               type="button"
@@ -760,7 +781,6 @@ function SuperAssistant() {
 
             if (feedbackId) {
               router.push(`/${courseSlug}/super-assistant/feedback/${feedbackId}`);
-              toast.success("Your solution has been uploaded. Please wait for it to be reviewed.");
             } else {
               toast.error("Failed to generate feedback.");
             }
@@ -810,7 +830,6 @@ function SuperAssistant() {
 
             if (chatId) {
               router.push(`/${courseSlug}/super-assistant/chat/${chatId}`);
-              toast.success("A new chat is being generated, please wait.");
             } else {
               toast.error("Failed to generate chat.");
             }

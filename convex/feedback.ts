@@ -45,12 +45,13 @@ export const data = queryWithAuth({
       .withIndex("by_key", (q) => q.eq("userId", session.user._id).eq("courseId", course._id))
       .collect();
 
-    const result : {id:string, creationTime:number, name:string|undefined, type:string}[] = [];
+    const result : {id:string, creationTime:number, lastModified:number, name:string|undefined, type:string}[] = [];
 
     for (const fb of feedbacks) {
       result.push({
         id: fb._id,
         creationTime: fb._creationTime,
+        lastModified: fb.lastModified,
         name: fb.name,
         type: "feedback",
       });
@@ -60,6 +61,7 @@ export const data = queryWithAuth({
       result.push({
         id: chat._id,
         creationTime: chat._creationTime,
+        lastModified: chat.lastModified,
         name: chat.name,
         type: "chat",
       });
@@ -205,7 +207,14 @@ export const generateFeedback = mutationWithAuth({
       courseId: course._id,
       image: storageId,
       name : (name !== "") ? name : undefined,
+      lastModified: 0,
     });
+
+    const feedback = await ctx.db.get(feedbackId);
+
+    await ctx.db.patch(feedbackId, {
+      lastModified: feedback?._creationTime,
+    })
 
     const fileUrl = await ctx.storage.getUrl(storageId);
 
@@ -258,8 +267,11 @@ export const goToChat = mutationWithAuth({
   },
   handler: async (ctx, { feedbackId }) => {
 
+    const timestamp = Date.now();
+
     await ctx.db.patch(feedbackId, {
       status:"chat",
+      lastModified: timestamp,
     });
 
   },
