@@ -35,17 +35,86 @@ async function getAttemptIfAuthorized(
 
 
 export const list = queryWithAuth({
-    args: {
-        feedbackId: v.id("feedbacks"),
-    },
-    handler: async (ctx, { feedbackId }) => {
-        await getAttemptIfAuthorized(ctx.db, ctx.session, feedbackId);
+  args: {
+    feedbackId: v.id("feedbacks"),
+  },
+  handler: async (ctx, { feedbackId }) => {
+    await getAttemptIfAuthorized(ctx.db, ctx.session, feedbackId);
 
-        return await ctx.db
-                        .query("feedbackMessages")
-                        .withIndex("by_feedback", (x) => x.eq("feedbackId", feedbackId))
-                        .collect();
-    },
+    const rows = await ctx.db
+      .query("feedbackMessages")
+      .withIndex("by_feedback", (x) => x.eq("feedbackId", feedbackId))
+      .collect();
+
+    const reportedMessages = await ctx.db
+      .query("feedbackReports")
+      .withIndex("by_feedback", (x) => x.eq("feedbackId", feedbackId))
+      .collect();
+
+    const result = [];
+    for (const message of rows) {
+      const isReported = reportedMessages.some(
+        (x) => x.messageId === message._id,
+      );
+
+      result.push({
+        id: message._id,
+        role: message.role,
+        content: message.content,
+        appearance: message.appearance,
+        isReported: isReported,
+      });
+    }
+
+    return result;
+  },
+});
+
+
+export const reportMessage = mutationWithAuth({
+  args: {
+    messageId: v.id("feedbackMessages"),
+    reason: v.string(),
+  },
+  handler: async (ctx, { messageId, reason }) => {
+    const message = await ctx.db.get(messageId);
+    if (message === null) throw new ConvexError("Message not found");
+
+    const feedback = await getAttemptIfAuthorized(
+      ctx.db,
+      ctx.session,
+      message.feedbackId,
+    );
+    if (feedback === null) throw new ConvexError("Feedback not found");
+
+    await ctx.db.insert("feedbackReports", {
+      feedbackId: message.feedbackId,
+      messageId: messageId,
+      courseId: feedback.courseId,
+      reason: reason,
+    });
+  },
+});
+
+
+export const unreportMessage = mutationWithAuth({
+  args: {
+    messageId: v.id("feedbackMessages"),
+  },
+  handler: async (ctx, { messageId }) => {
+    const message = await ctx.db.get(messageId);
+    if (message === null) throw new ConvexError("Message not found");
+
+    await getAttemptIfAuthorized(ctx.db, ctx.session, message.feedbackId);
+
+    const report = await ctx.db
+      .query("feedbackReports")
+      .withIndex("by_message", (x) => x.eq("messageId", messageId))
+      .first();
+    if (report === null) throw new ConvexError("No report");
+
+    await ctx.db.delete(report._id);
+  },
 });
 
 

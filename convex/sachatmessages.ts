@@ -55,17 +55,86 @@ async function getAttemptIfAuthorized(
 
 
 export const list = queryWithAuth({
-    args: {
-        chatId: v.id("chats"),
-    },
-    handler: async (ctx, { chatId }) => {
-        await getAttemptIfAuthorized(ctx.db, ctx.session, chatId);
+  args: {
+    chatId: v.id("chats"),
+  },
+  handler: async (ctx, { chatId }) => {
+    await getAttemptIfAuthorized(ctx.db, ctx.session, chatId);
 
-        return await ctx.db
-                        .query("chatMessages")
-                        .withIndex("by_chat", (x) => x.eq("chatId", chatId))
-                        .collect();
-    },
+    const rows = await ctx.db
+      .query("chatMessages")
+      .withIndex("by_chat", (x) => x.eq("chatId", chatId))
+      .collect();
+
+    const reportedMessages = await ctx.db
+      .query("chatReports")
+      .withIndex("by_chat", (x) => x.eq("chatId", chatId))
+      .collect();
+
+    const result = [];
+    for (const message of rows) {
+      const isReported = reportedMessages.some(
+        (x) => x.messageId === message._id,
+      );
+
+      result.push({
+        id: message._id,
+        assistant: message.assistant,
+        content: message.content,
+        appearance: message.appearance,
+        isReported: isReported,
+      });
+    }
+
+    return result;
+  },
+});
+
+
+export const reportMessage = mutationWithAuth({
+  args: {
+    messageId: v.id("chatMessages"),
+    reason: v.string(),
+  },
+  handler: async (ctx, { messageId, reason }) => {
+    const message = await ctx.db.get(messageId);
+    if (message === null) throw new ConvexError("Message not found");
+
+    const chat = await getAttemptIfAuthorized(
+      ctx.db,
+      ctx.session,
+      message.chatId,
+    );
+    if (chat === null) throw new ConvexError("Chat not found");
+
+    await ctx.db.insert("chatReports", {
+      chatId: message.chatId,
+      messageId: messageId,
+      courseId: chat.courseId,
+      reason: reason,
+    });
+  },
+});
+
+
+export const unreportMessage = mutationWithAuth({
+  args: {
+    messageId: v.id("chatMessages"),
+  },
+  handler: async (ctx, { messageId }) => {
+    const message = await ctx.db.get(messageId);
+    if (message === null) throw new ConvexError("Message not found");
+
+    await getAttemptIfAuthorized(ctx.db, ctx.session, message.chatId);
+
+    const report = await ctx.db
+      .query("chatReports")
+      .withIndex("by_message", (x) => x.eq("messageId", messageId))
+      .first();
+    if (report === null) throw new ConvexError("No report");
+
+    await ctx.db.delete(report._id);
+  },
 });
 
 

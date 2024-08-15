@@ -199,6 +199,24 @@ export default defineSchema(
       .index("by_attempt", ["attemptId"])
       .index("by_message", ["messageId"])
       .index("by_course", ["courseId"]),
+    chatReports: defineTable({
+      chatId: v.id("chats"),
+      messageId: v.id("chatMessages"),
+      courseId: v.id("courses"),
+      reason: v.string(),
+    })
+      .index("by_chat", ["chatId"])
+      .index("by_message", ["messageId"])
+      .index("by_course", ["courseId"]),
+    feedbackReports: defineTable({
+        feedbackId: v.id("feedbacks"),
+        messageId: v.id("feedbackMessages"),
+        courseId: v.id("courses"),
+        reason: v.string(),
+      })
+        .index("by_feedback", ["feedbackId"])
+        .index("by_message", ["messageId"])
+        .index("by_course", ["courseId"]),
     logs: defineTable({
       type: v.union(
         v.literal("attemptStarted"),

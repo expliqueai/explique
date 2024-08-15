@@ -179,7 +179,6 @@ export default function ExplainExercise({
                       <>
                         <Markdown text={message.content} />
                         <ReportMessage
-                          attemptId={attemptId}
                           messageId={message.id}
                           isReported={message.isReported}
                         />
@@ -213,11 +212,9 @@ export default function ExplainExercise({
 }
 
 function ReportMessage({
-  attemptId,
   messageId,
   isReported,
 }: {
-  attemptId: Id<"attempts">;
   messageId: Id<"messages">;
   isReported: boolean;
 }) {

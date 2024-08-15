@@ -710,7 +710,7 @@ function DebouncedInput({
   }, [value])
 
   return (
-    <form className="flex flex-row w-full shadow rounded-md mb-6 text-gray-500 bg-slate-100 items-center">
+    <form className="flex flex-row w-full shadow-md rounded-md mb-6 text-gray-500 bg-slate-100 items-center">
       <MagnifyingGlassIcon className="h-10 w-10 p-2 pl-3"/>
       <input {...props} value={value} onChange={e => setValue(e.target.value)} />
     </form>
