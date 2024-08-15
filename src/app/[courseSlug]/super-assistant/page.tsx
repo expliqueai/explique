@@ -2,7 +2,7 @@
 
 import { api } from "../../../../convex/_generated/api";
 import { useState, useEffect } from "react";
-import { CheckIcon, ChevronUpDownIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, ChevronUpDownIcon, ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useQuery } from "@/usingSession";
 import { useRouter } from "next/navigation";
@@ -525,6 +525,7 @@ function Table() {
       enableSorting: false,
     }),
     columnHelper.accessor(row => row.name ? row.name : "", {
+      id: "name",
       cell: info => <span className="px-3">{info.getValue()}</span>,
       header: "Name",
       sortUndefined: "last",
@@ -567,11 +568,15 @@ function Table() {
     state: { sorting, columnFilters },
     getRowId: originalRow => originalRow.id,
   });
+  var nameRow: Column<Row, unknown> | undefined;
 
   return (
     <>
       {data.length !== 0 && (
         <div className="p-2">
+          {(nameRow = table.getColumn("name")) !== undefined &&
+            <Filter column={nameRow}/>
+          }
           <table className="w-full">
             <thead>
               {table.getHeaderGroups().map(headerGroup => (
@@ -668,9 +673,9 @@ function Filter({ column }: { column: Column<any, unknown> }) {
     </select>
   ) : (
     <DebouncedInput
-      className="w-36 border shadow rounded"
+      className="w-full p-3 bg-transparent focus:outline-0"
       onChange={value => column.setFilterValue(value)}
-      placeholder={`Search...`}
+      placeholder={"Search..."}
       type="text"
       value={(columnFilterValue ?? '') as string}
     />
@@ -705,7 +710,10 @@ function DebouncedInput({
   }, [value])
 
   return (
-    <input {...props} value={value} onChange={e => setValue(e.target.value)} />
+    <form className="flex flex-row w-full shadow rounded-md mb-6 text-gray-500 bg-slate-100 items-center">
+      <MagnifyingGlassIcon className="h-10 w-10 p-2 pl-3"/>
+      <input {...props} value={value} onChange={e => setValue(e.target.value)} />
+    </form>
   )
 }
 
