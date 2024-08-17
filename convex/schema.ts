@@ -158,6 +158,7 @@ export default defineSchema(
     chatMessages: defineTable({
       chatId: v.id("chats"),
       assistant: v.boolean(),
+      storageId: v.optional(v.id("_storage")),
       content: v.union(v.string(), v.array(v.union(
         v.object({ 
           type:v.literal("text"), 

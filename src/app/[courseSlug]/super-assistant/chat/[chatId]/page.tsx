@@ -49,4 +49,3 @@ export default function ChatPage({ params: { courseSlug, chatId } }: ChatProps) 
     </>
     );
 }
-
