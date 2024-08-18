@@ -710,7 +710,7 @@ function DebouncedInput({
   }, [value])
 
   return (
-    <form className="flex flex-row w-full shadow-md rounded-md mb-6 text-gray-500 bg-slate-100 items-center">
+    <form className="flex flex-row w-full border border-slate-200 rounded-md mb-6 text-gray-500 bg-slate-100 items-center">
       <MagnifyingGlassIcon className="h-10 w-10 p-2 pl-3"/>
       <input {...props} value={value} onChange={e => setValue(e.target.value)} />
     </form>
@@ -782,18 +782,22 @@ function SuperAssistant() {
         <form onSubmit={
           async (e) => {
             e.preventDefault();
-            if (file === null) return;
-            const uploaded = await startUpload([file]);
-            const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
-            const feedbackId = await generateFeedback({ courseSlug, storageId:storageId, name:feedbackName});
-
-            if (feedbackId) {
-              router.push(`/${courseSlug}/super-assistant/feedback/${feedbackId}`);
+            if (file === null) {
+              toast.error("You have to upload your tentative solution to get feedback.")
             } else {
-              toast.error("Failed to generate feedback.");
-            }
+              const uploaded = await startUpload([file]);
+              const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
+              const feedbackId = await generateFeedback({ courseSlug, storageId:storageId, name:feedbackName});
 
-            setIsModal1Open(false);
+              if (feedbackId) {
+                router.push(`/${courseSlug}/super-assistant/feedback/${feedbackId}`);
+              } else {
+                toast.error("Failed to generate feedback.");
+              }
+
+              setFile(null);
+              setIsModal1Open(false);
+            }
           }
         }>          
           <Upload
