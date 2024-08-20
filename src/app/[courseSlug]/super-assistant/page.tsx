@@ -10,7 +10,7 @@ import { useIdentity } from "@/components/SessionProvider";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from "@headlessui/react";
 import { TabBar } from "@/components/TabBar";
-import Upload from "@/components/Upload";
+import UploadWithImage from "@/components/UploadWithImage";
 import { DropdownMenu, DropdownMenuItem } from "@/components/DropdownMenu";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
@@ -250,13 +250,19 @@ function NoSuperAssistant() {
 
 
 function EditFeedback({ feedbackId }: { feedbackId:Id<"feedbacks"> }) {
+  const [file, setFile] = useState<File | null>(null);
   const courseSlug = useCourseSlug();
   const deleteFeedback = useMutation(api.feedback.deleteFeedback);
   const renameFeedback = useMutation(api.feedback.rename);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const updateFeedback = useMutation(api.feedback.updateFeedback);
+  const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
+  const { startUpload } = useUploadFiles(generateUploadUrl);
   const name = useQuery(api.feedback.getName, { feedbackId });
   const [newName, setNewName] = useState(name || "");
+  const router = useRouter();
 
   useEffect(() => {
     name && setNewName(name);
@@ -267,6 +273,14 @@ function EditFeedback({ feedbackId }: { feedbackId:Id<"feedbacks"> }) {
       <div className="p-2 pr-4">
         <div className="pointer-events-auto">
           <DropdownMenu variant="ghost" horizontal={true}>
+          <DropdownMenuItem
+              onClick={() => {
+                setIsUpdateModalOpen(true);
+              }}
+              variant="default"
+            >
+              Update
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 setIsEditNameModalOpen(true);
@@ -356,6 +370,54 @@ function EditFeedback({ feedbackId }: { feedbackId:Id<"feedbacks"> }) {
             Rename
           </Button>
         </div>
+      </Modal>
+      <Modal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        title="Upload a new attempt to get feedback"
+      >
+        <form onSubmit={
+          async (e) => {
+            e.preventDefault();
+            if (file === null) {
+              toast.error("You have to upload a tentative solution to get feedback.")
+            } else {
+              const uploaded = await startUpload([file]);
+              const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
+              await updateFeedback({ courseSlug, storageId:storageId, feedbackId:feedbackId });
+
+              if (feedbackId) {
+                router.push(`/${courseSlug}/super-assistant/feedback/${feedbackId}`);
+              } else {
+                toast.error("Failed to generate feedback.");
+              }
+
+              setFile(null);
+              setIsUpdateModalOpen(false);
+            }
+          }
+        }>          
+          <UploadWithImage
+            value={file}
+            onChange={(value) => setFile(value)}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              onClick={() => {
+                setIsUpdateModalOpen(false);
+                setFile(null);
+              }}
+              variant="secondary"
+              size="sm"
+            >
+              Cancel
+            </Button>
+            <Button type="submit" size="sm">
+              Generate feedback
+            </Button>
+          </div>
+        </form>
       </Modal>
     </>
   );
@@ -800,7 +862,7 @@ function SuperAssistant() {
             }
           }
         }>          
-          <Upload
+          <UploadWithImage
             value={file}
             onChange={(value) => setFile(value)}
           />

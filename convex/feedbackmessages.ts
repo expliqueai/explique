@@ -45,6 +45,8 @@ export const list = queryWithAuth({
       .query("feedbackMessages")
       .withIndex("by_feedback", (x) => x.eq("feedbackId", feedbackId))
       .collect();
+    rows.shift();
+    rows.shift();
 
     const reportedMessages = await ctx.db
       .query("feedbackReports")
@@ -133,8 +135,8 @@ export const insertMessage = internalMutation({
         ))),
         appearance: v.optional(v.union(v.literal("finished"), v.literal("feedback"), v.literal("typing"), v.literal("error"))),
     },
-    handler: async ({ db }, { feedbackId, role, content }) => {
-        return await db.insert("feedbackMessages", { feedbackId, content, role });
+    handler: async ({ db }, { feedbackId, role, content, appearance }) => {
+        return await db.insert("feedbackMessages", { feedbackId, content, role, appearance });
     },
 });
 
@@ -149,7 +151,8 @@ export const getFeedback = queryWithAuth({
                                 .query("feedbackMessages")
                                 .withIndex("by_feedback", (x) => x.eq("feedbackId", feedbackId))
                                 .filter((x) => x.eq(x.field("role"), "assistant"))
-                                .first()
+                                .order("desc")
+                                .first();
 
         if (feedback === null || typeof feedback.content !== "string") return undefined;
         return feedback.content;

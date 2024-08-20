@@ -19,10 +19,9 @@ export const insertMessage = internalMutation({
             })
         ))),
         appearance: v.optional(v.union(v.literal("finished"), v.literal("feedback"), v.literal("typing"), v.literal("error"))),
-        storageId: v.optional(v.id("_storage")), 
     },
-    handler: async ({ db }, { chatId, assistant, content, appearance, storageId }) => {
-        return await db.insert("chatMessages", { chatId, content, assistant, appearance, storageId });
+    handler: async ({ db }, { chatId, assistant, content, appearance }) => {
+        return await db.insert("chatMessages", { chatId, content, assistant, appearance });
     },
 });
 
@@ -84,7 +83,6 @@ export const list = queryWithAuth({
         content: message.content,
         appearance: message.appearance,
         isReported: isReported,
-        storageId: message.storageId,
       });
     }
 
@@ -142,63 +140,36 @@ export const unreportMessage = mutationWithAuth({
 
 async function sendMessageController(
   ctx: Omit<MutationCtx, "auth">,
-  {
-    message,
-    chatId,
-    fileUrl,
-    storageId
-  }: {
-    chatId: Id<"chats">;
-    message: string;
-    fileUrl?: string | undefined;
-    storageId?: Id<'_storage'> | undefined;
-  },
-) {
-  const chat = await ctx.db.get(chatId);
-  if (!chat) throw new Error(`Chat ${chatId} not found`);
+    {
+      message,
+      chatId,
+    }: {
+      chatId: Id<"chats">;
+      message: string;
+    },
+  ) {
+    const chat = await ctx.db.get(chatId);
+    if (!chat) throw new Error(`Chat ${chatId} not found`);
 
-  // Initialize the content array with the correct types
-  const userMessageContent: ({ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } })[] = [];
-
-  // Add the text message if it exists
-  if (message) {
-    userMessageContent.push({ type: "text", text: message });
-  }
-
-  // Add the image URL if it exists
-  if (fileUrl) {
-    userMessageContent.push({
-      type:"image_url",
-      image_url:{
-        url:fileUrl,
-      },
+    const userMessageId = await ctx.db.insert("chatMessages", {
+      chatId,
+      assistant: false,
+      content: message,
     });
-  }
 
-  // Insert the user message with the content array
-  const userMessageId = await ctx.db.insert("chatMessages", {
-    chatId,
-    assistant: false,
-    content: userMessageContent,
-    storageId: storageId,
+    const assistantMessageId = await ctx.db.insert("chatMessages", {
+      chatId,
+      assistant: true,
+      appearance: "typing",
+      content: "",
+    });
+
+    ctx.scheduler.runAfter(0, internal.sachatmessages.answerChatCompletionsApi, {
+      chatId,
+      userMessageId,
+      assistantMessageId,
   });
-
-  // Insert the assistant's typing indicator
-  const assistantMessageId = await ctx.db.insert("chatMessages", {
-    chatId,
-    assistant: true,
-    appearance: "typing",
-    content: "",
-  });
-
-  // Schedule the assistant's response
-  ctx.scheduler.runAfter(0, internal.sachatmessages.answerChatCompletionsApi, {
-    chatId,
-    userMessageId,
-    assistantMessageId,
-  });
-}
-
+};
 
 
 export const generateTranscriptMessages = internalQuery({
@@ -338,30 +309,19 @@ export const answerChatCompletionsApi = internalAction({
 export const sendMessage = mutationWithAuth({
     args: {
       chatId: v.id("chats"),
-      storageId: v.optional(v.id("_storage")),
       message: v.string(),
     },
-    handler: async (ctx, { chatId, message, storageId }) => {
+    handler: async (ctx, { chatId, message }) => {
       
       const attempt = await getAttemptIfAuthorized(
         ctx.db,
         ctx.session,
         chatId,
       );
-
-      let fileUrl: string | undefined;
-      if (storageId != null) {
-        const fileUrl = await ctx.storage.getUrl(storageId);
-      }
-      else{
-        const fileUrl = undefined;
-      }
   
       await sendMessageController(ctx, {
         message,
         chatId,
-        fileUrl,
-        storageId,
       });
 
       const timestamp = Date.now();

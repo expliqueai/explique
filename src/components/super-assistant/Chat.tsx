@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   HandThumbDownIcon,
   PaperAirplaneIcon,
-  PlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -20,7 +19,6 @@ import Input from "../Input";
 import { Button } from "../Button";
 import { Modal } from "@/components/Modal";
 import { toast } from "sonner";
-import { useUploadFiles } from "@xixixao/uploadstuff/react";
 
 export default function Chat({
   chatId,
@@ -195,133 +193,9 @@ function ReportMessage({
 }
 
 
-// function NewMessage({ chatId }: { chatId: Id<"chats"> }) {
-//   const sendMessage = useMutation(api.sachatmessages.sendMessage);
-//   const [message, setMessage] = useState("");
-//   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-//   const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
-//   const { startUpload } = useUploadFiles(generateUploadUrl);
-
-//   async function handleFileChange() {
-   
-
-//     if (selectedFile !== null) {
-//       const uploaded = await startUpload([selectedFile]);
-//       const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
-    
-//       const filename = selectedFile.name.split(".")[0];
-      
-//       return storageId
-
-//     }
-
-//   }
-
-//   function autoResizeTextarea() {
-//     if (!textareaRef.current || !paddingRef.current) return;
-
-//     const isDocumentScrolledToBottom =
-//       window.innerHeight + window.scrollY >= document.body.scrollHeight;
-
-//     textareaRef.current.style.height = "0";
-//     const newHeight = Math.min(500, textareaRef.current.scrollHeight) + "px";
-//     textareaRef.current.style.height = newHeight;
-//     paddingRef.current.style.height = newHeight;
-
-//     if (isDocumentScrolledToBottom) {
-//       window.scrollTo({ top: document.body.scrollHeight });
-//     }
-//   }
-
-//   const textareaRef = useRef<HTMLTextAreaElement>(null);
-//   useEffect(() => {
-//     window.addEventListener("resize", autoResizeTextarea);
-//     return () => window.removeEventListener("resize", autoResizeTextarea);
-//   });
-
-//   const paddingRef = useRef<HTMLDivElement>(null);
-
-//   function send() {
-//     const messageSent = message.trim();
-//     if (!messageSent) return;
-//     sendMessage({ chatId, message: messageSent });
-//     setMessage("");
-//     setTimeout(() => {
-//       autoResizeTextarea();
-//     }, 0);
-//   }
-
-//   return (
-//     <>
-//       <div className="box-content h-[60px] pt-4" ref={paddingRef} />
-//       <form
-//         className="fixed bottom-2 left-2 flex w-[calc(100%-1rem)] shadow-xl rounded-xl"
-//         onSubmit={(e) => {
-//           e.preventDefault();
-//           send();
-//         }}
-//       >
-//         <textarea
-//           ref={textareaRef}
-//           value={message}
-//           onChange={(e) => setMessage(e.target.value)}
-//           className={`w-full bg-transparent sm:text-lg px-4 rounded-xl resize-none bg-white py-4 h-[60px] pl-16 pr-16`}
-//           onKeyDown={(e) => {
-//             if (e.key === "Enter" && !e.shiftKey) {
-//               e.preventDefault();
-//               send();
-//             }
-//           }}
-//           onInput={() => {
-//             autoResizeTextarea();
-//           }}
-//         />
-
-//         <div className="flex px-2 items-center right-0 inset-y-0 absolute">
-//           <button
-//             className="bg-purple-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-md"
-//             type="submit"
-//             title="Send"
-//           >
-//             <PaperAirplaneIcon className="w-6 h-6" />
-//           </button>
-//         </div>
-
-
-//         <div className="flex px-2 items-center left-0 inset-y-0 absolute">
-//           <label
-//             className="bg-purple-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-md"
-//             title="Attach Image"
-//           >
-//             <input
-//               type="file"
-//               className="hidden"
-//               accept="image/*"
-//               onChange={handleFileChange}
-//             />
-//             <PlusIcon className="w-6 h-6" />
-//           </label>
-//         </div>
-
-//       </form>
-//     </>
-//   );
-// }
-
-export function NewMessage({ chatId }: { chatId: Id<"chats"> }) {
+function NewMessage({ chatId }: { chatId: Id<"chats"> }) {
   const sendMessage = useMutation(api.sachatmessages.sendMessage);
   const [message, setMessage] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
-  const { startUpload } = useUploadFiles(generateUploadUrl);
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const paddingRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    window.addEventListener("resize", autoResizeTextarea);
-    return () => window.removeEventListener("resize", autoResizeTextarea);
-  }, []);
 
   function autoResizeTextarea() {
     if (!textareaRef.current || !paddingRef.current) return;
@@ -339,41 +213,19 @@ export function NewMessage({ chatId }: { chatId: Id<"chats"> }) {
     }
   }
 
-  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] || null;
-    setSelectedFile(file);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    window.addEventListener("resize", autoResizeTextarea);
+    return () => window.removeEventListener("resize", autoResizeTextarea);
+  });
 
-    // if (file !== null) {
-    //   const uploaded = await startUpload([file]);
-    //   const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
-     
+  const paddingRef = useRef<HTMLDivElement>(null);
 
-    //   const filename = file.name.split(".")[0];
-    //   toast.success("Image uploaded.");
-    //   return storageId
-    // }
-    // else {
-    //   toast.error("Imae not uploaded. Please try again.");
-    //   return null;
-    // }
-   
-  }
-
-  async function send() {
+  function send() {
     const messageSent = message.trim();
-    if (!messageSent && !selectedFile) return;  // Ensure there's a message or file to send
-
-    // If a file is selected, handle the file upload
-    let storageId = undefined;
-    if (selectedFile) {
-      const uploaded = await startUpload([selectedFile]);
-      const storageId = uploaded.map(({ response }) => ((response as any).storageId))[0];
-    }
-
-    // Send the message with or without the file
-    await sendMessage({ chatId, message: messageSent, storageId: storageId });
+    if (!messageSent) return;
+    sendMessage({ chatId, message: messageSent });
     setMessage("");
-    setSelectedFile(null);
     setTimeout(() => {
       autoResizeTextarea();
     }, 0);
@@ -389,26 +241,11 @@ export function NewMessage({ chatId }: { chatId: Id<"chats"> }) {
           send();
         }}
       >
-        <div className="flex px-2 items-center left-0 inset-y-0 absolute">
-          <label
-            className="bg-purple-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-md"
-            title="Attach Image"
-          >
-            <input
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={handleFileChange}
-            />
-            <PlusIcon className="w-6 h-6" />
-          </label>
-        </div>
-
         <textarea
           ref={textareaRef}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className={`w-full bg-transparent sm:text-lg px-4 rounded-xl resize-none bg-white py-4 h-[60px] pl-16 pr-16`}
+          className="w-full bg-transparent sm:text-lg px-4 rounded-xl resize-none bg-white py-4 h-[60px] pr-16"          
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();

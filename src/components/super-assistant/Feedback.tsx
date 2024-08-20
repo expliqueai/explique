@@ -54,6 +54,33 @@ export default function Feedback({
         
         {chat?.map((message) => (
           <>
+            { typeof message.content !== "string" 
+              && message.role === "user" 
+              && message.content[1].type === "image_url" && (
+              <>
+                <div className="flex flex-row-full justify-items-center items-center text-center text-purple-500 font-bold text-lg p-4 w-full">
+                  <div className="w-1/3 items-center">
+                    <div className="h-0.5 bg-purple-500 w-auto self-stretch px-2"></div>
+                  </div>
+                  <p className="px-2 w-1/3">New attempt</p>
+                  <div className="w-1/3 items-center">
+                    <div className="h-0.5 bg-purple-500 w-auto self-stretch px-2"></div>
+                  </div>
+                </div>
+                <div className="flex ml-6">
+                  <div className="max-w-sm ml-auto">
+                    <picture>
+                      <img
+                        className="rounded-xl shadow relative rounded-br-none"
+                        src={message.content[1].image_url.url}
+                        alt={""}
+                      />
+                    </picture>
+                  </div>
+                </div>
+              </>
+            )}
+
             {typeof message.content === "string" && (message.role === "assistant" || message.role === "user") && (
               <div key={message.id}>
                 <div

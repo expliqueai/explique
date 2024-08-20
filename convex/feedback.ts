@@ -205,7 +205,7 @@ export const generateFeedback = mutationWithAuth({
       userId: userId,
       status: "feedback",
       courseId: course._id,
-      image: storageId,
+      images: [storageId],
       name : (name !== "") ? name : undefined,
       lastModified: 0,
     });
@@ -232,6 +232,93 @@ export const generateFeedback = mutationWithAuth({
   },
 });
 
+export const generateUpdateMessages = internalAction({
+  args: {
+    fileUrl: v.string(),
+    courseId: v.id("courses"),
+    userId: v.id("users"),
+    storageId: v.id("_storage"),
+    feedbackId: v.id("feedbacks"),
+  },
+  handler: async (ctx, { fileUrl, courseId, storageId, feedbackId }) => {
+    const message : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
+    message.push({
+      type:"text",
+      text:"Here is a new try I made on the exercise. Analyze what is different from the previous attempt I made and tell me if I am closer to something correct or not. Give me feedback on what is different. Make sure the attempt is on the same exercise as before and that it is not a picture I already gave you.",
+    });
+    message.push({
+      type:"image_url",
+      image_url:{
+        url:fileUrl,
+      },
+    });
+
+    const userMessageId = await ctx.runMutation(
+      internal.feedbackmessages.insertMessage,
+      {
+        feedbackId:feedbackId,
+        role:"user",
+        content:message,
+      }
+    );
+
+    const assistantMessageId = await ctx.runMutation(
+      internal.feedbackmessages.insertMessage,
+      {
+        feedbackId:feedbackId,
+        role:"assistant",
+        content:"",
+        appearance: "typing",
+      }
+    );
+
+    await ctx.scheduler.runAfter(0, internal.feedbackmessages.answerChatCompletionsApi, {
+      feedbackId,
+      userMessageId,
+      assistantMessageId,
+    });
+  },
+});
+
+export const updateFeedback = mutationWithAuth({
+  args: {
+    courseSlug: v.string(),
+    storageId: v.id("_storage"),
+    feedbackId: v.id("feedbacks"),
+  }, 
+  handler: async (ctx, { courseSlug, storageId, feedbackId }) => {
+    if (!ctx.session) throw new ConvexError("Not logged in");
+    const userId = ctx.session.user._id;
+
+    const { course } = await getCourseRegistration(
+      ctx.db,
+      ctx.session,
+      courseSlug,
+    );
+
+    const fileUrl = await ctx.storage.getUrl(storageId);
+    if (fileUrl) {      // schedule the action to generate feedback
+      await ctx.scheduler.runAfter(0, internal.feedback.generateUpdateMessages, {
+        fileUrl: fileUrl,
+        courseId: course._id,
+        userId: userId,
+        storageId: storageId,
+        feedbackId: feedbackId,
+      });
+    };
+
+    const feedback = await ctx.db.get(feedbackId);
+    if (feedback) {
+      const timestamp = Date.now();
+      await ctx.db.patch(feedbackId, {
+        status: "feedback",
+        lastModified: timestamp,
+        images: [storageId].concat(feedback.images)
+      });
+    };
+  },
+});
+
 export const getImage = queryWithAuth({
   args: {
     feedbackId: v.id("feedbacks"),
@@ -239,7 +326,7 @@ export const getImage = queryWithAuth({
   handler: async (ctx, { feedbackId }) => {
     const feedback = await ctx.db.get(feedbackId);
     if (feedback === null) return null;
-    return await ctx.storage.getUrl(feedback.image);
+    return await ctx.storage.getUrl(feedback.images[0]);
   }
 })
 
@@ -308,8 +395,8 @@ export const deleteFeedback = mutationWithAuth({
         throw new ConvexError("Forbidden");
       }
   
-      if (feedback.image) {
-        await ctx.storage.delete(feedback.image);
+      for (const image of feedback.images) {
+        await ctx.storage.delete(image);
       }
 
       await ctx.scheduler.runAfter(0, 

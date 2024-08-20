@@ -124,8 +124,8 @@ export default defineSchema(
       ),
       courseId: v.id("courses"),
       userId: v.id("users"),
-      image: v.id("_storage"),
-      name:  v.optional(v.string()),
+      images: v.array(v.id("_storage")),
+      name: v.optional(v.string()),
       lastModified: v.number(),
     }).index("by_key", ["userId", "courseId"]),
     feedbackMessages: defineTable({
@@ -158,7 +158,6 @@ export default defineSchema(
     chatMessages: defineTable({
       chatId: v.id("chats"),
       assistant: v.boolean(),
-      storageId: v.optional(v.id("_storage")),
       content: v.union(v.string(), v.array(v.union(
         v.object({ 
           type:v.literal("text"), 

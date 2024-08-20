@@ -58,7 +58,7 @@ export default function FeedbackPage({ params: { courseSlug, feedbackId } }: Fee
                   </picture>
                 )}
 
-                {feedbackMessage === null || feedbackMessage === undefined ? (
+                {feedbackMessage === null || feedbackMessage === undefined || feedbackMessage === "" ? (
                   <h1>Feedback loading...</h1>
                 ) : (
                   <>
