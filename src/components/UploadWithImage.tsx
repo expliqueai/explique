@@ -1,4 +1,4 @@
-import { CloudArrowUpIcon } from "@heroicons/react/24/outline";
+import { ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
@@ -24,7 +24,7 @@ export default function UploadWithImage({
                 <div className="w-80 h-40 max-w-md rounded border-blue-900 border-dashed border-2 bg-blue-10 text-blue-900 hover:bg-blue-50 items-center content-center">
                     <input type="file" id="fileInput" className="hidden" onChange={handleFileInput} />
                     <label htmlFor="fileInput" className="flex justify-center items-center w-full h-full rounded cursor-pointer">
-                        <CloudArrowUpIcon className="w-20 h-20"/>
+                        <ArrowUpTrayIcon className="w-10 h-10"/>
                     </label>
                 </div>
             ) : (    

@@ -8,6 +8,7 @@ import clsx from "clsx";
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
+  ArrowUpTrayIcon,
 } from "@heroicons/react/24/outline";
 import { useMutation, useQuery } from "@/usingSession";
 import { api } from "../../../convex/_generated/api";
@@ -19,11 +20,17 @@ import Input from "../Input";
 import { Button } from "../Button";
 import { Modal } from "@/components/Modal";
 import { toast } from "sonner";
+import { useUploadFiles } from "@xixixao/uploadstuff/react";
+import UploadWithImage from "@/components/UploadWithImage";
+
+
 
 export default function Feedback({
   feedbackId,
+  courseSlug,
 }: {
   feedbackId: Id<"feedbacks">;
+  courseSlug: string;
 }) {
   const chat = useQuery(api.feedbackmessages.list, { feedbackId });
   const imageUrl = useQuery(api.feedback.getImage, { feedbackId });
@@ -146,7 +153,7 @@ export default function Feedback({
         ))}
       </div>  
 
-      <NewMessage feedbackId={feedbackId} />
+      <NewMessage feedbackId={feedbackId} courseSlug={courseSlug} />
     </>
   );
 }
@@ -236,9 +243,15 @@ function ReportMessage({
 }
 
 
-function NewMessage({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
+function NewMessage({ feedbackId, courseSlug }: { feedbackId: Id<"feedbacks">, courseSlug:string }) {
   const sendMessage = useMutation(api.feedbackmessages.sendMessage);
   const [message, setMessage] = useState("");
+  const [isNewAttemptModalOpen, setIsNewAttemptModalOpen] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
+  const { startUpload } = useUploadFiles(generateUploadUrl);
+  const updateFeedback = useMutation(api.feedback.updateFeedbackInChat);
+
 
   function autoResizeTextarea() {
     if (!textareaRef.current || !paddingRef.current) return;
@@ -284,11 +297,24 @@ function NewMessage({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
           send();
         }}
       >
+        <div className="flex px-2 items-center left-0 inset-y-0 absolute">
+          <button
+            className="hover:bg-slate-200 hover:text-slate-600 bg-transparent text-slate-500 w-12 h-12 rounded-full flex items-center justify-center"
+            type="button"
+            title="Upload new attempt"
+            onClick={(e) => {
+              e.preventDefault();
+              setIsNewAttemptModalOpen(true);
+            }}
+          >
+            <ArrowUpTrayIcon className="w-6 h-6" />
+          </button>
+        </div>
         <textarea
           ref={textareaRef}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="w-full bg-transparent sm:text-lg px-4 rounded-xl resize-none bg-white py-4 h-[60px] pr-16"
+          className="w-full bg-transparent sm:text-lg pl-16 px-4 rounded-xl resize-none bg-white py-4 h-[60px] pr-16"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -309,6 +335,48 @@ function NewMessage({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
           </button>
         </div>
       </form>
+
+      <Modal
+        isOpen={isNewAttemptModalOpen}
+        onClose={() => setIsNewAttemptModalOpen(false)}
+        title="Upload a new attempt to get feedback."
+      >
+        <form onSubmit={
+          async (e) => {
+            e.preventDefault();
+            if (file === null) {
+              toast.error("You have to upload a tentative solution to get feedback.")
+            } else {
+              const uploaded = await startUpload([file]);
+              const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
+              await updateFeedback({ courseSlug, storageId:storageId, feedbackId:feedbackId });
+              setFile(null);
+              setIsNewAttemptModalOpen(false);
+            }
+          }
+        }>          
+          <UploadWithImage
+            value={file}
+            onChange={(value) => setFile(value)}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              onClick={() => {
+                setIsNewAttemptModalOpen(false);
+                setFile(null);
+              }}
+              variant="secondary"
+              size="sm"
+            >
+              Cancel
+            </Button>
+            <Button type="submit" size="sm">
+              Generate feedback
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </>
   );
 }

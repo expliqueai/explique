@@ -9,6 +9,7 @@ import Markdown from "@/components/Markdown";
 import { ArrowLeftIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { ArrowRightIcon } from "@heroicons/react/16/solid";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { Button } from "@/components/Button";
 import Feedback from "@/components/super-assistant/Feedback";
 
 
@@ -80,7 +81,7 @@ export default function FeedbackPage({ params: { courseSlug, feedbackId } }: Fee
                 )}
               </>
             ) : (
-              <Feedback feedbackId={feedbackId} />
+              <Feedback feedbackId={feedbackId} courseSlug={courseSlug} />
             )}
 
           </div>

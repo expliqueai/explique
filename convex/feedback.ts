@@ -319,6 +319,44 @@ export const updateFeedback = mutationWithAuth({
   },
 });
 
+export const updateFeedbackInChat = mutationWithAuth({
+  args: {
+    courseSlug: v.string(),
+    storageId: v.id("_storage"),
+    feedbackId: v.id("feedbacks"),
+  }, 
+  handler: async (ctx, { courseSlug, storageId, feedbackId }) => {
+    if (!ctx.session) throw new ConvexError("Not logged in");
+    const userId = ctx.session.user._id;
+
+    const { course } = await getCourseRegistration(
+      ctx.db,
+      ctx.session,
+      courseSlug,
+    );
+
+    const fileUrl = await ctx.storage.getUrl(storageId);
+    if (fileUrl) {      // schedule the action to generate feedback
+      await ctx.scheduler.runAfter(0, internal.feedback.generateUpdateMessages, {
+        fileUrl: fileUrl,
+        courseId: course._id,
+        userId: userId,
+        storageId: storageId,
+        feedbackId: feedbackId,
+      });
+    };
+
+    const feedback = await ctx.db.get(feedbackId);
+    if (feedback) {
+      const timestamp = Date.now();
+      await ctx.db.patch(feedbackId, {
+        lastModified: timestamp,
+        images: [storageId].concat(feedback.images)
+      });
+    };
+  },
+});
+
 export const getImage = queryWithAuth({
   args: {
     feedbackId: v.id("feedbacks"),

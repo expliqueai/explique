@@ -374,7 +374,7 @@ function EditFeedback({ feedbackId }: { feedbackId:Id<"feedbacks"> }) {
       <Modal
         isOpen={isUpdateModalOpen}
         onClose={() => setIsUpdateModalOpen(false)}
-        title="Upload a new attempt to get feedback"
+        title="Upload a new attempt to get feedback."
       >
         <form onSubmit={
           async (e) => {
