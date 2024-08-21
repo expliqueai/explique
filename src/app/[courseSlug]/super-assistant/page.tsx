@@ -33,7 +33,6 @@ import {
   getSortedRowModel, 
   ColumnFiltersState, 
   getFilteredRowModel } from '@tanstack/react-table';
-import Title from "@/components/typography";
 import * as React from 'react';
 
 
@@ -567,7 +566,7 @@ function Table() {
   const courseSlug = useCourseSlug();
   const list : Row[] | undefined = useQuery(api.feedback.data, { courseSlug });
   const [data, setData] = useState(() => list ? [...list] : []);
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id:"lastModified", desc:true }]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const router = useRouter();
 
@@ -603,6 +602,7 @@ function Table() {
       enableColumnFilter: false,
     }),
     columnHelper.accessor("lastModified", {
+      id: "lastModified",
       cell: info => <span className="px-3 text-slate-400">{formatTimestampHumanFormat(info.getValue())}</span>,
       header: "Last modified",
       sortingFn: sortLastModifiedFn,

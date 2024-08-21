@@ -2,20 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import {
   HandThumbDownIcon,
   PaperAirplaneIcon,
-  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import {
-  CheckCircleIcon,
   ExclamationCircleIcon,
   ArrowUpTrayIcon,
 } from "@heroicons/react/24/outline";
 import { useMutation, useQuery } from "@/usingSession";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
-import { ArrowRightIcon, SparklesIcon } from "@heroicons/react/16/solid";
 import Markdown from "../Markdown";
-import { PrimaryButton } from "../PrimaryButton";
 import Input from "../Input";
 import { Button } from "../Button";
 import { Modal } from "@/components/Modal";

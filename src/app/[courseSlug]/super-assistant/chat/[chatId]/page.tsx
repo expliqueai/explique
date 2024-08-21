@@ -1,14 +1,11 @@
 "use client";
 
-import { useMutation, useQuery } from "@/usingSession";
+import { useQuery } from "@/usingSession";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import React from 'react'
 import Link from "next/link";
-import Markdown from "@/components/Markdown";
-import { ArrowLeftIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
-import { ArrowRightIcon } from "@heroicons/react/16/solid";
-import { PrimaryButton } from "@/components/PrimaryButton";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import Chat from "@/components/super-assistant/Chat";
 
 
