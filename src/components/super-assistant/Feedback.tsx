@@ -18,6 +18,9 @@ import { Modal } from "@/components/Modal";
 import { toast } from "sonner";
 import { useUploadFiles } from "@xixixao/uploadstuff/react";
 import UploadWithImage from "@/components/UploadWithImage";
+import { Fragment, ReactNode } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+
 
 
 
@@ -42,17 +45,7 @@ export default function Feedback({
       <div className="flex flex-col gap-6">
 
         {(imageUrl !== null && imageUrl !== undefined) && (
-          <div className="flex ml-6" >
-            <div className="max-w-sm ml-auto" >
-              <picture>
-                <img
-                  className="rounded-xl shadow relative rounded-br-none"
-                  src={imageUrl}
-                  alt={""}
-                />
-              </picture>
-            </div>
-          </div>
+          <ImageMessage imageUrl={imageUrl} />
         )}
         
         {chat?.map((message) => (
@@ -70,17 +63,7 @@ export default function Feedback({
                     <div className="h-0.5 bg-purple-500 w-auto self-stretch px-2"></div>
                   </div>
                 </div>
-                <div className="flex ml-6">
-                  <div className="max-w-sm ml-auto">
-                    <picture>
-                      <img
-                        className="rounded-xl shadow relative rounded-br-none"
-                        src={message.content[1].image_url.url}
-                        alt={""}
-                      />
-                    </picture>
-                  </div>
-                </div>
+                <ImageMessage imageUrl={message.content[1].image_url.url} />
               </>
             )}
 
@@ -376,3 +359,74 @@ function NewMessage({ feedbackId, courseSlug }: { feedbackId: Id<"feedbacks">, c
     </>
   );
 }
+
+
+function ImageMessage({
+  imageUrl,
+}: {
+  imageUrl: string;
+}) {
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+
+  return (
+    <>
+      <div className="flex ml-6" >
+        <div className="max-w-sm ml-auto" >
+          <picture 
+            className="hover:cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              setIsImageModalOpen(true);
+            }}
+          >
+            <img
+              className="rounded-xl shadow relative rounded-br-none"
+              src={imageUrl}
+              alt={""}
+            />
+          </picture>
+        </div>
+      </div>
+
+      <Transition appear show={isImageModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={() => setIsImageModalOpen(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="max-w-screen-md max-h-screen-md transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+                  <picture>
+                  <img
+                    className=""
+                    src={imageUrl}
+                    alt={""}
+                  />
+                  </picture>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+    </>
+  );
+};
