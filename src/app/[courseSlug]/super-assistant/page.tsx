@@ -2,7 +2,17 @@
 
 import { api } from "../../../../convex/_generated/api";
 import { useState, useEffect } from "react";
-import { CheckIcon, ChevronUpDownIcon, ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { 
+  CheckIcon, 
+  ChevronUpDownIcon, 
+  ChevronDownIcon, 
+  ChevronUpIcon, 
+  MagnifyingGlassIcon, 
+  ChevronLeftIcon, 
+  ChevronRightIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon 
+} from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useQuery } from "@/usingSession";
 import { useRouter } from "next/navigation";
@@ -32,7 +42,9 @@ import {
   SortingState, 
   getSortedRowModel, 
   ColumnFiltersState, 
-  getFilteredRowModel } from '@tanstack/react-table';
+  getFilteredRowModel,
+  getPaginationRowModel 
+} from '@tanstack/react-table';
 import * as React from 'react';
 
 
@@ -569,6 +581,7 @@ function Table() {
   const [sorting, setSorting] = useState<SortingState>([{ id:"lastModified", desc:true }]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const router = useRouter();
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 5 });
 
   useEffect(() => {
     list ? setData([...list]) : setData([]);
@@ -624,10 +637,12 @@ function Table() {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
+    getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setPagination,
     getFilteredRowModel: getFilteredRowModel(),
     onColumnFiltersChange: setColumnFilters,
     filterFns: {},
-    state: { sorting, columnFilters },
+    state: { sorting, columnFilters, pagination },
     getRowId: originalRow => originalRow.id,
   });
   var nameRow: Column<Row, unknown> | undefined;
@@ -636,9 +651,30 @@ function Table() {
     <>
       {data.length !== 0 && (
         <div className="p-2">
-          {(nameRow = table.getColumn("name")) !== undefined &&
-            <Filter column={nameRow}/>
-          }
+          <div className="flex flex-row w-full mb-6">
+            {(nameRow = table.getColumn("name")) !== undefined &&
+              <div className="w-full mr-4">
+                <Filter column={nameRow} />
+              </div>
+            }
+            <div className="flex flex-row p-2 content-center">
+              <p className="mr-3 content-center">Show</p>
+              <select
+                value={table.getState().pagination.pageSize}
+                onChange={e => {
+                  table.setPageSize(Number(e.target.value))
+                }}
+                className="bg-slate-200 border rounded-md"
+              >
+                {[5, 10, 20, 30, 40, 50].map(pageSize => (
+                  <option key={pageSize} value={pageSize}>
+                    {pageSize}
+                  </option>
+                ))}
+              </select>
+              <p className="ml-3 content-center">entries</p>
+            </div>
+          </div>
           <table className="w-full">
             <thead>
               {table.getHeaderGroups().map(headerGroup => (
@@ -705,6 +741,47 @@ function Table() {
               ))}
             </tbody>
           </table>
+          <div className="flex flex-row flex-nowrap justify-center items-center p-4">
+            <button
+              onClick={() => table.firstPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="flex items-center justify-center w-10 h-10 bg-sky-200 enabled:hover:bg-sky-300 disabled:bg-slate-200 text-sky-700 enabled:hover:text-sky-950 disabled:text-slate-600 enabled:hover:cursor-pointer disabled:hover:cursor-default rounded-lg mr-2"
+              type="button"
+              title="Go to the first page"
+            >
+              <ChevronDoubleLeftIcon className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="flex items-center justify-center w-10 h-10 bg-sky-200 enabled:hover:bg-sky-300 disabled:bg-slate-200 text-sky-700 enabled:hover:text-sky-950 disabled:text-slate-600 enabled:hover:cursor-pointer disabled:hover:cursor-default rounded-lg"
+              type="button"
+              title="Go to the previous page"
+            >
+              <ChevronLeftIcon className="w-5 h-5" />
+            </button>
+            <div className="text-center p-4 content-center justify-center">
+              <p>Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}</p>
+            </div>
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="flex items-center justify-center w-10 h-10 bg-sky-200 enabled:hover:bg-sky-300 disabled:bg-slate-200 text-sky-700 enabled:hover:text-sky-950 disabled:text-slate-600 enabled:hover:cursor-pointer disabled:hover:cursor-default rounded-lg mr-2"
+              type="button"
+              title="Go to the next page"
+            >
+              <ChevronRightIcon className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => table.lastPage()}
+              disabled={!table.getCanNextPage()}
+              className="flex items-center justify-center w-10 h-10 bg-sky-200 enabled:hover:bg-sky-300 disabled:bg-slate-200 text-sky-700 enabled:hover:text-sky-950 disabled:text-slate-600 enabled:hover:cursor-pointer disabled:hover:cursor-default rounded-lg"
+              type="button"
+              title="Go to the last page"
+            >
+              <ChevronDoubleRightIcon className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       )}
     </>
@@ -772,7 +849,7 @@ function DebouncedInput({
   }, [value])
 
   return (
-    <form className="flex flex-row w-full border border-slate-200 rounded-md mb-6 text-gray-500 bg-slate-100 items-center">
+    <form className="flex flex-row w-full border border-slate-200 rounded-md text-gray-500 bg-slate-100 items-center">
       <MagnifyingGlassIcon className="h-10 w-10 p-2 pl-3"/>
       <input {...props} value={value} onChange={e => setValue(e.target.value)} />
     </form>
