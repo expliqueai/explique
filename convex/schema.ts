@@ -148,6 +148,7 @@ export default defineSchema(
           v.literal("error"),
         ),
       ),
+      streaming: v.optional(v.boolean()),
     }).index("by_feedback", ["feedbackId"]),
     chats: defineTable({
       courseId: v.id("courses"),

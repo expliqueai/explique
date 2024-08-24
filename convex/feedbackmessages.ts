@@ -134,10 +134,39 @@ export const insertMessage = internalMutation({
             })
         ))),
         appearance: v.optional(v.union(v.literal("finished"), v.literal("feedback"), v.literal("typing"), v.literal("error"))),
+        streaming: v.optional(v.boolean()),
     },
-    handler: async ({ db }, { feedbackId, role, content, appearance }) => {
-        return await db.insert("feedbackMessages", { feedbackId, content, role, appearance });
+    handler: async ({ db }, { feedbackId, role, content, appearance, streaming }) => {
+        return await db.insert("feedbackMessages", { feedbackId, content, role, appearance, streaming });
     },
+});
+
+
+export const addChunk = internalMutation({
+  args: {
+    messageId: v.id("feedbackMessages"),
+    chunk: v.string(),
+  },
+  handler: async ({ db }, { messageId, chunk }) => {
+    const message = await db.get(messageId);
+    if (typeof message?.content === "string") {
+      await db.patch(messageId, {
+        content: message.content.concat(chunk),
+      })
+    }
+  },
+});
+
+
+export const streamingDone = internalMutation({
+  args: {
+    messageId: v.id("feedbackMessages"),
+  },
+  handler: async ({ db }, { messageId }) => {
+    await db.patch(messageId, {
+      streaming: false,
+    })
+  },
 });
 
 
@@ -155,7 +184,10 @@ export const getFeedback = queryWithAuth({
                                 .first();
 
         if (feedback === null || typeof feedback.content !== "string") return undefined;
-        return feedback.content;
+        return {
+          content:feedback.content,
+          streaming:feedback.streaming,
+        };
     },
 });
 

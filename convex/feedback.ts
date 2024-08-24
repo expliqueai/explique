@@ -161,25 +161,42 @@ export const generateFirstMessages = internalAction({
 
     const openai = new OpenAI();
 
-    const feedback = await openai.chat.completions.create(
+    const stream = await openai.chat.completions.create(
       {
         model: "gpt-4o",
         messages: messages,
         temperature: 0.3,
-        stream: false,
-      },
-      {
-        timeout: 3 * 60 * 1000, // 3 minutes
+        stream: true,
       }
     );
-    const message3 = feedback.choices[0]?.message?.content ?? "";
 
-    await ctx.runMutation(
+    const messageId = await ctx.runMutation(
       internal.feedbackmessages.insertMessage,
       {
         feedbackId:feedbackId,
         role:"assistant",
-        content:message3,
+        content:"",
+        streaming:true,
+      }
+    );
+
+    for await (const chunk of stream) {
+      const newChunk = chunk.choices[0]?.delta?.content || "";
+      if (newChunk !== "") {
+        await ctx.runMutation(
+          internal.feedbackmessages.addChunk,
+          {
+            messageId:messageId,
+            chunk:newChunk,
+          }
+        );
+      }
+    };
+
+    await ctx.runMutation(
+      internal.feedbackmessages.streamingDone,
+      {
+        messageId:messageId,
       }
     );
   },

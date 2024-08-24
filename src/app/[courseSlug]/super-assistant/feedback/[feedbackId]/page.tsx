@@ -58,24 +58,26 @@ export default function FeedbackPage({ params: { courseSlug, feedbackId } }: Fee
                   </picture>
                 )}
 
-                {feedbackMessage === null || feedbackMessage === undefined || feedbackMessage === "" ? (
+                {feedbackMessage?.content === null || feedbackMessage?.content === undefined || feedbackMessage.content === "" ? (
                   <h1>Feedback loading...</h1>
                 ) : (
                   <>
-                    <Markdown text={feedbackMessage} />
+                    <Markdown text={feedbackMessage.content} />
 
-                    <footer className="flex justify-center mt-8">
-                      <div className="flex flex-col gap-2 items-center">
-                        <PrimaryButton
-                          onClick={async () => {
-                            await goToChat({ feedbackId });
-                          }}
-                        >
-                          Chat with the Super-Assistant
-                          <ArrowRightIcon className="w-5 h-5" />
-                        </PrimaryButton>
-                      </div>
-                    </footer>
+                    {!feedbackMessage.streaming && (
+                      <footer className="flex justify-center mt-8">
+                        <div className="flex flex-col gap-2 items-center">
+                          <PrimaryButton
+                            onClick={async () => {
+                              await goToChat({ feedbackId });
+                            }}
+                          >
+                            Chat with the Super-Assistant
+                            <ArrowRightIcon className="w-5 h-5" />
+                          </PrimaryButton>
+                        </div>
+                      </footer>
+                    )}
                   </>
                 )}
               </>

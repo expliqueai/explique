@@ -22,8 +22,6 @@ import { Fragment, ReactNode } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
 
-
-
 export default function Feedback({
   feedbackId,
   courseSlug,
