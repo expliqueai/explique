@@ -790,11 +790,10 @@ function Table() {
 
 
 declare module '@tanstack/react-table' {
-  //allows us to define custom properties for our columns
   interface ColumnMeta<TData extends RowData, TValue> {
     filterVariant?: 'text' | 'select'
   }
-}
+};
 
 function Filter({ column }: { column: Column<any, unknown> }) {
   const columnFilterValue = column.getFilterValue()
@@ -822,9 +821,8 @@ function Filter({ column }: { column: Column<any, unknown> }) {
 }
 
 
-// A typical debounced input react component
 function DebouncedInput({
-  value: initialValue,
+  value: firstVal,
   onChange,
   debounce = 500,
   ...props
@@ -833,27 +831,25 @@ function DebouncedInput({
   onChange: (value: string | number) => void
   debounce?: number
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'>) {
-  const [value, setValue] = React.useState(initialValue)
+  const [value, setValue] = useState(firstVal);
 
-  React.useEffect(() => {
-    setValue(initialValue)
-  }, [initialValue])
-
-  React.useEffect(() => {
+  useEffect(() => {
+    setValue(firstVal)
+  }, [firstVal]);
+  useEffect(() => {
     const timeout = setTimeout(() => {
       onChange(value)
-    }, debounce)
-
+    }, debounce);
     return () => clearTimeout(timeout)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value])
+  }, [value]);
 
   return (
     <form className="flex flex-row w-full border border-slate-200 rounded-md text-gray-500 bg-slate-100 items-center">
       <MagnifyingGlassIcon className="h-10 w-10 p-2 pl-3"/>
       <input {...props} value={value} onChange={e => setValue(e.target.value)} />
     </form>
-  )
+  );
 }
 
 
@@ -869,7 +865,9 @@ function SuperAssistant() {
   const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
   const { startUpload } = useUploadFiles(generateUploadUrl);
   const generateChat = useMutation(api.sachat.generateChat);
-  const [feedbackName, setFeedbackName] = useState(""); 
+  const [feedbackName, setFeedbackName] = useState("");
+  const weeks = useQuery(api.admin.sadatabase.getWeeks, { courseSlug });
+  const [selectedWeek, setSelectedWeek] = useState<number>(weeks === undefined ? NaN : weeks[0]);
   
   return (
     <>
@@ -924,6 +922,7 @@ function SuperAssistant() {
             if (file === null) {
               toast.error("You have to upload your tentative solution to get feedback.")
             } else {
+              toast.info("Here is the selected week: " + selectedWeek);
               const uploaded = await startUpload([file]);
               const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
               const feedbackId = await generateFeedback({ courseSlug, storageId:storageId, name:feedbackName});
@@ -933,7 +932,6 @@ function SuperAssistant() {
               } else {
                 toast.error("Failed to generate feedback.");
               }
-
               setFile(null);
               setIsModal1Open(false);
             }
@@ -943,6 +941,24 @@ function SuperAssistant() {
             value={file}
             onChange={(value) => setFile(value)}
           />
+          {weeks !== undefined && (
+            <>
+              <label htmlFor="week-number" className="block text-sm font-medium text-slate-800">Please select the week you are working on:</label>
+              <select
+                name="week"
+                id="week-number"
+                value={selectedWeek}
+                onChange={e => setSelectedWeek(Number(e.target.value))}
+                className="mt-1 mb-6 p-2 w-full border border-slate-300 rounded-md font-sans h-10 form-select focus:ring-2 focus:ring-inherit focus:border-inherit focus:outline-none"
+              >
+                {weeks.map(week => (
+                  <option key={week} value={week}>
+                    Week {week}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
           <Input
             label="Name this new feedback (optional):"
             placeholder="Name"

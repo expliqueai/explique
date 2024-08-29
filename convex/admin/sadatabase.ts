@@ -7,6 +7,29 @@ import { getCourseRegistration } from "../courses";
 import { internalQuery } from "../_generated/server";
 
 
+export const getWeeks = queryWithAuth({
+    args: {
+        courseSlug: v.string(),
+    },
+    handler: async ({ db, session }, { courseSlug }) => {
+        const { course } = await getCourseRegistration(
+            db,
+            session,
+            courseSlug,
+            "admin",
+        );
+
+        const files = await db
+                            .query("saDatabase")
+                            .withIndex("by_course", (q) => q.eq("courseId", course._id))
+                            .collect();
+        
+        const weeks = files.map(x => x.week);
+        return weeks.filter((item, index) => weeks.indexOf(item) === index);
+    },
+});
+
+
 export const list = queryWithAuth({
     args: {
       courseSlug: v.string(),

@@ -18,7 +18,7 @@ import { Modal } from "@/components/Modal";
 import { toast } from "sonner";
 import { useUploadFiles } from "@xixixao/uploadstuff/react";
 import UploadWithImage from "@/components/UploadWithImage";
-import { Fragment, ReactNode } from "react";
+import { Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
 

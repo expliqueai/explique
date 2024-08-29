@@ -15,6 +15,9 @@ import Upload from "@/components/Upload";
 import PdfToImg from "pdftoimg-js/browser";
 import { useUploadFiles } from "@xixixao/uploadstuff/react";
 import { formatTimestampHumanFormat } from "@/util/date";
+import BeatLoader from "react-spinners/BeatLoader";
+import { Fragment } from "react";
+import { Dialog, Transition } from "@headlessui/react";
 
 
 
@@ -54,7 +57,7 @@ export default function AdminSuperAssistantPage() {
               <td className="px-2 py-3">
                 <OpenFile filename={file.name} />
               </td>
-              <td className="px-2 py-3">{(file.week === -1) ? "No week assigned" : "Week " + file.week}</td>
+              <td className="px-2 py-3">{"Week " + file.week}</td>
               <td className="px-2 py-3">{formatTimestampHumanFormat(file.creationTime)}</td>
               <td>
                 <button
@@ -87,6 +90,7 @@ function UploadFile({}: {}) {
   const courseSlug = useCourseSlug();
   const [file, setFile] = useState<File | null>(null);
   const get = useQuery(api.admin.sadatabase.get, { courseSlug:courseSlug, name:file?.name });
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleUploadFile() {
     const storageIds = [];
@@ -125,6 +129,43 @@ function UploadFile({}: {}) {
           Upload file
       </Button>
 
+      <Transition appear show={isLoading} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={() => {}}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="transform overflow-hidden text-left align-middle transition-all">
+                  <BeatLoader
+                    color={"#2563eb"}
+                    size={25}
+                  />
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -138,13 +179,19 @@ function UploadFile({}: {}) {
               toast.error("A file with this name already exists.");
               setFile(null);
             } else {
-              setIsModalOpen(false);
-              const weekNumber = (week === "" ? -1 : Number(week));
-              const storageIds = await handleUploadFile();
-              setFile(null);
-              setWeek("");
-              await uploadFile({ courseSlug:courseSlug, week:(!isNaN(weekNumber) && weekNumber >= 0 ? weekNumber : -1), name:file?file.name:"", storageIds:storageIds });
-              toast.success("The file has been uploaded. Thank you!");
+              const weekNumber = Number(week);
+              if (week === "" || Number.isNaN(weekNumber)) {
+                setWeek("");
+                toast.error("Please provide a valid week number.");
+              } else {
+                setIsModalOpen(false);
+                setIsLoading(true);
+                const storageIds = await handleUploadFile();
+                setFile(null);
+                setWeek("");
+                await uploadFile({ courseSlug:courseSlug, week:weekNumber, name:file?file.name:"", storageIds:storageIds });
+                setIsLoading(false);
+              }
             }
           }}
         >
@@ -153,9 +200,10 @@ function UploadFile({}: {}) {
             onChange={(value) => setFile(value)}
           />
           <Input
-            label="Specify week (optional):"
+            label="Specify week:"
             placeholder="Week number"
             value={week}
+            required={true}
             onChange={(value) => setWeek(value)}
           />
           <div className="flex justify-end gap-2">
