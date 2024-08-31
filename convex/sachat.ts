@@ -22,8 +22,9 @@ export const generateChat = mutationWithAuth({
       courseSlug: v.string(),
       reason: v.string(),
       name: v.string(),
+      weekNumber: v.number(),
     }, 
-    handler: async (ctx, { courseSlug, reason, name }) => {
+    handler: async (ctx, { courseSlug, reason, name, weekNumber }) => {
         if (!ctx.session) throw new ConvexError("Not logged in");
         const userId = ctx.session.user._id;
     
@@ -38,6 +39,7 @@ export const generateChat = mutationWithAuth({
             courseId: course._id,
             name: (name !== "") ? name : undefined,
             lastModified: 0,
+            weekNumber: weekNumber,
         });
 
         const chat = await ctx.db.get(chatId);
@@ -50,7 +52,8 @@ export const generateChat = mutationWithAuth({
             courseId: course._id,
             userId: userId,
             chatId: chatId,
-            reason:reason,
+            reason: reason,
+            weekNumber: weekNumber,
         });
   
         return chatId;
@@ -64,8 +67,9 @@ export const generateFirstMessages = internalAction({
       userId: v.id("users"),
       chatId: v.id("chats"),
       reason: v.string(),
+      weekNumber: v.number(),
     },
-    handler: async (ctx, { courseId, userId, chatId, reason }) => {
+    handler: async (ctx, { courseId, userId, chatId, reason, weekNumber }) => {
   
       const messages : OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
   
@@ -82,7 +86,7 @@ export const generateFirstMessages = internalAction({
         content:instructions,
       });
 
-      const urls = await ctx.runQuery(internal.admin.sadatabase.getUrls, { courseId:courseId });
+      const urls = await ctx.runQuery(internal.admin.sadatabase.getUrls, { courseId:courseId, weekNumber:weekNumber });
       const message1 : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
       message1.push({
         type:"text",

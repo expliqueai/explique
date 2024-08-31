@@ -867,7 +867,8 @@ function SuperAssistant() {
   const generateChat = useMutation(api.sachat.generateChat);
   const [feedbackName, setFeedbackName] = useState("");
   const weeks = useQuery(api.admin.sadatabase.getWeeks, { courseSlug });
-  const [selectedWeek, setSelectedWeek] = useState<number>(weeks === undefined ? NaN : weeks[0]);
+  const [selectedFeedbackWeek, setSelectedFeedbackWeek] = useState<number>(weeks === undefined ? NaN : weeks[0]);
+  const [selectedChatWeek, setSelectedChatWeek] = useState<number>(weeks === undefined ? NaN : weeks[0]);
   
   return (
     <>
@@ -920,12 +921,11 @@ function SuperAssistant() {
           async (e) => {
             e.preventDefault();
             if (file === null) {
-              toast.error("You have to upload your tentative solution to get feedback.")
+              toast.error("You have to upload your tentative solution to get feedback.");
             } else {
-              toast.info("Here is the selected week: " + selectedWeek);
               const uploaded = await startUpload([file]);
               const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
-              const feedbackId = await generateFeedback({ courseSlug, storageId:storageId, name:feedbackName});
+              const feedbackId = await generateFeedback({ courseSlug, storageId:storageId, name:feedbackName, weekNumber:selectedFeedbackWeek });
 
               if (feedbackId) {
                 router.push(`/${courseSlug}/super-assistant/feedback/${feedbackId}`);
@@ -947,8 +947,8 @@ function SuperAssistant() {
               <select
                 name="week"
                 id="week-number"
-                value={selectedWeek}
-                onChange={e => setSelectedWeek(Number(e.target.value))}
+                value={selectedFeedbackWeek}
+                onChange={e => setSelectedFeedbackWeek(Number(e.target.value))}
                 className="mt-1 mb-6 p-2 w-full border border-slate-300 rounded-md font-sans h-10 form-select focus:ring-2 focus:ring-inherit focus:border-inherit focus:outline-none"
               >
                 {weeks.map(week => (
@@ -993,7 +993,7 @@ function SuperAssistant() {
         <form onSubmit={
           async (e) => {
             e.preventDefault();
-            const chatId = await generateChat({ courseSlug, reason:statement, name:chatName });
+            const chatId = await generateChat({ courseSlug, reason:statement, name:chatName, weekNumber:selectedChatWeek });
 
             if (chatId) {
               router.push(`/${courseSlug}/super-assistant/chat/${chatId}`);
@@ -1005,6 +1005,24 @@ function SuperAssistant() {
           }
         }>
           <div className="h-6"></div>
+          {weeks !== undefined && (
+            <>
+              <label htmlFor="week-number" className="block text-sm font-medium text-slate-800">Please select the week you are working on:</label>
+              <select
+                name="week"
+                id="week-number"
+                value={selectedChatWeek}
+                onChange={e => setSelectedChatWeek(Number(e.target.value))}
+                className="mt-1 mb-6 p-2 w-full border border-slate-300 rounded-md font-sans h-10 form-select focus:ring-2 focus:ring-inherit focus:border-inherit focus:outline-none"
+              >
+                {weeks.map(week => (
+                  <option key={week} value={week}>
+                    Week {week}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
           <Input
             label="Name this new chat (optional):"
             placeholder="Name"

@@ -207,15 +207,17 @@ export const getUrl = queryWithAuth({
 export const getUrls = internalQuery({
     args: {
         courseId: v.id("courses"),
+        weekNumber: v.number(),
     },
-    handler: async (ctx, { courseId }) => {
+    handler: async (ctx, { courseId, weekNumber }) => {
 
         const files = await ctx.db
             .query("saDatabase")
             .withIndex("by_course", (q) =>
                 q.eq("courseId", courseId),
             )
-            .collect()
+            .filter((q) => q.eq(q.field("week"), weekNumber))
+            .collect();
         
         const urls = [];
         for (const file of files) {

@@ -127,6 +127,7 @@ export default defineSchema(
       images: v.array(v.id("_storage")),
       name: v.optional(v.string()),
       lastModified: v.number(),
+      weekNumber: v.number(),
     }).index("by_key", ["userId", "courseId"]),
     feedbackMessages: defineTable({
       feedbackId: v.id("feedbacks"),
@@ -155,6 +156,7 @@ export default defineSchema(
       userId: v.id("users"),
       name: v.optional(v.string()),
       lastModified: v.number(),
+      weekNumber: v.number(),
     }).index("by_key", ["userId", "courseId"]),
     chatMessages: defineTable({
       chatId: v.id("chats"),
