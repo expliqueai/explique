@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@/usingSession";
 import { PlusIcon } from "@heroicons/react/20/solid";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { api } from "../../../../../../convex/_generated/api";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import Title from "@/components/typography";
@@ -18,6 +18,7 @@ import { formatTimestampHumanFormat } from "@/util/date";
 import BeatLoader from "react-spinners/BeatLoader";
 import { Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
+import { Id } from "../../../../../../convex/_generated/dataModel";
 
 
 
@@ -47,7 +48,9 @@ export default function AdminSuperAssistantPage() {
             <th scope="col" className="px-2 py-3 align-bottom text-left">
               Creation time
             </th>
-            <th scope="col" className="px-2 py-3 align-bottom justify-end">
+            <th scope="col" className="py-3 align-bottom justify-end">
+            </th>
+            <th scope="col" className="pr-2 py-3 align-bottom justify-end">
             </th>
           </tr>
         </thead>
@@ -59,6 +62,9 @@ export default function AdminSuperAssistantPage() {
               </td>
               <td className="px-2 py-3">{"Week " + file.week}</td>
               <td className="px-2 py-3">{formatTimestampHumanFormat(file.creationTime)}</td>
+              <td>
+                <EditWeek fileId={file.id} />
+              </td>
               <td>
                 <button
                   className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white"
@@ -76,6 +82,78 @@ export default function AdminSuperAssistantPage() {
           ))}
         </tbody>
       </table>
+    </>
+  );
+}
+
+
+function EditWeek({fileId} : {fileId: Id<"saDatabase">}) {
+  const changeWeek = useMutation(api.admin.sadatabase.changeWeek);
+  const [isEditWeekModalOpen, setIsEditWeekModalOpen] = useState(false);
+  const weekNumber = useQuery(api.admin.sadatabase.getWeek, { fileId });
+  const [newWeekNumber, setNewWeekNumber] = useState(weekNumber === undefined || weekNumber === null ? "" : weekNumber.toString());
+
+  return (
+    <>
+      <div className="flex justify-end">
+        <button
+          className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-500 hover:text-white"
+          type="button"
+          title="Edit week number"
+          onClick={async (e) => {
+            e.preventDefault();
+            setIsEditWeekModalOpen(true);
+          }}
+        >
+          <PencilIcon className="w-5 h-5" />
+        </button>
+      </div>
+
+      <Modal
+        isOpen={isEditWeekModalOpen}
+        onClose={() => setIsEditWeekModalOpen(false)}
+        title={`Edit week number`}
+      >
+        <div className="mt-4">
+          <Input
+            label="New week number:"
+            placeholder="Enter new week number"
+            value={newWeekNumber}
+            onChange={(value) => setNewWeekNumber(value)}
+          />
+        </div>
+        <div className="mt-4 flex gap-2 justify-end">
+          <Button
+            onClick={() => {
+              setIsEditWeekModalOpen(false);
+              if (weekNumber !== undefined && weekNumber !== null) {
+                setNewWeekNumber(weekNumber.toString());
+              }
+            }}
+            variant="secondary"
+            size="sm"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={async () => {
+              if (isNaN(Number(newWeekNumber))) {
+                toast.error("Please provide a valid number.");
+              } else if (Number(newWeekNumber) !== weekNumber) {
+                setIsEditWeekModalOpen(false);
+                await changeWeek({ fileId:fileId, newWeek:Number(newWeekNumber) });
+              } else {
+                setIsEditWeekModalOpen(false);
+                setNewWeekNumber(weekNumber.toString());
+              }
+            }}
+            variant="primary"
+            size="sm"
+          >
+            Rename
+          </Button>
+        </div>
+      </Modal>
     </>
   );
 }

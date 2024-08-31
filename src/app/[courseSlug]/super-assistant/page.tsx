@@ -543,7 +543,6 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
           </Button>
         </div>
       </Modal>
-
     </>
   );
 };

@@ -30,6 +30,17 @@ export const getWeeks = queryWithAuth({
 });
 
 
+export const getWeek = queryWithAuth({
+    args: {
+        fileId: v.id("saDatabase"),
+    },
+    handler: async ({ db, session }, { fileId }) => {
+        const file = await db.get(fileId);
+        return file?.week;
+    },
+});
+
+
 export const list = queryWithAuth({
     args: {
       courseSlug: v.string(),
@@ -52,6 +63,7 @@ export const list = queryWithAuth({
       const result = [];
       for (const file of files) {
         result.push({
+          id: file._id,
           name: file.name,
           creationTime: file._creationTime,
           week: file.week,
@@ -234,5 +246,18 @@ export const getUrls = internalQuery({
         }
 
         return urls;
+    },
+});
+
+
+export const changeWeek = mutationWithAuth({
+    args: {
+        fileId: v.id("saDatabase"),
+        newWeek: v.number(),
+    },
+    handler: async (ctx, { fileId, newWeek }) => {
+        return await ctx.db.patch(fileId, {
+            week: newWeek,
+        });
     },
 });
