@@ -19,6 +19,7 @@ export default function Page() {
 
     const storedState = localStorage.getItem("googleState");
     const storedCodeVerifier = localStorage.getItem("googleCodeVerifier");
+    const external = localStorage.getItem("googleExternal") === "true";
 
     const code =
       new URLSearchParams(window.location.search).get("code") ?? null;
@@ -35,6 +36,7 @@ export default function Page() {
         state,
         storedState,
         storedCodeVerifier,
+        external,
       });
       const identity = null; // Provided by Convex in this case
       setSession(newSessionId, identity);

@@ -36,10 +36,13 @@ export default function Page() {
       const legacy = urlParams.has("legacy") || !isUsingIdentities;
 
       if (external || legacy) {
-        const { url, state, codeVerifier } = await generateGoogleAuthUrl();
+        const { url, state, codeVerifier } = await generateGoogleAuthUrl({
+          external,
+        });
 
         localStorage.setItem("googleState", state);
         localStorage.setItem("googleCodeVerifier", codeVerifier);
+        localStorage.setItem("googleExternal", external ? "true" : "false");
 
         window.location.href = url;
       } else {
