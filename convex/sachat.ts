@@ -79,7 +79,7 @@ export const generateFirstMessages = internalAction({
         A student is coming to you because they have tried to solve one of the exercises but is stuck. They need help to start it.\
         \
         First make sure that the student understood the problem statement and what is asked in the exercise. Then, if they are still stuck, you can give them hints on how to start the \
-        exercise. But never give them the solution to the exercise, even if they ask for it. Your answer should be short and only contain between 1 and 5 sentences.";
+        exercise. But never give them the solution to the exercise, even if they ask for it. Your answer should be short and only contain between 1 and 5 sentences. You can give them the problem statement.";
   
       messages.push({
         role:"system",
