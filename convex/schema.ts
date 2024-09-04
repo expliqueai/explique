@@ -45,7 +45,7 @@ export const exerciseAdminSchema = {
   completionFunctionDescription: v.string(),
   image: v.optional(v.id("images")),
   imagePrompt: v.optional(v.string()),
-};
+} as const;
 
 export default defineSchema(
   {
@@ -108,8 +108,9 @@ export default defineSchema(
     reports: defineTable({
       attemptId: v.id("attempts"),
       messageId: v.id("messages"),
-      reason: v.string()
-    }).index("by_attempt", ["attemptId"])
+      reason: v.string(),
+    })
+      .index("by_attempt", ["attemptId"])
       .index("by_message", ["messageId"]),
     logs: defineTable({
       type: v.union(

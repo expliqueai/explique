@@ -63,7 +63,7 @@ export const updateRow = internalMutation({
   },
 });
 
-async function createAssistant(
+export async function createAssistant(
   instructions: string,
   model: string,
   completionFunctionDescription: string,
