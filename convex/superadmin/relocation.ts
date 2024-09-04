@@ -170,7 +170,7 @@ async function downloadContents(
 
 export const importCourse = internalAction({
   args: {
-    courseId: v.id("courses"),
+    courseId: v.optional(v.id("courses")),
     weeks: exportSchema,
   },
   handler: async (ctx, { courseId, weeks }) => {
@@ -228,7 +228,7 @@ export const importCourse = internalAction({
 
 export const saveImportedCoures = internalMutation({
   args: {
-    courseId: v.id("courses"),
+    courseId: v.optional(v.id("courses")),
     weeks: v.array(
       v.object({
         object: v.object({
