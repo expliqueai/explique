@@ -118,7 +118,7 @@ export const exportCourse = internalQuery({
                   thumbnails: await Promise.all(
                     imageSrc.thumbnails.map(async (thumbnail) => {
                       const sourceUrlThumbnail = await storage.getUrl(
-                        imageSrc.storageId,
+                        thumbnail.storageId,
                       );
                       if (!sourceUrlThumbnail) {
                         throw new Error("Can’t find thumbnail");
