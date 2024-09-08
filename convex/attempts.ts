@@ -117,7 +117,7 @@ function toUserVisibleQuestion(
 ): {
   question: string;
   answers: string[];
-  correctAnswer: string | null;
+  correctAnswer: string[] | null;
 } {
   const chanceAnswersOrder = new Chance(
     `${exerciseId} ${userId} ${questionIndex} answers order`,
@@ -129,7 +129,7 @@ function toUserVisibleQuestion(
       question.answers.map((answer) => answer.text),
     ),
     correctAnswer: isSolutionShown
-      ? question.answers.find((a) => a.correct)!.text
+      ? question.answers.filter((a) => a.correct).map((q) => q.text)
       : null,
   };
 }

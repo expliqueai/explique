@@ -27,7 +27,7 @@ export default function QuizExercise({
   questions: {
     question: string;
     answers: string[];
-    correctAnswer: string | null;
+    correctAnswer: string[] | null;
   }[];
   lastSubmission: {
     answers: number[];
@@ -89,7 +89,11 @@ export default function QuizExercise({
             question={question}
             answers={answers}
             selectedAnswerIndex={selectedAnswerIndexes[index]}
-            correctAnswer={correctAnswer}
+            correctAnswerIndex={
+              correctAnswer === null
+                ? null
+                : correctAnswer.map((a) => answers.indexOf(a))
+            }
             onChange={(newSelectedIndex) => {
               const newIndexes = [...selectedAnswerIndexes];
               newIndexes[index] = newSelectedIndex;
@@ -171,14 +175,14 @@ export function QuizContents({
   question,
   answers,
   selectedAnswerIndex,
-  correctAnswer,
+  correctAnswerIndex,
   onChange,
   disabled = false,
 }: {
   question: string;
   answers: string[];
   selectedAnswerIndex: number | null;
-  correctAnswer: string | null;
+  correctAnswerIndex: number | number[] | null;
   onChange?: (index: number) => void;
   disabled?: boolean;
 }) {
@@ -211,15 +215,21 @@ export function QuizContents({
 
               <Markdown text={answer} className="flex-1 prose-p:my-0" />
 
-              {correctAnswer === answer && (
+              {(correctAnswerIndex === index ||
+                (Array.isArray(correctAnswerIndex) &&
+                  correctAnswerIndex.includes(index))) && (
                 <CheckCircleIcon
                   className="w-6 h-6 text-green-600"
                   title="Correct answer"
                 />
               )}
-              {correctAnswer !== null &&
+              {correctAnswerIndex !== null &&
                 selectedAnswerIndex === index &&
-                correctAnswer !== answer && (
+                !(
+                  correctAnswerIndex === index ||
+                  (Array.isArray(correctAnswerIndex) &&
+                    correctAnswerIndex.includes(index))
+                ) && (
                   <XCircleIcon
                     className="w-6 h-6 text-red-600"
                     title="Incorrect answer"

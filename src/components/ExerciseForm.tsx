@@ -5,10 +5,7 @@ import {
   ExclamationCircleIcon,
   PlusIcon,
 } from "@heroicons/react/16/solid";
-import {
-  ArrowPathRoundedSquareIcon,
-  PlusIcon as PlusIconLarge,
-} from "@heroicons/react/24/outline";
+import { PlusIcon as PlusIconLarge } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { QuizContents } from "@/components/exercises/QuizExercise";
 import Markdown from "@/components/Markdown";
@@ -24,7 +21,7 @@ import { QuizBatchOption } from "./QuizBatchOption";
 type Question = {
   question: string;
   answers: string[];
-  correctAnswerIndex: number | null;
+  correctAnswerIndex: number | number[] | null;
 };
 
 export type Batch = { questions: Question[]; randomize: boolean };
@@ -75,7 +72,10 @@ export function toConvexState(state: State) {
                   question,
                   answers: answers.map((text, index) => ({
                     text,
-                    correct: index === correctAnswerIndex,
+                    correct:
+                      correctAnswerIndex === index ||
+                      (Array.isArray(correctAnswerIndex) &&
+                        correctAnswerIndex.includes(index)),
                   })),
                 }),
               ),
@@ -589,6 +589,46 @@ function QuizBatch({
                 ></path>
               </svg>
             </QuizBatchOption>
+            <QuizBatchOption
+              checked={Array.isArray(batch.questions[0].correctAnswerIndex)}
+              onChange={() => {
+                onChange({
+                  randomize,
+                  questions: questions.map((q) => ({
+                    ...q,
+                    correctAnswerIndex: Array.isArray(q.correctAnswerIndex)
+                      ? // Take the currently checked answer it it exists
+                        q.correctAnswerIndex[0] ?? null
+                      : // Take the first checked answer if it exists
+                        q.correctAnswerIndex === null
+                        ? []
+                        : [q.correctAnswerIndex],
+                  })),
+                });
+              }}
+              tooltip="Accept multiple answers as correct"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 15 15"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  d="M8.96704 4.10197C9.25594 4.29086 9.33701 4.6782 9.14811 4.9671L4.89811 11.4671C4.79795 11.6203 4.63568 11.7219 4.45414 11.745C4.27259 11.7682 4.09001 11.7106 3.95458 11.5875L1.20458 9.08753C0.949173 8.85534 0.93035 8.46006 1.16254 8.20465C1.39473 7.94924 1.79001 7.93042 2.04542 8.16261L4.25304 10.1695L8.1019 4.28304C8.2908 3.99414 8.67813 3.91307 8.96704 4.10197Z"
+                  fill="currentColor"
+                />
+                <path
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  d="M14.1481 4.9671C14.337 4.6782 14.2559 4.29086 13.967 4.10197C13.6781 3.91307 13.2908 3.99414 13.1019 4.28304L9.25304 10.1695L7.80014 8.84871L7.10743 9.9083L8.95458 11.5875C9.09001 11.7106 9.27259 11.7682 9.45414 11.745C9.63568 11.7219 9.79795 11.6203 9.89811 11.4671L14.1481 4.9671ZM6.35806 9.22706L7.05077 8.16747L7.04542 8.16261C6.79001 7.93042 6.39473 7.94924 6.16254 8.20465C5.93035 8.46006 5.94917 8.85534 6.20458 9.08753L6.35806 9.22706Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </QuizBatchOption>
           </h3>
         </div>
 
@@ -703,19 +743,45 @@ function QuizQuestion({
             {question.answers.map((answer, answerIndex) => (
               <div key={answerIndex} className="mb-1 flex">
                 <label className="flex items-center w-8 px-2">
-                  <input
-                    type="radio"
-                    name={correctAnswerName}
-                    value={answerIndex}
-                    checked={question.correctAnswerIndex === answerIndex}
-                    onChange={() => {
-                      onChange({
-                        ...question,
-                        correctAnswerIndex: answerIndex,
-                      });
-                    }}
-                    required
-                  />
+                  {Array.isArray(question.correctAnswerIndex) ? (
+                    <input
+                      type="checkbox"
+                      value={answerIndex}
+                      checked={question.correctAnswerIndex.includes(
+                        answerIndex,
+                      )}
+                      onChange={(e) => {
+                        const currentState = question.correctAnswerIndex;
+                        if (!Array.isArray(currentState)) {
+                          throw new Error("Unexpected state");
+                        }
+                        const otherCorrectAnswers = currentState.filter(
+                          (i) => i !== answerIndex,
+                        );
+
+                        onChange({
+                          ...question,
+                          correctAnswerIndex: e.target.checked
+                            ? [...otherCorrectAnswers, answerIndex]
+                            : otherCorrectAnswers,
+                        });
+                      }}
+                    />
+                  ) : (
+                    <input
+                      type="radio"
+                      name={correctAnswerName}
+                      value={answerIndex}
+                      checked={question.correctAnswerIndex === answerIndex}
+                      onChange={() => {
+                        onChange({
+                          ...question,
+                          correctAnswerIndex: answerIndex,
+                        });
+                      }}
+                      required
+                    />
+                  )}
                 </label>
 
                 <textarea
@@ -773,11 +839,7 @@ function QuizQuestion({
             question={question.question}
             answers={question.answers}
             selectedAnswerIndex={null}
-            correctAnswer={
-              question.correctAnswerIndex === null
-                ? null
-                : question.answers[question.correctAnswerIndex]
-            }
+            correctAnswerIndex={question.correctAnswerIndex}
             disabled
           />
         </div>

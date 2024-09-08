@@ -167,10 +167,8 @@ function validateQuiz(quiz: Quiz) {
       if (question.answers.length < 2) {
         throw new ConvexError("Each question must have at least 2 answers");
       }
-      if (question.answers.filter((a) => a.correct).length !== 1) {
-        throw new ConvexError(
-          "Each question must have exactly 1 correct answer",
-        );
+      if (!question.answers.some((a) => a.correct)) {
+        throw new ConvexError("Each question must have a correct answer");
       }
       const answers = new Set(question.answers.map((a) => a.text));
       if (answers.size !== question.answers.length) {
