@@ -90,6 +90,7 @@ export default class Protocol {
       {
         method: "POST",
         body: teq_post_payload,
+        cache: "no-cache",
       },
     );
 
