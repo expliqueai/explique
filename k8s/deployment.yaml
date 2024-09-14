@@ -29,5 +29,5 @@ spec:
       volumes:
       - name: data
         persistentVolumeClaim:
-          claimName: cs250
+          claimName: PVC_NAME
       restartPolicy: Always
