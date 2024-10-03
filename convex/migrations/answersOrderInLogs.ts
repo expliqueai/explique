@@ -8,7 +8,7 @@ export default internalMutation(async ({ db }) => {
     .withIndex("by_type_and_version", (q) =>
       q.eq("type", "quizSubmission").eq("version", undefined),
     )
-    .take(1000);
+    .take(1500);
 
   for (const row of toUpdate) {
     const details = row.details;
