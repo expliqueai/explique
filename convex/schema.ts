@@ -129,7 +129,10 @@ export default defineSchema(
       systemMessageId: v.optional(v.id("messages")),
       variant: v.union(v.literal("reading"), v.literal("explain")),
       details: v.optional(v.any()),
-    }).index("by_type", ["type"]),
+      version: v.optional(v.int64()),
+    })
+      .index("by_type", ["type"])
+      .index("by_type_and_version", ["type", "version"]),
 
     groupAssignments: defineTable({
       identifier: v.string(),

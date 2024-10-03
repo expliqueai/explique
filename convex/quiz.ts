@@ -150,12 +150,24 @@ export const submit = mutationWithAuth({
       exerciseId: attempt.exerciseId,
       variant: attempt.threadId === null ? "reading" : "explain",
       details: {
-        questions,
+        questions: questions.map((q, questionIndex) => {
+          const chanceAnswersOrder = new Chance(
+            `${attempt.exerciseId} ${userId} ${questionIndex} answers order`,
+          );
+
+          const result: Question = {
+            question: q.question,
+            answers: chanceAnswersOrder.shuffle(q.answers),
+          };
+
+          return result;
+        }),
         answers,
         correctness:
           answers.filter((a, i) => correctAnswers[i] === a).length /
           answers.length,
       },
+      version: 2n,
     });
 
     return { isCorrect };

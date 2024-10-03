@@ -29,6 +29,7 @@ import type * as exercises from "../exercises.js";
 import type * as lucia from "../lucia.js";
 import type * as lucia_epfl from "../lucia_epfl.js";
 import type * as lucia_tequila from "../lucia_tequila.js";
+import type * as migrations_answersOrderInLogs from "../migrations/answersOrderInLogs.js";
 import type * as quiz from "../quiz.js";
 import type * as researchConsent from "../researchConsent.js";
 import type * as superadmin_relocation from "../superadmin/relocation.js";
@@ -60,6 +61,7 @@ declare const fullApi: ApiFromModules<{
   lucia: typeof lucia;
   lucia_epfl: typeof lucia_epfl;
   lucia_tequila: typeof lucia_tequila;
+  "migrations/answersOrderInLogs": typeof migrations_answersOrderInLogs;
   quiz: typeof quiz;
   researchConsent: typeof researchConsent;
   "superadmin/relocation": typeof superadmin_relocation;
