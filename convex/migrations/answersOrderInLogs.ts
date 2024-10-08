@@ -37,7 +37,7 @@ export default internalMutation(async ({ db }) => {
           return result;
         }),
       },
-      version: 2n,
+      version: BigInt(2),
     });
   }
 

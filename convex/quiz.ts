@@ -167,7 +167,7 @@ export const submit = mutationWithAuth({
           answers.filter((a, i) => correctAnswers[i] === a).length /
           answers.length,
       },
-      version: 2n,
+      version: BigInt(2),
     });
 
     return { isCorrect };
