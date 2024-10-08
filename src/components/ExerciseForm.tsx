@@ -7,7 +7,10 @@ import {
 } from "@heroicons/react/16/solid";
 import { PlusIcon as PlusIconLarge } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/20/solid";
-import { QuizContents } from "@/components/exercises/QuizExercise";
+import {
+  SingleChoiceQuestion,
+  TextQuestion,
+} from "@/components/exercises/QuizExercise";
 import Markdown from "@/components/Markdown";
 import { Id } from "../../convex/_generated/dataModel";
 import { api as convexApi } from "../../convex/_generated/api";
@@ -16,13 +19,25 @@ import clsx from "clsx";
 import { toast } from "sonner";
 import { PrimaryButton } from "./PrimaryButton";
 import { Button } from "./Button";
-import { QuizBatchOption } from "./QuizBatchOption";
+import { IconCheckbox, IconToggle } from "./QuizBatchOption";
 
-type Question = {
-  question: string;
-  answers: string[];
-  correctAnswerIndex: number | number[] | null;
-};
+type Question =
+  | {
+      question: string;
+
+      answers: string[];
+      correctAnswerIndex: number | number[] | null;
+
+      text?: never;
+    }
+  | {
+      question: string;
+
+      answers?: never;
+      correctAnswerIndex?: never;
+
+      text: true;
+    };
 
 export type Batch = { questions: Question[]; randomize: boolean };
 
@@ -67,18 +82,22 @@ export function toConvexState(state: State) {
         : {
             batches: state.quizBatches.map((batch) => ({
               randomize: batch.randomize,
-              questions: batch.questions.map(
-                ({ question, answers, correctAnswerIndex }) => ({
-                  question,
-                  answers: answers.map((text, index) => ({
+              questions: batch.questions.map((question) => {
+                if (question.text) {
+                  return question;
+                }
+
+                return {
+                  question: question.question,
+                  answers: question.answers.map((text, index) => ({
                     text,
                     correct:
-                      correctAnswerIndex === index ||
-                      (Array.isArray(correctAnswerIndex) &&
-                        correctAnswerIndex.includes(index)),
+                      question.correctAnswerIndex === index ||
+                      (Array.isArray(question.correctAnswerIndex) &&
+                        question.correctAnswerIndex.includes(index)),
                   })),
-                }),
-              ),
+                };
+              }),
             })),
           },
 
@@ -564,7 +583,7 @@ function QuizBatch({
             <div className="mx-4">
               <div className="h-10 border-l"></div>
             </div>
-            <QuizBatchOption
+            <IconCheckbox
               checked={randomize}
               onChange={(newRandomize) => {
                 onChange({
@@ -574,6 +593,7 @@ function QuizBatch({
               }}
               tooltip="Randomize the questions order"
             >
+              {/* Source: Radix UI icons */}
               <svg
                 width="15"
                 height="15"
@@ -588,26 +608,33 @@ function QuizBatch({
                   clip-rule="evenodd"
                 ></path>
               </svg>
-            </QuizBatchOption>
-            <QuizBatchOption
+            </IconCheckbox>
+            <IconCheckbox
               checked={Array.isArray(batch.questions[0].correctAnswerIndex)}
               onChange={() => {
                 onChange({
                   randomize,
-                  questions: questions.map((q) => ({
-                    ...q,
-                    correctAnswerIndex: Array.isArray(q.correctAnswerIndex)
-                      ? // Take the currently checked answer it it exists
-                        q.correctAnswerIndex[0] ?? null
-                      : // Take the first checked answer if it exists
-                        q.correctAnswerIndex === null
-                        ? []
-                        : [q.correctAnswerIndex],
-                  })),
+                  questions: questions.map((q) =>
+                    q.text
+                      ? q
+                      : {
+                          ...q,
+                          correctAnswerIndex: Array.isArray(
+                            q.correctAnswerIndex,
+                          )
+                            ? // Take the currently checked answer it it exists
+                              q.correctAnswerIndex[0] ?? null
+                            : // Take the first checked answer if it exists
+                              q.correctAnswerIndex === null
+                              ? []
+                              : [q.correctAnswerIndex],
+                        },
+                  ),
                 });
               }}
               tooltip="Accept multiple answers as correct"
             >
+              {/* Custom icon based on Radix UI */}
               <svg
                 width="15"
                 height="15"
@@ -628,7 +655,7 @@ function QuizBatch({
                   fill="currentColor"
                 />
               </svg>
-            </QuizBatchOption>
+            </IconCheckbox>
           </h3>
         </div>
 
@@ -736,112 +763,179 @@ function QuizQuestion({
             </div>
           </label>
 
-          <fieldset className="md:pl-6">
-            <legend className="block text-sm font-medium text-slate-800">
-              Answers
-            </legend>
-            {question.answers.map((answer, answerIndex) => (
-              <div key={answerIndex} className="mb-1 flex">
-                <label className="flex items-center w-8 px-2">
-                  {Array.isArray(question.correctAnswerIndex) ? (
-                    <input
-                      type="checkbox"
-                      value={answerIndex}
-                      checked={question.correctAnswerIndex.includes(
-                        answerIndex,
-                      )}
-                      onChange={(e) => {
-                        const currentState = question.correctAnswerIndex;
-                        if (!Array.isArray(currentState)) {
-                          throw new Error("Unexpected state");
-                        }
-                        const otherCorrectAnswers = currentState.filter(
-                          (i) => i !== answerIndex,
-                        );
+          <div className="mb-6 text-sm font-medium text-slate-800 flex items-center gap-2">
+            Type
+            <IconToggle
+              values={[
+                {
+                  value: "mcq",
+                  tooltip: "Multiple-choice",
+                  icon: (
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 15 15"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M7.49991 0.877045C3.84222 0.877045 0.877075 3.84219 0.877075 7.49988C0.877075 11.1575 3.84222 14.1227 7.49991 14.1227C11.1576 14.1227 14.1227 11.1575 14.1227 7.49988C14.1227 3.84219 11.1576 0.877045 7.49991 0.877045ZM1.82708 7.49988C1.82708 4.36686 4.36689 1.82704 7.49991 1.82704C10.6329 1.82704 13.1727 4.36686 13.1727 7.49988C13.1727 10.6329 10.6329 13.1727 7.49991 13.1727C4.36689 13.1727 1.82708 10.6329 1.82708 7.49988ZM10.1589 5.53774C10.3178 5.31191 10.2636 5.00001 10.0378 4.84109C9.81194 4.68217 9.50004 4.73642 9.34112 4.96225L6.51977 8.97154L5.35681 7.78706C5.16334 7.59002 4.84677 7.58711 4.64973 7.78058C4.45268 7.97404 4.44978 8.29061 4.64325 8.48765L6.22658 10.1003C6.33054 10.2062 6.47617 10.2604 6.62407 10.2483C6.77197 10.2363 6.90686 10.1591 6.99226 10.0377L10.1589 5.53774Z"
+                        fill="currentColor"
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                      ></path>
+                    </svg>
+                  ),
+                },
+                {
+                  value: "text",
+                  tooltip: "Textual (not graded)",
+                  icon: (
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 15 15"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M12.5 3L2.5 3.00002C1.67157 3.00002 1 3.6716 1 4.50002V9.50003C1 10.3285 1.67157 11 2.5 11H7.50003C7.63264 11 7.75982 11.0527 7.85358 11.1465L10 13.2929V11.5C10 11.2239 10.2239 11 10.5 11H12.5C13.3284 11 14 10.3285 14 9.50003V4.5C14 3.67157 13.3284 3 12.5 3ZM2.49999 2.00002L12.5 2C13.8807 2 15 3.11929 15 4.5V9.50003C15 10.8807 13.8807 12 12.5 12H11V14.5C11 14.7022 10.8782 14.8845 10.6913 14.9619C10.5045 15.0393 10.2894 14.9965 10.1464 14.8536L7.29292 12H2.5C1.11929 12 0 10.8807 0 9.50003V4.50002C0 3.11931 1.11928 2.00003 2.49999 2.00002Z"
+                        fill="currentColor"
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                      ></path>
+                    </svg>
+                  ),
+                },
+              ]}
+              value={question.text ? "text" : "mcq"}
+              onChange={(newValue) => {
+                onChange(
+                  newValue === "text"
+                    ? { text: true, question: question.question }
+                    : {
+                        question: question.question,
+                        answers: ["", ""],
+                        correctAnswerIndex: null,
+                      },
+                );
+              }}
+            />
+          </div>
 
-                        onChange({
-                          ...question,
-                          correctAnswerIndex: e.target.checked
-                            ? [...otherCorrectAnswers, answerIndex]
-                            : otherCorrectAnswers,
-                        });
-                      }}
-                    />
-                  ) : (
-                    <input
-                      type="radio"
-                      name={correctAnswerName}
-                      value={answerIndex}
-                      checked={question.correctAnswerIndex === answerIndex}
-                      onChange={() => {
-                        onChange({
-                          ...question,
-                          correctAnswerIndex: answerIndex,
-                        });
-                      }}
-                      required
-                    />
-                  )}
-                </label>
+          {question.answers !== undefined && (
+            <fieldset className="md:pl-6">
+              <legend className="block text-sm font-medium text-slate-800">
+                Answers
+              </legend>
 
-                <textarea
-                  className="mt-1 p-2 w-full border border-slate-300 rounded-md text-base disabled:bg-slate-200 disabled:cursor-not-allowed flex-1 resize-y"
-                  value={answer}
-                  onChange={(e) => {
-                    onChange({
-                      ...question,
-                      answers: question.answers.map((a, index) =>
-                        index === answerIndex ? e.target.value : a,
-                      ),
-                    });
-                  }}
-                  required
-                />
+              {question.answers.map((answer, answerIndex) => (
+                <div key={answerIndex} className="mb-1 flex">
+                  <label className="flex items-center w-8 px-2">
+                    {Array.isArray(question.correctAnswerIndex) ? (
+                      <input
+                        type="checkbox"
+                        value={answerIndex}
+                        checked={question.correctAnswerIndex.includes(
+                          answerIndex,
+                        )}
+                        onChange={(e) => {
+                          const currentState = question.correctAnswerIndex;
+                          if (!Array.isArray(currentState)) {
+                            throw new Error("Unexpected state");
+                          }
+                          const otherCorrectAnswers = currentState.filter(
+                            (i) => i !== answerIndex,
+                          );
 
-                {question.answers.length > 1 && (
-                  <button
-                    type="button"
-                    className="ml-3 text-gray-500 hover:text-gray-700 transition-colors"
-                    onClick={() => {
+                          onChange({
+                            ...question,
+                            correctAnswerIndex: e.target.checked
+                              ? [...otherCorrectAnswers, answerIndex]
+                              : otherCorrectAnswers,
+                          });
+                        }}
+                      />
+                    ) : (
+                      <input
+                        type="radio"
+                        name={correctAnswerName}
+                        value={answerIndex}
+                        checked={question.correctAnswerIndex === answerIndex}
+                        onChange={() => {
+                          onChange({
+                            ...question,
+                            correctAnswerIndex: answerIndex,
+                          });
+                        }}
+                        required
+                      />
+                    )}
+                  </label>
+
+                  <textarea
+                    className="mt-1 p-2 w-full border border-slate-300 rounded-md text-base disabled:bg-slate-200 disabled:cursor-not-allowed flex-1 resize-y"
+                    value={answer}
+                    onChange={(e) => {
                       onChange({
                         ...question,
-                        answers: question.answers.filter(
-                          (_, index) => index !== answerIndex,
+                        answers: question.answers.map((a, index) =>
+                          index === answerIndex ? e.target.value : a,
                         ),
                       });
                     }}
-                  >
-                    <XMarkIcon className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
-            ))}
-            <button
-              type="button"
-              className="font-medium text-blue-800 flex items-center py-2"
-              onClick={() => {
-                onChange({
-                  ...question,
-                  answers: [...question.answers, ""],
-                });
-              }}
-            >
-              <div className="w-8 flex justify-center">
-                <PlusIcon className="w-5 h-5" />
-              </div>
-              Add Answer
-            </button>
-          </fieldset>
+                    required
+                  />
+
+                  {question.answers.length > 1 && (
+                    <button
+                      type="button"
+                      className="ml-3 text-gray-500 hover:text-gray-700 transition-colors"
+                      onClick={() => {
+                        onChange({
+                          ...question,
+                          answers: question.answers.filter(
+                            (_, index) => index !== answerIndex,
+                          ),
+                        });
+                      }}
+                    >
+                      <XMarkIcon className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                className="font-medium text-blue-800 flex items-center py-2"
+                onClick={() => {
+                  onChange({
+                    ...question,
+                    answers: [...question.answers, ""],
+                  });
+                }}
+              >
+                <div className="w-8 flex justify-center">
+                  <PlusIcon className="w-5 h-5" />
+                </div>
+                Add Answer
+              </button>
+            </fieldset>
+          )}
         </div>
 
         <div className="mt-6">
-          <QuizContents
-            question={question.question}
-            answers={question.answers}
-            selectedAnswerIndex={null}
-            correctAnswerIndex={question.correctAnswerIndex}
-            disabled
-          />
+          {question.text ? (
+            <TextQuestion question={question.question} answer={""} disabled />
+          ) : (
+            <SingleChoiceQuestion
+              question={question.question}
+              answers={question.answers}
+              selectedAnswerIndex={null}
+              correctAnswerIndex={question.correctAnswerIndex}
+              disabled
+            />
+          )}
         </div>
       </div>
     </div>

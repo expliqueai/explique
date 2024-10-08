@@ -38,15 +38,21 @@ const exportSchema = v.array(
               v.object({
                 randomize: v.optional(v.boolean()),
                 questions: v.array(
-                  v.object({
-                    question: v.string(),
-                    answers: v.array(
-                      v.object({
-                        text: v.string(),
-                        correct: v.boolean(),
-                      }),
-                    ),
-                  }),
+                  v.union(
+                    v.object({
+                      question: v.string(),
+                      answers: v.array(
+                        v.object({
+                          text: v.string(),
+                          correct: v.boolean(),
+                        }),
+                      ),
+                    }),
+                    v.object({
+                      question: v.string(),
+                      text: v.literal(true),
+                    }),
+                  ),
                 ),
               }),
             ),

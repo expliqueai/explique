@@ -4,10 +4,17 @@ import { validateDueDate } from "./weeks";
 import { Doc, Id } from "./_generated/dataModel";
 import Chance from "chance";
 
-export type Question = {
-  question: string;
-  answers: { text: string; correct: boolean }[];
-};
+export type Question =
+  | {
+      question: string;
+      answers: { text: string; correct: boolean }[];
+      text?: never;
+    }
+  | {
+      question: string;
+      answers?: never;
+      text: true;
+    };
 
 function indexes(count: number) {
   const result: number[] = [];
@@ -72,7 +79,12 @@ export function shownQuestions(
 export const submit = mutationWithAuth({
   args: {
     attemptId: v.id("attempts"),
-    answers: v.array(v.number()),
+    answers: v.array(
+      v.union(
+        v.number(), // single-choice questions
+        v.string(), // text questions
+      ),
+    ),
   },
   handler: async ({ db, session }, { attemptId, answers }) => {
     if (!session) throw new ConvexError("Not logged in");
@@ -108,6 +120,8 @@ export const submit = mutationWithAuth({
       assignment,
     );
     const correctAnswers = questions.map((q, questionIndex) => {
+      if (q.text) return null;
+
       const chanceAnswersOrder = new Chance(
         `${exercise._id} ${userId} ${questionIndex} answers order`,
       );
@@ -122,7 +136,9 @@ export const submit = mutationWithAuth({
       throw new ConvexError("Incorrect number of answers");
     }
 
-    const isCorrect = answers.every((a, i) => correctAnswers[i] === a);
+    const isCorrect = answers.every(
+      (a, i) => correctAnswers[i] === a || correctAnswers[i] === null,
+    );
 
     await db.insert("quizSubmissions", {
       attemptId,
@@ -151,6 +167,11 @@ export const submit = mutationWithAuth({
       variant: attempt.threadId === null ? "reading" : "explain",
       details: {
         questions: questions.map((q, questionIndex) => {
+          if (q.text) {
+            return q;
+          }
+
+          // Reorder answers to match the user's submission
           const chanceAnswersOrder = new Chance(
             `${attempt.exerciseId} ${userId} ${questionIndex} answers order`,
           );
@@ -164,8 +185,9 @@ export const submit = mutationWithAuth({
         }),
         answers,
         correctness:
-          answers.filter((a, i) => correctAnswers[i] === a).length /
-          answers.length,
+          answers.filter(
+            (a, i) => correctAnswers[i] === a || correctAnswers[i] === null,
+          ).length / answers.length,
       },
       version: BigInt(2),
     });

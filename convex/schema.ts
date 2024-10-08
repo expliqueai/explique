@@ -20,15 +20,24 @@ export const exerciseAdminSchema = {
         v.object({
           randomize: v.optional(v.boolean()),
           questions: v.array(
-            v.object({
-              question: v.string(),
-              answers: v.array(
-                v.object({
-                  text: v.string(),
-                  correct: v.boolean(),
-                }),
-              ),
-            }),
+            v.union(
+              // Single-choice question: choose the correct answer among
+              // the given options
+              v.object({
+                question: v.string(),
+                answers: v.array(
+                  v.object({
+                    text: v.string(),
+                    correct: v.boolean(),
+                  }),
+                ),
+              }),
+              // Text question: write text, not graded (used to give feedback)
+              v.object({
+                question: v.string(),
+                text: v.literal(true),
+              }),
+            ),
           ),
         }),
       ),
@@ -64,7 +73,7 @@ export default defineSchema(
       .index("by_status", ["status"]),
     quizSubmissions: defineTable({
       attemptId: v.id("attempts"),
-      answers: v.array(v.number()),
+      answers: v.array(v.union(v.number(), v.string())),
     }).index("attemptId", ["attemptId"]),
     weeks: defineTable({
       name: v.string(),

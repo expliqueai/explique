@@ -45,15 +45,19 @@ export default function EditExercise() {
                 exercise.quiz === null
                   ? null
                   : exercise.quiz.batches.map((batch) => ({
-                      questions: batch.questions.map(
-                        ({ question, answers }) => ({
-                          question,
-                          answers: answers.map((a) => a.text),
-                          correctAnswerIndex: answers.findIndex(
+                      questions: batch.questions.map((question) => {
+                        if ("text" in question) {
+                          return question;
+                        }
+
+                        return {
+                          question: question.question,
+                          answers: question.answers.map((a) => a.text),
+                          correctAnswerIndex: question.answers.findIndex(
                             (a) => a.correct,
                           ),
-                        }),
-                      ),
+                        };
+                      }),
                       randomize:
                         typeof batch.randomize === "boolean"
                           ? batch.randomize

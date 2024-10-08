@@ -24,13 +24,26 @@ export default function QuizExercise({
 }: {
   attemptId: Id<"attempts">;
   title: string;
-  questions: {
-    question: string;
-    answers: string[];
-    correctAnswer: string[] | null;
-  }[];
+  questions: (
+    | {
+        question: string;
+
+        answers: string[];
+        correctAnswer: string[] | null;
+
+        text?: never;
+      }
+    | {
+        question: string;
+
+        answers?: never;
+        correctAnswer?: never;
+
+        text: true;
+      }
+  )[];
   lastSubmission: {
-    answers: number[];
+    answers: (number | string)[];
     timestamp: number;
   } | null;
   succeeded: boolean;
@@ -38,12 +51,18 @@ export default function QuizExercise({
 }) {
   const submit = useMutation(api.quiz.submit);
 
-  const [selectedAnswerIndexes, setSelectedAnswerIndexes] = useState<
-    (number | null)[]
-  >(
-    questions.map((_, i) =>
-      lastSubmission ? lastSubmission.answers[i] : null,
-    ),
+  const [answers, setAnswers] = useState<(number | string | null)[]>(
+    questions.map((q, i) => {
+      if (lastSubmission) {
+        const lastAnswer = lastSubmission.answers[i];
+        if (q.text && typeof lastAnswer === "string") return lastAnswer;
+        if (!q.text && typeof lastAnswer === "number") return lastAnswer;
+
+        console.warn("Unexpected answer type", lastAnswer, q);
+      }
+
+      return q.text ? "" : null;
+    }),
   );
 
   const [timeoutSeconds, setTimeoutSeconds] = useState<null | number>(67);
@@ -83,34 +102,69 @@ export default function QuizExercise({
       </p>
 
       <div className="flex flex-col gap-4">
-        {questions.map(({ question, answers, correctAnswer }, index) => (
-          <QuizContents
-            key={index}
-            question={question}
-            answers={answers}
-            selectedAnswerIndex={selectedAnswerIndexes[index]}
-            correctAnswerIndex={
-              correctAnswer === null
-                ? null
-                : correctAnswer.map((a) => answers.indexOf(a))
+        {questions.map((question, index) => {
+          const currentAnswer = answers[index];
+
+          if (question.text === true) {
+            if (typeof currentAnswer !== "string") {
+              console.warn("Unexpected answer type", currentAnswer, question);
+              return "Error: can’t load this question.";
             }
-            onChange={(newSelectedIndex) => {
-              const newIndexes = [...selectedAnswerIndexes];
-              newIndexes[index] = newSelectedIndex;
-              setSelectedAnswerIndexes(newIndexes);
-            }}
-            disabled={disabled}
-          />
-        ))}
+
+            return (
+              <TextQuestion
+                key={index}
+                question={question.question}
+                answer={currentAnswer}
+                onChange={(newValue) =>
+                  setAnswers(
+                    answers.map((currentValue, i) =>
+                      i === index ? newValue : currentValue,
+                    ),
+                  )
+                }
+                disabled={disabled}
+              />
+            );
+          }
+
+          if (currentAnswer !== null && typeof currentAnswer !== "number") {
+            console.warn("Unexpected answer type", currentAnswer, question);
+            return "Error: can’t load this question";
+          }
+
+          return (
+            <SingleChoiceQuestion
+              key={index}
+              question={question.question}
+              answers={question.answers}
+              selectedAnswerIndex={currentAnswer}
+              correctAnswerIndex={
+                question.correctAnswer === null
+                  ? null
+                  : question.correctAnswer.map((a) =>
+                      question.answers.indexOf(a),
+                    )
+              }
+              onChange={(newSelectedIndex) => {
+                const newAnswers = [...answers];
+                newAnswers[index] = newSelectedIndex;
+                setAnswers(newAnswers);
+              }}
+              disabled={disabled}
+            />
+          );
+        })}
       </div>
 
       <footer className="flex flex-col items-center my-8 gap-8">
         <PrimaryButton
-          disabled={selectedAnswerIndexes.includes(null) || disabled}
+          disabled={answers.includes(null) || disabled}
           onClick={async () => {
             await submit({
               attemptId,
-              answers: selectedAnswerIndexes.map((index) => {
+              answers: answers.map((index) => {
+                // Making the TypeScript compiler happy by proving there is no null
                 if (index === null) throw new Error("No answer selected");
                 return index;
               }),
@@ -171,7 +225,7 @@ export default function QuizExercise({
   );
 }
 
-export function QuizContents({
+export function SingleChoiceQuestion({
   question,
   answers,
   selectedAnswerIndex,
@@ -239,6 +293,39 @@ export function QuizContents({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+export function TextQuestion({
+  question,
+  answer,
+  onChange,
+  disabled = false,
+}: {
+  question: string;
+  answer: string;
+  onChange?: (value: string) => void;
+  disabled?: boolean;
+}) {
+  const id = useId();
+
+  return (
+    <div className="bg-white border rounded-xl p-4">
+      <header>
+        <Markdown
+          className="text-xl prose-p:mt-0 prose-p:mb-1"
+          text={question}
+        />
+      </header>
+
+      <textarea
+        id={id}
+        className="mt-1 p-2 w-full border border-slate-300 rounded-md resize-none h-32 text-base bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+        value={answer}
+        onChange={(e) => onChange?.(e.target.value)}
+        disabled={disabled}
+      />
     </div>
   );
 }

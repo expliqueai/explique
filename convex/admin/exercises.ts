@@ -148,15 +148,24 @@ export const update = actionWithAuth({
   },
 });
 
+// Matches the DB format
 type Quiz = null | {
   batches: {
-    questions: {
-      answers: {
-        text: string;
-        correct: boolean;
-      }[];
-      question: string;
-    }[];
+    questions: (
+      | {
+          question: string;
+          answers: {
+            text: string;
+            correct: boolean;
+          }[];
+          text?: never;
+        }
+      | {
+          question: string;
+          answers?: never;
+          text: true;
+        }
+    )[];
   }[];
 };
 
@@ -164,6 +173,8 @@ function validateQuiz(quiz: Quiz) {
   if (quiz === null) return;
   for (const { questions } of quiz.batches) {
     for (const question of questions) {
+      if (question.text === true) continue;
+
       if (question.answers.length < 2) {
         throw new ConvexError("Each question must have at least 2 answers");
       }

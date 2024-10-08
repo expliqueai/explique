@@ -114,11 +114,27 @@ function toUserVisibleQuestion(
   userId: Id<"users">,
   exerciseId: Id<"exercises">,
   questionIndex: number,
-): {
-  question: string;
-  answers: string[];
-  correctAnswer: string[] | null;
-} {
+):
+  | {
+      question: string;
+
+      answers: string[];
+      correctAnswer: string[] | null;
+
+      text?: never;
+    }
+  | {
+      question: string;
+
+      answers?: never;
+      correctAnswer?: never;
+
+      text: true;
+    } {
+  if (question.text) {
+    return { question: question.question, text: true };
+  }
+
   const chanceAnswersOrder = new Chance(
     `${exerciseId} ${userId} ${questionIndex} answers order`,
   );
