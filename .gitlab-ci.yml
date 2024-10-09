@@ -8,7 +8,7 @@ variables:
   REPO_NAME: "cs250"
   IMAGE_NAME: "cs250"
   TAG: "test"
-  REGISTRY_ROBOT: 'robot$$CS250-gitlab'
+  REGISTRY_ROBOT: 'robot$$cs250+cs250-gitlab'
   DOCKERFILE_PATH: "prod.Dockerfile"
   DOCKER_AUTH_CONFIG: "{\"auths\":{\"$HARBOR_REGISTRY\":{\"username\":\"$REGISTRY_ROBOT\",\"password\":\"$HARBOR_PASSWORD\"}}}"
   FQDN: cs250.epfl.ch
