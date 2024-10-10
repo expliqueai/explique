@@ -610,7 +610,10 @@ function QuizBatch({
               </svg>
             </IconCheckbox>
             <IconCheckbox
-              checked={Array.isArray(batch.questions[0].correctAnswerIndex)}
+              checked={Array.isArray(
+                batch.questions.find((q) => q.correctAnswerIndex !== undefined)
+                  ?.correctAnswerIndex ?? null,
+              )}
               onChange={() => {
                 onChange({
                   randomize,
@@ -669,7 +672,12 @@ function QuizBatch({
                 {
                   question: "Question",
                   answers: ["Answer 1", "Answer 2", "Answer 3", "Answer 4"],
-                  correctAnswerIndex: null,
+                  correctAnswerIndex: Array.isArray(
+                    questions.find((q) => q.correctAnswerIndex !== undefined)
+                      ?.correctAnswerIndex ?? null,
+                  )
+                    ? []
+                    : null,
                 },
               ],
             });
