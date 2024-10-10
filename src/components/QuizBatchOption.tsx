@@ -1,4 +1,4 @@
-import { Radio, RadioGroup, Switch } from "@headlessui/react";
+import { RadioGroup, Switch } from "@headlessui/react";
 import clsx from "clsx";
 import Tooltip from "./Tooltip";
 
