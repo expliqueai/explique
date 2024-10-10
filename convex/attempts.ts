@@ -139,11 +139,14 @@ function toUserVisibleQuestion(
     `${exerciseId} ${userId} ${questionIndex} answers order`,
   );
 
+  const answersText = question.answers.map((answer) => answer.text);
+
   return {
     question: question.question,
-    answers: chanceAnswersOrder.shuffle(
-      question.answers.map((answer) => answer.text),
-    ),
+    answers:
+      question.randomize === false
+        ? answersText
+        : chanceAnswersOrder.shuffle(answersText),
     correctAnswer: isSolutionShown
       ? question.answers.filter((a) => a.correct).map((q) => q.text)
       : null,

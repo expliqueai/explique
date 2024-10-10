@@ -8,11 +8,13 @@ export type Question =
   | {
       question: string;
       answers: { text: string; correct: boolean }[];
+      randomize?: boolean;
       text?: never;
     }
   | {
       question: string;
       answers?: never;
+      randomize?: never;
       text: true;
     };
 
@@ -126,9 +128,11 @@ export const submit = mutationWithAuth({
         `${exercise._id} ${userId} ${questionIndex} answers order`,
       );
 
-      const correctAnswer = chanceAnswersOrder
-        .shuffle(q.answers)
-        .findIndex((a) => a.correct);
+      const correctAnswer = (
+        q.randomize === false
+          ? q.answers
+          : chanceAnswersOrder.shuffle(q.answers)
+      ).findIndex((a) => a.correct);
       if (correctAnswer === -1) throw new ConvexError("No correct answer");
       return correctAnswer;
     });
@@ -178,7 +182,10 @@ export const submit = mutationWithAuth({
 
           const result: Question = {
             question: q.question,
-            answers: chanceAnswersOrder.shuffle(q.answers),
+            answers:
+              q.randomize === false
+                ? chanceAnswersOrder.shuffle(q.answers)
+                : q.answers,
           };
 
           return result;

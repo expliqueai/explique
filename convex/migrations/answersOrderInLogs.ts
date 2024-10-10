@@ -31,7 +31,10 @@ export default internalMutation(async ({ db }) => {
 
           const result: Question = {
             question: q.question,
-            answers: chanceAnswersOrder.shuffle(q.answers),
+            answers:
+              q.randomize === false
+                ? q.answers
+                : chanceAnswersOrder.shuffle(q.answers),
           };
 
           return result;

@@ -41,6 +41,7 @@ const exportSchema = v.array(
                   v.union(
                     v.object({
                       question: v.string(),
+                      randomize: v.optional(v.boolean()),
                       answers: v.array(
                         v.object({
                           text: v.string(),

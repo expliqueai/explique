@@ -18,13 +18,14 @@ export const exerciseAdminSchema = {
     v.object({
       batches: v.array(
         v.object({
-          randomize: v.optional(v.boolean()),
+          randomize: v.optional(v.boolean()), // default = yes, for questions
           questions: v.array(
             v.union(
               // Single-choice question: choose the correct answer among
               // the given options
               v.object({
                 question: v.string(),
+                randomize: v.optional(v.boolean()), // default = yes, for answers
                 answers: v.array(
                   v.object({
                     text: v.string(),

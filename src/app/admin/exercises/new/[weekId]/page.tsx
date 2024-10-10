@@ -43,6 +43,7 @@ export default function NewExercise() {
                     question: "Question",
                     answers: ["Answer 1", "Answer 2", "Answer 3", "Answer 4"],
                     correctAnswerIndex: null,
+                    randomize: true,
                   },
                 ],
               },

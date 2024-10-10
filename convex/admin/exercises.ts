@@ -154,6 +154,7 @@ type Quiz = null | {
     questions: (
       | {
           question: string;
+          randomize?: boolean;
           answers: {
             text: string;
             correct: boolean;
@@ -162,6 +163,7 @@ type Quiz = null | {
         }
       | {
           question: string;
+          randomize?: never;
           answers?: never;
           text: true;
         }

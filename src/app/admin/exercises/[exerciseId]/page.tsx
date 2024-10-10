@@ -52,6 +52,7 @@ export default function EditExercise() {
 
                         return {
                           question: question.question,
+                          randomize: question.randomize ?? true,
                           answers: question.answers.map((a) => a.text),
                           correctAnswerIndex: question.answers.findIndex(
                             (a) => a.correct,
