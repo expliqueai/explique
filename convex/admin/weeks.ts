@@ -148,8 +148,14 @@ function validateWeekDetails({
     throw new ConvexError("The deadline must be after the release date");
   }
 
-  if (softEndDate !== undefined && softEndDate >= endDate) {
-    throw new ConvexError("The soft deadline must be before the deadline");
+  if (softEndDate !== undefined) {
+    if (softEndDate >= endDate) {
+      throw new ConvexError("The soft deadline must be before the deadline");
+    }
+
+    if (softEndDate < startDate) {
+      throw new ConvexError("The soft deadline must be after the release date");
+    }
   }
 }
 
