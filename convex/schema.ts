@@ -83,6 +83,8 @@ export default defineSchema(
 
       name: v.string(),
       startDate: v.number(),
+
+      softEndDate: v.optional(v.number()), // will only be shown for the users but endDate is the one strictly enforced (useful for late deadlines)
       endDate: v.number(),
       endDateExtraTime: v.number(),
 

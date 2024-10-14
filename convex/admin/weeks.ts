@@ -80,18 +80,17 @@ async function scheduleWeekChangesInvalidation(
   }
 }
 
+const weekDetails = v.object({
+  name: v.string(),
+  startDate: v.number(),
+  endDate: v.number(),
+  softEndDate: v.optional(v.number()),
+  endDateExtraTime: v.number(),
+});
+
 export const create = mutationWithAuth({
-  args: {
-    name: v.string(),
-    startDate: v.number(),
-    endDate: v.number(),
-    endDateExtraTime: v.number(),
-    courseSlug: v.string(),
-  },
-  handler: async (
-    ctx,
-    { name, startDate, endDate, endDateExtraTime, courseSlug },
-  ) => {
+  args: { weekDetails, courseSlug: v.string() },
+  handler: async (ctx, { courseSlug, weekDetails }) => {
     const { course } = await getCourseRegistration(
       ctx.db,
       ctx.session,
@@ -99,11 +98,10 @@ export const create = mutationWithAuth({
       "admin",
     );
 
+    validateWeekDetails(weekDetails);
+
     const weekId = await ctx.db.insert("weeks", {
-      name,
-      startDate,
-      endDate,
-      endDateExtraTime,
+      ...weekDetails,
       courseId: course._id,
     });
     await scheduleWeekChangesInvalidation(ctx, weekId);
@@ -113,16 +111,10 @@ export const create = mutationWithAuth({
 export const update = mutationWithAuth({
   args: {
     id: v.id("weeks"),
-    name: v.string(),
-    startDate: v.number(),
-    endDate: v.number(),
-    endDateExtraTime: v.number(),
+    weekDetails,
     courseSlug: v.string(),
   },
-  handler: async (
-    ctx,
-    { id, name, startDate, endDate, endDateExtraTime, courseSlug },
-  ) => {
+  handler: async (ctx, { id, courseSlug, weekDetails }) => {
     const { course } = await getCourseRegistration(
       ctx.db,
       ctx.session,
@@ -130,20 +122,36 @@ export const update = mutationWithAuth({
       "admin",
     );
 
+    validateWeekDetails(weekDetails);
+
     const week = await ctx.db.get(id);
     if (!week || week.courseId !== course._id) {
       throw new ConvexError("Week not found");
     }
 
-    await ctx.db.patch(id, {
-      name,
-      startDate,
-      endDate,
-      endDateExtraTime,
-    });
+    await ctx.db.patch(id, weekDetails);
     await scheduleWeekChangesInvalidation(ctx, id);
   },
 });
+
+function validateWeekDetails({
+  startDate,
+  endDate,
+  softEndDate,
+}: {
+  startDate: number;
+  endDate: number;
+  softEndDate?: number;
+  endDateExtraTime: number;
+}) {
+  if (startDate >= endDate) {
+    throw new ConvexError("The deadline must be after the release date");
+  }
+
+  if (softEndDate !== undefined && softEndDate >= endDate) {
+    throw new ConvexError("The soft deadline must be before the deadline");
+  }
+}
 
 export const remove = mutationWithAuth({
   args: {

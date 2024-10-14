@@ -31,7 +31,7 @@ export default function EditWeek() {
           <WeekForm
             onSubmit={async (state) => {
               await update({
-                ...state,
+                weekDetails: state,
                 courseSlug,
                 id: week._id,
               });
@@ -40,6 +40,10 @@ export default function EditWeek() {
             initialState={{
               name: week.name,
               startDate: toDatetimeLocalString(new Date(week.startDate)),
+              softEndDate:
+                week.softEndDate === undefined
+                  ? null
+                  : toDatetimeLocalString(new Date(week.softEndDate)),
               endDate: toDatetimeLocalString(new Date(week.endDate)),
             }}
             submitLabel="Save"

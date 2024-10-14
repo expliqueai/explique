@@ -20,12 +20,13 @@ export default function NewWeek() {
 
         <WeekForm
           onSubmit={async (state) => {
-            await create({ courseSlug, ...state });
+            await create({ courseSlug, weekDetails: state });
             router.push(`/${courseSlug}/admin/exercises`);
           }}
           initialState={{
             name: "",
             startDate: "",
+            softEndDate: null,
             endDate: "",
           }}
           submitLabel="Create"

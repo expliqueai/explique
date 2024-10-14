@@ -1,12 +1,12 @@
-import { formatDateTime } from "@/util/date";
 import { useState } from "react";
-import Input from "./Input";
+import Input, { InputWithCheckbox } from "./Input";
 import { PrimaryButton } from "./PrimaryButton";
 import { toast } from "sonner";
 
 export type State = {
   name: string;
   startDate: string;
+  softEndDate: string | null;
   endDate: string;
 };
 
@@ -19,6 +19,7 @@ export default function WeekForm({
   onSubmit: (state: {
     name: string;
     startDate: number;
+    softEndDate?: number;
     endDate: number;
     endDateExtraTime: number;
   }) => void;
@@ -26,6 +27,7 @@ export default function WeekForm({
 }) {
   const [name, setName] = useState(initialState.name);
   const [startDate, setStartDate] = useState(initialState.startDate);
+  const [softEndDate, setSoftEndDate] = useState(initialState.softEndDate);
   const [endDate, setEndDate] = useState(initialState.endDate);
 
   return (
@@ -33,15 +35,12 @@ export default function WeekForm({
       onSubmit={async (e) => {
         e.preventDefault();
 
-        if (startDate >= endDate) {
-          toast.error("The end date must be after the start date");
-          return;
-        }
-
         onSubmit({
           name,
           startDate: +new Date(startDate),
           endDate: +new Date(endDate),
+          softEndDate:
+            softEndDate !== null ? +new Date(softEndDate) : undefined,
           endDateExtraTime: +new Date(endDate) + 1000 * 60 * 60 * 24, // + 1 day,
         });
       }}
@@ -61,6 +60,15 @@ export default function WeekForm({
         label="Release"
         type="datetime-local"
         required
+      />
+
+      <InputWithCheckbox
+        value={softEndDate}
+        onChange={setSoftEndDate}
+        label="Soft deadline"
+        type="datetime-local"
+        required
+        hint="If set, this deadline will be the one shown to students. Late submissions are still possible until the hard deadline."
       />
 
       <Input
