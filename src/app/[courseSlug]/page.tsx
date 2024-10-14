@@ -273,22 +273,26 @@ function ProjectGrid() {
               </p>
             )}
             <div className="text-gray-700 my-4">
-              <span>Due on</span>{" "}
-              {week.endDateExtraTime === null ? (
-                <Deadline timestamp={week.endDate} />
-              ) : (
+              {week.softEndDate === undefined ? (
                 <>
-                  <span className="inline-flex flex-wrap items-center gap-1">
-                    <s className="opacity-60">
-                      <Deadline timestamp={week.endDate} />
-                    </s>
-
-                    <Tooltip tip="Extra time applied">
-                      <QuestionMarkCircleIcon className="w-5 h-5 text-gray-500 inline-block mr-1" />
-                    </Tooltip>
-                  </span>{" "}
-                  <Deadline timestamp={week.endDateExtraTime} />
+                  Due on <Deadline timestamp={week.endDate} />
                 </>
+              ) : Date.now() < week.softEndDate ||
+                Date.now() >= week.endDate ||
+                isCompleted ? (
+                <>
+                  Due on <Deadline timestamp={week.softEndDate} />
+                </>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <p>
+                    Due on <Deadline timestamp={week.softEndDate} />
+                  </p>
+                  <p className="text-red-700">
+                    Late submissions possible until{" "}
+                    <Deadline timestamp={week.endDate} red />
+                  </p>
+                </div>
               )}
             </div>
             <div className="grid gap-6 md:grid-cols-2">
@@ -348,10 +352,18 @@ function ProjectGridSkeleton() {
   );
 }
 
-function Deadline({ timestamp }: { timestamp: number }) {
+function Deadline({
+  timestamp,
+  red = false,
+}: {
+  timestamp: number;
+  red?: boolean;
+}) {
   return (
     <>
-      <strong className="font-medium text-gray-800">
+      <strong
+        className={clsx("font-medium", red ? "text-red-800" : "text-gray-800")}
+      >
         {formatTimestampHumanFormat(timestamp)}
       </strong>
       {Date.now() < timestamp && (

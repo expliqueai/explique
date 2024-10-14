@@ -119,7 +119,7 @@ export const list = queryWithAuth({
         name: week.name,
         startDate: week.startDate,
         endDate: week.endDate,
-        endDateExtraTime: user.extraTime ? week.endDateExtraTime : null,
+        softEndDate: week.softEndDate,
         exercises: exercisesResult,
         preview: week.startDate > now,
       });
