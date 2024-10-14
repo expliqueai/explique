@@ -99,7 +99,7 @@ export const list = queryWithAuth({
       .order("desc")
       .collect();
 
-    // @TODO Only query the exercises from this course
+    // FIXME: Only query the exercises from this course
     const exercises = await db.query("exercises").collect();
 
     const result = [];
