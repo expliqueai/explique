@@ -50,13 +50,18 @@ export default function EditExercise() {
                           return question;
                         }
 
+                        const correctAnswersIndexes = question.answers.flatMap(
+                          (a, i) => (a.correct ? [i] : []),
+                        );
+
                         return {
                           question: question.question,
                           randomize: question.randomize ?? true,
                           answers: question.answers.map((a) => a.text),
-                          correctAnswerIndex: question.answers.findIndex(
-                            (a) => a.correct,
-                          ),
+                          correctAnswerIndex:
+                            correctAnswersIndexes.length === 1
+                              ? correctAnswersIndexes.at(0)
+                              : correctAnswersIndexes,
                         };
                       }),
                       randomize:
