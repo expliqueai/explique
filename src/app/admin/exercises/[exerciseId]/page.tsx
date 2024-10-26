@@ -60,7 +60,7 @@ export default function EditExercise() {
                           answers: question.answers.map((a) => a.text),
                           correctAnswerIndex:
                             correctAnswersIndexes.length === 1
-                              ? correctAnswersIndexes.at(0)
+                              ? correctAnswersIndexes.at(0)!
                               : correctAnswersIndexes,
                         };
                       }),
