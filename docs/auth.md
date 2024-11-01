@@ -5,7 +5,7 @@ The authentication system is based on [Lucia v3](https://lucia-auth.com), using 
 
 There are two login flows:
 * The **Google** login flow, which uses Google SSO with OAuth. This login flow can be restricted to a specific Google workspace (e.g. `stanford.edu` for the Stanford deployment).
-* The **Tequila** login flow, which uses Tequila (the login system of EPFL), used on the EPFL instances. This login flow depends on Next.js API routes to avoid sending identifiable user data to Convex (see [identifiers.md] for more details).
+* The **Tequila** login flow, which uses Tequila (the login system of EPFL), used on the EPFL instances. This login flow depends on Next.js API routes to avoid sending identifiable user data to Convex (see [identifiers.md]([identifiers.md]) for more details).
 
 ## Access control
 There are four levels of users on Explique:
