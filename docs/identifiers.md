@@ -28,7 +28,7 @@ The login flow through [Tequila](https://tequila.epfl.ch) (the EPFL login system
 ## How can the user see their own identity?
 When the Next.js server authenticates the user through Tequila, it sends the name and email address of the user along with the JWT. This information is stored in the user’s browser local storage, which is used to display the user’s name and email in the navbar of the app without sending this information to Convex.
 
-## How admin features can use the student identities?
+## How can admin features use the student identities?
 Some features of the admin panel (e.g. the users page) work with the student’s identities. To avoid sending this information to Convex, we provide two APIs on the Next.js side:
 
 - `/api/admin/identities`, which returns the mapping between every identifier and the matching email address. This is accessible through the `useIdentities` React hook. To make this endpoint work, we store the identities of every user that has logged in to the app (or been added to a course) in a SQLite database, accessed through the Drizzle ORM from the Next.js API routes.
