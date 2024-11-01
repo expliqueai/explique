@@ -107,6 +107,7 @@ export default internalMutation(async (ctx) => {
     "miltiadis.stouras@epfl.ch",
     "julie.terrassier@epfl.ch",
     "juliane.mercoli@epfl.ch",
+    "maxence.espagnet@epfl.ch",
   ]) {
     adminIds.push(
       await ctx.db.insert("users", {
