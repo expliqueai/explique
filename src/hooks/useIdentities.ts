@@ -11,6 +11,7 @@ export function useIsUsingIdentities(): boolean {
   return window.location.host === "cs250.epfl.ch";
 }
 
+/** See /docs/identifiers.md */
 export function useIdentities(): Identities | undefined {
   const isUsingIdentities = useIsUsingIdentities();
   const convex = useConvex();

@@ -1,3 +1,5 @@
+// See /docs/auth.md
+
 import {
   Adapter,
   Lucia,

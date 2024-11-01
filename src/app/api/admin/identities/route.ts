@@ -3,6 +3,8 @@ import { db } from "../../../../../drizzle/db";
 
 /**
  * Get all identities (requires an admin JWT token)
+ *
+ * See /docs/identifiers.md
  */
 export async function GET(req: Request) {
   const adminError = validateAdminRequest(req);

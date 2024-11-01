@@ -181,14 +181,14 @@ export default defineSchema(
       .index("by_course_and_role", ["courseId", "role"])
       .index("by_user_and_course", ["userId", "courseId"]),
 
-    // Lucia
+    // Lucia (see /docs/auth.md)
     users: defineTable({
       id: v.string(), // Lucia user ID
       email: v.union(v.string(), v.null()),
       name: v.union(v.string(), v.null()),
       googleId: v.optional(v.string()),
       googleMetadata: v.optional(v.any()),
-      identifier: v.optional(v.string()),
+      identifier: v.optional(v.string()), // see /docs/identifiers.md
       extraTime: v.optional(v.literal(true)),
       superadmin: v.optional(v.literal(true)),
     })
