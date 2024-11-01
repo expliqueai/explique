@@ -10,7 +10,8 @@
     "lint": "next lint",
     "dev:server": "convex dev",
     "generate-migration-files": "drizzle-kit generate:sqlite",
-    "migrate": "tsx src/migrate.ts"
+    "migrate": "tsx src/migrate.ts",
+    "seed": "convex run internal/seed:default"
   },
   "dependencies": {
     "@headlessui/react": "^2.0.4",

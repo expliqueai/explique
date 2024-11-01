@@ -4,11 +4,31 @@
 
 Please make sure you have [Node.js](https://nodejs.org/en/) installed on your machine.
 
-The first time you need the project, install the dependencies using:
+### Install the dependencies <small>(only the first time)</small>
+
+The first time you install the project, install the dependencies using:
 
 ```bash
 npm install
 ```
+
+### Link to a Convex project <small>(only the first time)</small>
+
+Then, run `npm run dev:server` to connect your local repository to a Convex database. When asked to, connect with your personal GitHub account. You can choose any name you want for the project.
+
+You can then stop the server with <kbd>Ctrl+C</kbd>.
+
+> [!NOTE]  
+> You don’t need to run `npm run dev:server` during regular development. Instead, you can use `npm run dev` which starts both the Convex development tool and the Next.js server.
+
+### Seed your development database <small>(only the first time)</small>
+To have some sample data you can use for development, you can run the following command:
+
+```bash
+npm run seed
+```
+
+This script automatically creates some admin accounts. Don’t hestitate to add your own email address before running it (in `convex/internal/seed.ts`) so that you’re an admin too.
 
 ### Run the development server
 
@@ -24,7 +44,7 @@ You can set up the environment variables of the deployment on the Convex dashboa
 
 #### OpenAI API key
 
-Create an OpenAI account, and set the environment variable `OPENAI_API_KEY` to an OpenAI API key.
+Set the environment variable `OPENAI_API_KEY` to an OpenAI API key. (You can ask Ola to generate one for you if necessary.)
 
 #### Google client
 
