@@ -36,6 +36,63 @@ export default function Input({
   );
 }
 
+export function InputWithCheckbox({
+  value,
+  onChange,
+  label,
+  type = "text",
+  hint,
+  ...fields
+}: {
+  value: string | null;
+  onChange: (value: string | null) => void;
+  label: string;
+  type?: string;
+  hint?: ReactNode;
+} & Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "value" | "onChange" | "disabled"
+>) {
+  const idInput = useId();
+  const idCheckbox = useId();
+
+  return (
+    <div className="mb-6">
+      <label
+        htmlFor={idInput}
+        className="block text-sm font-medium text-slate-800"
+      >
+        {label}
+      </label>
+
+      <div className="flex">
+        <label className="flex items-center pr-2" htmlFor={idCheckbox}>
+          <span className="sr-only">{label}</span>
+          <input
+            id={idCheckbox}
+            type="checkbox"
+            aria-label={label}
+            checked={value !== null}
+            onChange={(e) => onChange(e.target.checked ? "" : null)}
+          />
+        </label>
+
+        <input
+          {...fields}
+          type={type}
+          id={idInput}
+          className="mt-1 p-2 w-full border border-slate-300 rounded-md text-base disabled:bg-slate-200 disabled:cursor-not-allowed focus:ring-2 focus:outline-none"
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={value === null}
+        />
+      </div>
+
+      {hint && <p className="text-slate-500 mt-2">{hint}</p>}
+    </div>
+  );
+}
+
 export function Textarea({
   value,
   onChange,

@@ -2,21 +2,21 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: cs250
+  name: PVC_NAME
 spec:
   capacity:
     storage: 1Ti
   accessModes:
     - ReadWriteMany
   nfs:
-    server: ic1files.epfl.ch
-    path: "/u10394_ic_icit_003_files_nfs/cs250.epfl.ch"
+    server: PVC_SERVER
+    path: PVC_PATH
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: cs250
-  namespace: thl2
+  name: PVC_NAME
+  namespace: PVC_NSPACE
 spec:
   accessModes:
     - ReadWriteMany

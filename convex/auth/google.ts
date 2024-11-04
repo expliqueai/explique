@@ -33,8 +33,10 @@ const google = new Google(clientId, clientSecret, redirectUri);
 const hostedDomain = process.env.GOOGLE_HOSTED_DOMAIN ?? null;
 
 export const getLoginUrl = action({
-  args: {},
-  async handler() {
+  args: {
+    external: v.optional(v.boolean()),
+  },
+  async handler({}, { external }) {
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
 
@@ -42,7 +44,7 @@ export const getLoginUrl = action({
       scopes,
     });
 
-    if (hostedDomain !== null) {
+    if (hostedDomain !== null && !external) {
       url.searchParams.set("hd", hostedDomain);
     }
 
@@ -71,8 +73,12 @@ export const redirect = action({
     state: v.string(),
     storedState: v.string(),
     storedCodeVerifier: v.string(),
+    external: v.optional(v.boolean()),
   },
-  handler: async (ctx, { code, state, storedState, storedCodeVerifier }) => {
+  handler: async (
+    ctx,
+    { code, state, storedState, storedCodeVerifier, external },
+  ) => {
     if (state !== storedState) {
       throw new ConvexError("Invalid login request");
     }
@@ -112,7 +118,7 @@ export const redirect = action({
       );
     }
 
-    if (hostedDomain !== null && profile.hd !== hostedDomain) {
+    if (hostedDomain !== null && profile.hd !== hostedDomain && !external) {
       throw new ConvexError(
         "Your account is not part of the correct organization. Please contact support.",
       );

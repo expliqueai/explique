@@ -588,6 +588,37 @@ export const markFinished = internalMutation({
     }
 
     if (attempt.status === "exercise") {
+      if (exercise.quiz === null) {
+        // Mark the exercise as finished
+        const { weekId } = exercise;
+        if (weekId === null) {
+          throw new Error("Deleted exercise");
+        }
+        const week = await ctx.db.get(weekId);
+        if (!week) {
+          throw new Error("Can’t find the week");
+        }
+
+        const registration = await ctx.db
+          .query("registrations")
+          .withIndex("by_user_and_course", (q) =>
+            q.eq("userId", attempt.userId).eq("courseId", week.courseId),
+          )
+          .first();
+        if (!registration) {
+          throw new Error("The user is no longer registered in the course");
+        }
+
+        if (!registration.completedExercises.includes(attempt.exerciseId)) {
+          await ctx.db.patch(registration._id, {
+            completedExercises: [
+              ...registration.completedExercises,
+              attempt.exerciseId,
+            ],
+          });
+        }
+      }
+
       await ctx.db.patch(attemptId, {
         status: exercise.quiz === null ? "quizCompleted" : "exerciseCompleted",
       });

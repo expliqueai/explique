@@ -25,11 +25,13 @@ export default function ExplainExercise({
   attemptId,
   writeDisabled,
   nextButton,
+  succeeded,
 }: {
   hasQuiz: boolean;
   attemptId: Id<"attempts">;
   writeDisabled: boolean;
   nextButton: "show" | "hide" | "disable";
+  succeeded: boolean;
 }) {
   const chat = useQuery(api.chat.getMessages, { attemptId });
   const goToQuiz = useMutation(api.attempts.goToQuiz);
@@ -62,7 +64,7 @@ export default function ExplainExercise({
                   </span>
                 </p>
 
-                {nextButton !== "hide" && hasQuiz && (
+                {!succeeded && nextButton !== "hide" && hasQuiz && (
                   <div className="flex flex-col gap-2 items-center">
                     <PrimaryButton
                       onClick={async () => {
@@ -122,19 +124,21 @@ export default function ExplainExercise({
                     </div>
                   )}
 
-                  {nextButton !== "hide" && message.content !== "" && (
-                    <div className="flex flex-col gap-2 items-center">
-                      <PrimaryButton
-                        onClick={async () => {
-                          await goToQuiz({ attemptId });
-                        }}
-                        disabled={nextButton === "disable"}
-                      >
-                        Continue to the quiz
-                        <ArrowRightIcon className="w-5 h-5" />
-                      </PrimaryButton>
-                    </div>
-                  )}
+                  {!succeeded &&
+                    nextButton !== "hide" &&
+                    message.content !== "" && (
+                      <div className="flex flex-col gap-2 items-center">
+                        <PrimaryButton
+                          onClick={async () => {
+                            await goToQuiz({ attemptId });
+                          }}
+                          disabled={nextButton === "disable"}
+                        >
+                          Continue to the quiz
+                          <ArrowRightIcon className="w-5 h-5" />
+                        </PrimaryButton>
+                      </div>
+                    )}
                 </div>
               </>
             ) : (
@@ -197,6 +201,21 @@ export default function ExplainExercise({
       </div>
 
       {!writeDisabled && <NewMessage attemptId={attemptId} />}
+
+      {succeeded && (
+        <p className="sm:text-lg font-light flex items-center justify-center gap-1">
+          <CheckCircleIcon
+            className="w-6 h-6 text-purple-700"
+            aria-hidden="true"
+          />
+          <span>
+            <strong className="font-medium text-purple-700">
+              Congratulations!
+            </strong>{" "}
+            You have finished this exercise.
+          </span>
+        </p>
+      )}
 
       {nextButton === "disable" && (
         <p className="sm:text-lg font-light flex items-center justify-center gap-1">

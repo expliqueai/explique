@@ -12,6 +12,10 @@ variables:
   DOCKERFILE_PATH: "prod.Dockerfile"
   DOCKER_AUTH_CONFIG: "{\"auths\":{\"$HARBOR_REGISTRY\":{\"username\":\"$REGISTRY_ROBOT\",\"password\":\"$HARBOR_PASSWORD\"}}}"
   FQDN: cs250.epfl.ch
+  PVC_NAME: cs250
+  PVC_NSPACE: thl2
+  PVC_SERVER: ic1files.epfl.ch
+  PVC_PATH: /u10394_ic_icit_003_files_nfs/cs250.epfl.ch
 
 .EXEC_SCRIPT: &EXEC_SCRIPT
   - mkdir -p ~/.kube
@@ -23,6 +27,11 @@ variables:
   - sed -i "s%APPLICATION-NAME%$APPLICATION_NAME%g" $CI_PROJECT_DIR/k8s/deployment.yaml
   - sed -i "s%APPLICATION-NAME%$APPLICATION_NAME%g" $CI_PROJECT_DIR/k8s/ingress.yaml
   - sed -i "s%APPLICATION-NAME%$APPLICATION_NAME%g" $CI_PROJECT_DIR/k8s/service.yaml
+  - sed -i "s%PVC_NAME%$PVC_NAME%g" $CI_PROJECT_DIR/k8s/deployment.yaml
+  - sed -i "s%PVC_NAME%$PVC_NAME%g" $CI_PROJECT_DIR/k8s/persistentvolumeclaim.yaml
+  - sed -i "s%PVC_NSPACE%$PVC_NSPACE%g" $CI_PROJECT_DIR/k8s/persistentvolumeclaim.yaml
+  - sed -i "s%PVC_SERVER%$PVC_SERVER%g" $CI_PROJECT_DIR/k8s/persistentvolumeclaim.yaml
+  - sed -i "s%PVC_PATH%$PVC_PATH%g" $CI_PROJECT_DIR/k8s/persistentvolumeclaim.yaml
   - kubectl apply -f $CI_PROJECT_DIR/k8s/ingress.yaml -n thl2
   - kubectl apply -f $CI_PROJECT_DIR/k8s/service.yaml -n thl2
   - kubectl delete -f $CI_PROJECT_DIR/k8s/deployment.yaml --ignore-not-found -n thl2

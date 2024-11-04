@@ -1,3 +1,5 @@
+// See /docs/identifiers.md
+
 import { ConvexError, v } from "convex/values";
 import { DatabaseWriter, mutation } from "../_generated/server";
 import { Id } from "../_generated/dataModel";

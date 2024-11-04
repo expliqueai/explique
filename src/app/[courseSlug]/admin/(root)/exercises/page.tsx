@@ -83,10 +83,26 @@ function Week({
         <strong className="font-medium text-gray-800">
           {formatTimestampHumanFormat(week.startDate)}
         </strong>{" "}
-        to{" "}
-        <strong className="font-medium text-gray-800">
-          {formatTimestampHumanFormat(week.endDate)}
-        </strong>
+        {week.softEndDate ? (
+          <>
+            to{" "}
+            <strong className="font-medium text-gray-800">
+              {formatTimestampHumanFormat(week.softEndDate)}
+            </strong>{" "}
+            (late deadline:{" "}
+            <strong className="font-medium text-gray-800">
+              {formatTimestampHumanFormat(week.endDate)}
+            </strong>
+            )
+          </>
+        ) : (
+          <>
+            to{" "}
+            <strong className="font-medium text-gray-800">
+              {formatTimestampHumanFormat(week.endDate)}
+            </strong>
+          </>
+        )}
       </p>
 
       <div className="mt-4 grid gap-6 md:grid-cols-2">

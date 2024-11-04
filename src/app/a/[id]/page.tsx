@@ -75,6 +75,7 @@ export default function Page({ params }: { params: { id: string } }) {
                   }
                   attemptId={attemptId}
                   nextButton={metadata.isDue ? "disable" : "show"}
+                  succeeded={metadata.status === "quizCompleted"}
                 />
               ))}
 
@@ -93,6 +94,7 @@ export default function Page({ params }: { params: { id: string } }) {
                     writeDisabled
                     attemptId={attemptId}
                     nextButton="hide"
+                    succeeded={metadata.status === "quizCompleted"}
                   />
                 )}
 

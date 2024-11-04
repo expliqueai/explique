@@ -99,7 +99,7 @@ export const list = queryWithAuth({
       .order("desc")
       .collect();
 
-    // @TODO Only query the exercises from this course
+    // FIXME: Only query the exercises from this course
     const exercises = await db.query("exercises").collect();
 
     const result = [];
@@ -119,7 +119,7 @@ export const list = queryWithAuth({
         name: week.name,
         startDate: week.startDate,
         endDate: week.endDate,
-        endDateExtraTime: user.extraTime ? week.endDateExtraTime : null,
+        softEndDate: week.softEndDate,
         exercises: exercisesResult,
         preview: week.startDate > now,
       });

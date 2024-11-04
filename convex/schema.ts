@@ -4,9 +4,11 @@ import OpenAI from "openai";
 
 export const exerciseAdminSchema = {
   name: v.string(),
+  weekId: v.union(v.id("weeks"), v.null()), // null = soft-deleted exercise
+
   instructions: v.string(), // instructions for the chatbot in the explanation part
-  model: v.string(), // OpenAI model used for the chatbot
   chatCompletionsApi: v.optional(v.literal(true)), // whether to use the chat completions API instead of the assistants API
+  model: v.string(), // OpenAI model used for the chatbot
   feedback: v.optional(
     // whether to provide some feedback after the explanation
     v.object({
@@ -14,8 +16,9 @@ export const exerciseAdminSchema = {
       prompt: v.string(), // the system prompt of the feedback part
     }),
   ),
-  weekId: v.union(v.id("weeks"), v.null()), // null = unpublished exercise
+
   text: v.string(), // the text the users need to read for the reading exercise
+
   quiz: v.union(
     v.object({
       batches: v.array(
@@ -56,6 +59,7 @@ export default defineSchema(
       code: v.string(),
       slug: v.string(),
     }).index("by_slug", ["slug"]),
+
     attempts: defineTable({
       status: v.union(
         v.literal("exercise"),
@@ -69,15 +73,19 @@ export default defineSchema(
     })
       .index("by_key", ["userId", "exerciseId"])
       .index("by_status", ["status"]),
+
     quizSubmissions: defineTable({
       attemptId: v.id("attempts"),
       answers: v.array(v.number()),
     }).index("attemptId", ["attemptId"]),
+
     weeks: defineTable({
       courseId: v.id("courses"),
 
       name: v.string(),
       startDate: v.number(),
+
+      softEndDate: v.optional(v.number()), // will only be shown for the users but endDate is the one strictly enforced (useful for late deadlines)
       endDate: v.number(),
       endDateExtraTime: v.number(),
 
@@ -85,10 +93,12 @@ export default defineSchema(
       // are invalidated.
       cacheInvalidation: v.optional(v.number()),
     }).index("by_course_and_start_date", ["courseId", "startDate"]),
+
     exercises: defineTable({
       ...exerciseAdminSchema,
       assistantId: v.string(),
     }).index("by_week_id", ["weekId"]),
+
     images: defineTable({
       storageId: v.id("_storage"),
       thumbnails: v.array(
@@ -104,6 +114,7 @@ export default defineSchema(
       quality: v.union(v.literal("standard"), v.literal("hd")),
       exerciseId: v.id("exercises"),
     }).index("by_exercise_id", ["exerciseId"]),
+
     messages: defineTable({
       attemptId: v.id("attempts"),
       system: v.boolean(),
@@ -118,10 +129,7 @@ export default defineSchema(
       ),
     }).index("by_attempt", ["attemptId"]),
     feedbacks: defineTable({
-      status: v.union(
-        v.literal("feedback"),
-        v.literal("chat"),
-      ),
+      status: v.union(v.literal("feedback"), v.literal("chat")),
       courseId: v.id("courses"),
       userId: v.id("users"),
       images: v.array(v.id("_storage")),
@@ -131,16 +139,26 @@ export default defineSchema(
     }).index("by_key", ["userId", "courseId"]),
     feedbackMessages: defineTable({
       feedbackId: v.id("feedbacks"),
-      role: v.union(v.literal("user"), v.literal("system"), v.literal("assistant")),
-      content: v.union(v.string(), v.array(v.union(
-        v.object({ 
-          type:v.literal("text"), 
-          text:v.string(),
-        }), v.object({
-          type:v.literal("image_url"),
-          image_url:v.object({ url:v.string() }),
-        })
-      ))),
+      role: v.union(
+        v.literal("user"),
+        v.literal("system"),
+        v.literal("assistant"),
+      ),
+      content: v.union(
+        v.string(),
+        v.array(
+          v.union(
+            v.object({
+              type: v.literal("text"),
+              text: v.string(),
+            }),
+            v.object({
+              type: v.literal("image_url"),
+              image_url: v.object({ url: v.string() }),
+            }),
+          ),
+        ),
+      ),
       appearance: v.optional(
         v.union(
           v.literal("finished"),
@@ -161,15 +179,21 @@ export default defineSchema(
     chatMessages: defineTable({
       chatId: v.id("chats"),
       assistant: v.boolean(),
-      content: v.union(v.string(), v.array(v.union(
-        v.object({ 
-          type:v.literal("text"), 
-          text:v.string(),
-        }), v.object({
-          type:v.literal("image_url"),
-          image_url:v.object({ url:v.string() }),
-        })
-      ))),
+      content: v.union(
+        v.string(),
+        v.array(
+          v.union(
+            v.object({
+              type: v.literal("text"),
+              text: v.string(),
+            }),
+            v.object({
+              type: v.literal("image_url"),
+              image_url: v.object({ url: v.string() }),
+            }),
+          ),
+        ),
+      ),
       appearance: v.optional(
         v.union(
           v.literal("finished"),
@@ -212,14 +236,14 @@ export default defineSchema(
       .index("by_message", ["messageId"])
       .index("by_course", ["courseId"]),
     feedbackReports: defineTable({
-        feedbackId: v.id("feedbacks"),
-        messageId: v.id("feedbackMessages"),
-        courseId: v.id("courses"),
-        reason: v.string(),
-      })
-        .index("by_feedback", ["feedbackId"])
-        .index("by_message", ["messageId"])
-        .index("by_course", ["courseId"]),
+      feedbackId: v.id("feedbacks"),
+      messageId: v.id("feedbackMessages"),
+      courseId: v.id("courses"),
+      reason: v.string(),
+    })
+      .index("by_feedback", ["feedbackId"])
+      .index("by_message", ["messageId"])
+      .index("by_course", ["courseId"]),
     logs: defineTable({
       type: v.union(
         v.literal("attemptStarted"),
@@ -238,16 +262,6 @@ export default defineSchema(
       variant: v.union(v.literal("reading"), v.literal("explain")),
       details: v.optional(v.any()),
     }).index("by_type", ["type"]),
-
-    groupAssignments: defineTable({
-      identifier: v.string(),
-      group: v.union(v.literal("A"), v.literal("B")),
-      researchConsent: v.optional(v.literal(true)),
-      positionInGroup: v.optional(v.number()),
-      groupLength: v.optional(v.number()),
-    })
-      .index("byIdentifier", ["identifier"])
-      .index("byGroup", ["group"]),
 
     registrations: defineTable({
       userId: v.id("users"),
@@ -273,14 +287,14 @@ export default defineSchema(
       .index("by_course_and_role", ["courseId", "role"])
       .index("by_user_and_course", ["userId", "courseId"]),
 
-    // Lucia
+    // Lucia (see /docs/auth.md)
     users: defineTable({
       id: v.string(), // Lucia user ID
       email: v.union(v.string(), v.null()),
       name: v.union(v.string(), v.null()),
       googleId: v.optional(v.string()),
       googleMetadata: v.optional(v.any()),
-      identifier: v.optional(v.string()),
+      identifier: v.optional(v.string()), // see /docs/identifiers.md
       extraTime: v.optional(v.literal(true)),
       superadmin: v.optional(v.literal(true)),
     })
@@ -297,13 +311,6 @@ export default defineSchema(
       .index("by_lucia_id", ["id"])
       .index("by_user_id", ["userId"])
       .index("by_expires_at", ["expiresAt"]),
-    auth_keys: defineTable({
-      id: v.string(),
-      hashed_password: v.union(v.string(), v.null()),
-      user_id: v.string(),
-    })
-      .index("byId", ["id"])
-      .index("byUserId", ["user_id"]),
   },
   {
     schemaValidation: true,
