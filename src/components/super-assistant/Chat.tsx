@@ -4,9 +4,7 @@ import {
   PaperAirplaneIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import {
-  ExclamationCircleIcon,
-} from "@heroicons/react/24/outline";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { useMutation, useQuery } from "@/usingSession";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -16,11 +14,7 @@ import { Button } from "../Button";
 import { Modal } from "@/components/Modal";
 import { toast } from "sonner";
 
-export default function Chat({
-  chatId,
-}: {
-  chatId: Id<"chats">;
-}) {
+export default function Chat({ chatId }: { chatId: Id<"chats"> }) {
   const chat = useQuery(api.sachatmessages.list, { chatId });
 
   useEffect(() => {
@@ -37,56 +31,56 @@ export default function Chat({
             {typeof message.content === "string" && (
               <div key={message.id}>
                 <div
-                    className={clsx(
+                  className={clsx(
                     "flex",
                     message.assistant && "mr-6",
                     !message.assistant && "ml-6",
-                )}
+                  )}
                 >
                   <div
                     className={clsx(
-                    "inline-block p-3 sm:p-4 rounded-xl shadow relative",
-                    message.assistant && "bg-white rounded-bl-none",
-                    !message.assistant &&
+                      "inline-block p-3 sm:p-4 rounded-xl shadow relative",
+                      message.assistant && "bg-white rounded-bl-none",
+                      !message.assistant &&
                         "bg-gradient-to-b from-purple-500 to-purple-600 text-white rounded-br-none ml-auto",
                     )}
                   >
                     {message.assistant ? (
                       message.appearance === "typing" ? (
                         <div className="flex gap-1" aria-label="Loading">
-                        <div className="w-2 h-2 rounded-full bg-slate-500 animate-pulse"></div>
-                        <div className="w-2 h-2 rounded-full bg-slate-500 animate-pulse animation-delay-1-3"></div>
-                        <div className="w-2 h-2 rounded-full bg-slate-500 animate-pulse animation-delay-2-3"></div>
+                          <div className="w-2 h-2 rounded-full bg-slate-500 animate-pulse"></div>
+                          <div className="w-2 h-2 rounded-full bg-slate-500 animate-pulse animation-delay-1-3"></div>
+                          <div className="w-2 h-2 rounded-full bg-slate-500 animate-pulse animation-delay-2-3"></div>
                         </div>
-                    ) : message.appearance === "error" ? (
-                      <div>
-                        <p className="font-light flex items-center justify-center gap-1">
+                      ) : message.appearance === "error" ? (
+                        <div>
+                          <p className="font-light flex items-center justify-center gap-1">
                             <ExclamationCircleIcon
-                            className="w-6 h-6 text-red-600"
-                            aria-hidden="true"
+                              className="w-6 h-6 text-red-600"
+                              aria-hidden="true"
                             />
                             <span className="flex-1">
-                            <strong className="font-medium text-red-600">
+                              <strong className="font-medium text-red-600">
                                 An error occurred.
-                            </strong>{" "}
-                            Please try again.
+                              </strong>{" "}
+                              Please try again.
                             </span>
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        <Markdown text={message.content} />
-                        <ReportMessage
-                          messageId={message.id}
-                          isReported={message.isReported}
-                        />
-                      </>
-                    )
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <Markdown text={message.content} />
+                          <ReportMessage
+                            messageId={message.id}
+                            isReported={message.isReported}
+                          />
+                        </>
+                      )
                     ) : (
                       <>
                         {!message.assistant && (
                           <p className="prose prose-sm sm:prose-base text-white whitespace-pre-wrap">
-                              {message.content}
+                            {message.content}
                           </p>
                         )}
                       </>
@@ -97,13 +91,12 @@ export default function Chat({
             )}
           </>
         ))}
-      </div>  
+      </div>
 
       <NewMessage chatId={chatId} />
     </>
   );
 }
-
 
 function ReportMessage({
   messageId,
@@ -188,7 +181,6 @@ function ReportMessage({
   );
 }
 
-
 function NewMessage({ chatId }: { chatId: Id<"chats"> }) {
   const sendMessage = useMutation(api.sachatmessages.sendMessage);
   const [message, setMessage] = useState("");
@@ -241,7 +233,7 @@ function NewMessage({ chatId }: { chatId: Id<"chats"> }) {
           ref={textareaRef}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="w-full bg-transparent sm:text-lg px-4 rounded-xl resize-none bg-white py-4 h-[60px] pr-16"          
+          className="w-full bg-transparent sm:text-lg px-4 rounded-xl resize-none bg-white py-4 h-[60px] pr-16"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();

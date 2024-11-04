@@ -206,7 +206,10 @@ export default function CoursePage() {
           {user && (
             <TabBar
               items={[
-                { label: "Super-Assistant", href: `/${courseSlug}/super-assistant` },
+                {
+                  label: "Super-Assistant",
+                  href: `/${courseSlug}/super-assistant`,
+                },
                 { label: "Exercises", href: `/${courseSlug}` },
                 user.isAdmin && {
                   label: "Admin",

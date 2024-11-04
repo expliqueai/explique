@@ -20,8 +20,6 @@ import { Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 
-
-
 export default function AdminSuperAssistantPage() {
   const courseSlug = useCourseSlug();
   const files = useQuery(api.admin.sadatabase.list, {
@@ -48,10 +46,8 @@ export default function AdminSuperAssistantPage() {
             <th scope="col" className="px-2 py-3 align-bottom text-left">
               Creation time
             </th>
-            <th scope="col" className="py-3 align-bottom justify-end">
-            </th>
-            <th scope="col" className="pr-2 py-3 align-bottom justify-end">
-            </th>
+            <th scope="col" className="py-3 align-bottom justify-end"></th>
+            <th scope="col" className="pr-2 py-3 align-bottom justify-end"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -61,7 +57,9 @@ export default function AdminSuperAssistantPage() {
                 <OpenFile filename={file.name} />
               </td>
               <td className="px-2 py-3">{"Week " + file.week}</td>
-              <td className="px-2 py-3">{formatTimestampHumanFormat(file.creationTime)}</td>
+              <td className="px-2 py-3">
+                {formatTimestampHumanFormat(file.creationTime)}
+              </td>
               <td>
                 <EditWeek fileId={file.id} />
               </td>
@@ -72,7 +70,10 @@ export default function AdminSuperAssistantPage() {
                   title="Delete"
                   onClick={async (e) => {
                     e.preventDefault();
-                    await deleteFile({courseSlug:courseSlug, name:file.name});
+                    await deleteFile({
+                      courseSlug: courseSlug,
+                      name: file.name,
+                    });
                   }}
                 >
                   <TrashIcon className="w-5 h-5" />
@@ -86,12 +87,15 @@ export default function AdminSuperAssistantPage() {
   );
 }
 
-
-function EditWeek({fileId} : {fileId: Id<"saDatabase">}) {
+function EditWeek({ fileId }: { fileId: Id<"saDatabase"> }) {
   const changeWeek = useMutation(api.admin.sadatabase.changeWeek);
   const [isEditWeekModalOpen, setIsEditWeekModalOpen] = useState(false);
   const weekNumber = useQuery(api.admin.sadatabase.getWeek, { fileId });
-  const [newWeekNumber, setNewWeekNumber] = useState(weekNumber === undefined || weekNumber === null ? "" : weekNumber.toString());
+  const [newWeekNumber, setNewWeekNumber] = useState(
+    weekNumber === undefined || weekNumber === null
+      ? ""
+      : weekNumber.toString(),
+  );
 
   return (
     <>
@@ -141,7 +145,10 @@ function EditWeek({fileId} : {fileId: Id<"saDatabase">}) {
                 toast.error("Please provide a valid number.");
               } else if (Number(newWeekNumber) !== weekNumber) {
                 setIsEditWeekModalOpen(false);
-                await changeWeek({ fileId:fileId, newWeek:Number(newWeekNumber) });
+                await changeWeek({
+                  fileId: fileId,
+                  newWeek: Number(newWeekNumber),
+                });
               } else {
                 setIsEditWeekModalOpen(false);
                 setNewWeekNumber(weekNumber.toString());
@@ -158,7 +165,6 @@ function EditWeek({fileId} : {fileId: Id<"saDatabase">}) {
   );
 }
 
-
 function UploadFile({}: {}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const uploadFile = useMutation(api.admin.sadatabase.uploadFile);
@@ -167,7 +173,10 @@ function UploadFile({}: {}) {
   const [week, setWeek] = useState("");
   const courseSlug = useCourseSlug();
   const [file, setFile] = useState<File | null>(null);
-  const get = useQuery(api.admin.sadatabase.get, { courseSlug:courseSlug, name:file?.name });
+  const get = useQuery(api.admin.sadatabase.get, {
+    courseSlug: courseSlug,
+    name: file?.name,
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleUploadFile() {
@@ -175,20 +184,30 @@ function UploadFile({}: {}) {
 
     if (file !== null) {
       const uploaded = await startUpload([file]);
-      const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
+      const storageId = uploaded.map(
+        ({ response }) => (response as any).storageId,
+      )[0];
       storageIds.push({
-        pageNumber: 0, 
+        pageNumber: 0,
         storageId: storageId,
       });
 
       const filename = file.name.split(".")[0];
-      const pages = await PdfToImg(file, {imgType: "jpg", pages:"all", returnType:"buffer"});
+      const pages = await PdfToImg(file, {
+        imgType: "jpg",
+        pages: "all",
+        returnType: "buffer",
+      });
       for (let index in pages) {
-        const page = new File([pages[index]], `${filename}_page${index}.jpg`, {type:"image/jpg"});
+        const page = new File([pages[index]], `${filename}_page${index}.jpg`, {
+          type: "image/jpg",
+        });
         const pageUploaded = await startUpload([page]);
-        const pageStorageId = pageUploaded.map(({response}) => ((response as any).storageId))[0];
+        const pageStorageId = pageUploaded.map(
+          ({ response }) => (response as any).storageId,
+        )[0];
         storageIds.push({
-          pageNumber: Number(index)+1,
+          pageNumber: Number(index) + 1,
           storageId: pageStorageId,
         });
       }
@@ -201,10 +220,12 @@ function UploadFile({}: {}) {
     <>
       <Button
         type="button"
-        onClick={() => { setIsModalOpen(true); }}
-        >
-          <PlusIcon className="w-5 h-5" />
-          Upload file
+        onClick={() => {
+          setIsModalOpen(true);
+        }}
+      >
+        <PlusIcon className="w-5 h-5" />
+        Upload file
       </Button>
 
       <Transition appear show={isLoading} as={Fragment}>
@@ -233,10 +254,7 @@ function UploadFile({}: {}) {
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="transform overflow-hidden text-left align-middle transition-all">
-                  <BeatLoader
-                    color={"#2563eb"}
-                    size={25}
-                  />
+                  <BeatLoader color={"#2563eb"} size={25} />
                 </Dialog.Panel>
               </Transition.Child>
             </div>
@@ -267,16 +285,18 @@ function UploadFile({}: {}) {
                 const storageIds = await handleUploadFile();
                 setFile(null);
                 setWeek("");
-                await uploadFile({ courseSlug:courseSlug, week:weekNumber, name:file?file.name:"", storageIds:storageIds });
+                await uploadFile({
+                  courseSlug: courseSlug,
+                  week: weekNumber,
+                  name: file ? file.name : "",
+                  storageIds: storageIds,
+                });
                 setIsLoading(false);
               }
             }
           }}
         >
-          <Upload
-            value={file}
-            onChange={(value) => setFile(value)}
-          />
+          <Upload value={file} onChange={(value) => setFile(value)} />
           <Input
             label="Specify week:"
             placeholder="Week number"
@@ -307,22 +327,21 @@ function UploadFile({}: {}) {
   );
 }
 
-function OpenFile({
-  filename
-}: {
-  filename: string
-}) {
+function OpenFile({ filename }: { filename: string }) {
   const courseSlug = useCourseSlug();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const url = useQuery(api.admin.sadatabase.getUrl, { courseSlug:courseSlug, name:filename });
+  const url = useQuery(api.admin.sadatabase.getUrl, {
+    courseSlug: courseSlug,
+    name: filename,
+  });
 
   return (
     <>
-      {url &&
+      {url && (
         <a href={url} download className="text-blue-600 underline">
           {filename}
         </a>
-      }
+      )}
     </>
   );
 }

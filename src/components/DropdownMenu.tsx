@@ -32,7 +32,11 @@ export function DropdownMenu({
           )}
         >
           <span className="sr-only">Open options</span>
-          {horizontal === true ? <EllipsisHorizontalIcon className="h-7 w-7" /> : <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />}
+          {horizontal === true ? (
+            <EllipsisHorizontalIcon className="h-7 w-7" />
+          ) : (
+            <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
+          )}
         </MenuButton>
       </div>
 
