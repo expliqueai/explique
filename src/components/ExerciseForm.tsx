@@ -223,9 +223,7 @@ export default function ExerciseForm({
           <div className="mt-6 flex justify-end items-start">
             {firstMessage.trim() && (
               <div className="inline-block p-4 rounded-xl shadow bg-gradient-to-b from-purple-500 to-purple-600 text-white rounded-br-none ml-auto">
-                <p className="prose text-white whitespace-pre-wrap">
-                  {firstMessage}
-                </p>
+                <Markdown text={firstMessage} className="text-white" />
               </div>
             )}
           </div>
