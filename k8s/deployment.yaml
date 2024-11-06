@@ -26,6 +26,13 @@ spec:
         volumeMounts:
         - mountPath: /app/drizzle/storage
           name: data
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
       volumes:
       - name: data
         persistentVolumeClaim:
