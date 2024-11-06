@@ -121,28 +121,35 @@ export const submit = mutationWithAuth({
       attempt.exerciseId,
       assignment,
     );
-    const correctAnswers = questions.map((q, questionIndex) => {
-      if (q.text) return null;
+    const correctAnswers: (number[] | null)[] = questions.map(
+      (q, questionIndex) => {
+        if (q.text) return null;
 
-      const chanceAnswersOrder = new Chance(
-        `${exercise._id} ${userId} ${questionIndex} answers order`,
-      );
+        const chanceAnswersOrder = new Chance(
+          `${exercise._id} ${userId} ${questionIndex} answers order`,
+        );
 
-      const correctAnswer = (
-        q.randomize === false
-          ? q.answers
-          : chanceAnswersOrder.shuffle(q.answers)
-      ).findIndex((a) => a.correct);
-      if (correctAnswer === -1) throw new ConvexError("No correct answer");
-      return correctAnswer;
-    });
+        const answersInOrder =
+          q.randomize === false
+            ? q.answers
+            : chanceAnswersOrder.shuffle(q.answers);
+
+        return answersInOrder.flatMap((answer, answerOrderedIndex) =>
+          answer.correct ? [answerOrderedIndex] : [],
+        );
+      },
+    );
     if (correctAnswers.length !== answers.length) {
       throw new ConvexError("Incorrect number of answers");
     }
 
-    const isCorrect = answers.every(
-      (a, i) => correctAnswers[i] === a || correctAnswers[i] === null,
-    );
+    const correctness =
+      answers.filter(
+        (a, i) =>
+          correctAnswers[i]! === null /* expected a textual answer */ ||
+          (typeof a === "number" && correctAnswers[i]!.includes(a)),
+      ).length / answers.length;
+    const isCorrect = correctness === 1;
 
     await db.insert("quizSubmissions", {
       attemptId,
@@ -191,10 +198,7 @@ export const submit = mutationWithAuth({
           return result;
         }),
         answers,
-        correctness:
-          answers.filter(
-            (a, i) => correctAnswers[i] === a || correctAnswers[i] === null,
-          ).length / answers.length,
+        correctness,
       },
       version: BigInt(2),
     });
