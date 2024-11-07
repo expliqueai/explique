@@ -7,7 +7,12 @@ body {
   height: 100%;
 }
 
+body {
+  @apply bg-slate-100 antialiased;
+}
+
 @layer utilities {
+
   /* https://stackoverflow.com/a/66436651/4652564 */
   .no-scrollbar::-webkit-scrollbar {
     display: none;

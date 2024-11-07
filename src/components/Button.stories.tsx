@@ -1,0 +1,47 @@
+import type { Meta, StoryObj } from "@storybook/react";
+
+import { Button } from "./Button";
+
+const meta: Meta<typeof Button> = {
+  component: Button,
+  args: {
+    children: "Button",
+    onClick() {},
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof Button>;
+
+export const Primary: Story = {
+  args: {
+    variant: "primary",
+  },
+};
+
+export const Secondary: Story = {
+  args: {
+    variant: "secondary",
+  },
+};
+
+export const Danger: Story = {
+  args: {
+    variant: "danger",
+  },
+};
+
+export const Small: Story = {
+  args: {
+    variant: "primary",
+    size: "sm",
+  },
+};
+
+export const Link: Story = {
+  args: {
+    variant: "primary",
+    onClick: undefined,
+    href: "https://explique.ai",
+  },
+};
