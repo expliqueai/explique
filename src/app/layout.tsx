@@ -15,7 +15,7 @@ export default function RootLayout({
       <head>
         <title>Explique</title>
       </head>
-      <body className="bg-slate-100 antialiased">
+      <body>
         <SessionProvider>
           <ConvexClientProvider>{children}</ConvexClientProvider>
         </SessionProvider>
