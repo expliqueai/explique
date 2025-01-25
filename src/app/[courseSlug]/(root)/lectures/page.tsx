@@ -1,3 +1,3 @@
 export default function LecturesPage() {
-  return <div>Lectures</div>;
+  return <h1>Lectures</h1>;
 }
