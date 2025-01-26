@@ -10,7 +10,7 @@ import clsx from "clsx";
 import { useQuery } from "@/usingSession";
 import { formatTimestampHumanFormat, timeFromNow } from "@/util/date";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
-import { ExerciseLink } from "@/components/ExerciseLink";
+import { ImageLink } from "@/components/ImageLink";
 
 export default function ExercisesPage() {
   const courseSlug = useCourseSlug();
@@ -89,7 +89,7 @@ function ProjectGrid() {
             </div>
             <div className="grid gap-6 md:grid-cols-2">
               {week.exercises.map((exercise) => (
-                <ExerciseLink
+                <ImageLink
                   key={exercise.id}
                   href={`/e/${exercise.id}`}
                   name={exercise.name}

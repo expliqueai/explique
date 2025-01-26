@@ -1,6 +1,13 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+export const lectureAdminSchema = {
+  name: v.string(),
+  weekId: v.union(v.id("weeks"), v.null()), // null = soft-deleted exercise
+  image: v.optional(v.id("images")),
+  url: v.string(),
+};
+
 export const exerciseAdminSchema = {
   name: v.string(),
   weekId: v.union(v.id("weeks"), v.null()), // null = soft-deleted exercise
@@ -97,6 +104,8 @@ export default defineSchema(
       ...exerciseAdminSchema,
       assistantId: v.string(),
     }).index("by_week_id", ["weekId"]),
+
+    lectures: defineTable(lectureAdminSchema).index("by_week_id", ["weekId"]),
 
     images: defineTable({
       storageId: v.id("_storage"),

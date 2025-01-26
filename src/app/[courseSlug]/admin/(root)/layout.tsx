@@ -8,6 +8,7 @@ import {
   UserIcon,
   AcademicCapIcon,
   ExclamationCircleIcon,
+  VideoCameraIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { ReactNode } from "react";
@@ -40,6 +41,10 @@ export default function AdminRootLayout({ children }: { children: ReactNode }) {
         <NavLink href={`/${courseSlug}/admin/exercises`}>
           <PuzzlePieceIcon />
           Exercises
+        </NavLink>
+        <NavLink href={`/${courseSlug}/admin/lectures`}>
+          <VideoCameraIcon />
+          Lectures
         </NavLink>
         <NavLink href={`/${courseSlug}/admin/users`}>
           <UserIcon />

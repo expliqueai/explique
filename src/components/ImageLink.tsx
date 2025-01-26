@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 
-export function ExerciseLink({
+export function ImageLink({
   href,
   name,
   image,
