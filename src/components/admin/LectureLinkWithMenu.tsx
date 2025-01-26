@@ -15,6 +15,9 @@ interface Lecture {
   id: Id<"lectures">;
   name: string;
   url: string;
+  image: {
+    thumbnails: { type: string; sizes?: string; src: string }[];
+  } | null;
 }
 
 export function LectureLinkWithMenu({ lecture }: { lecture: Lecture }) {
@@ -27,7 +30,7 @@ export function LectureLinkWithMenu({ lecture }: { lecture: Lecture }) {
       <ImageLink
         href={`/${courseSlug}/admin/lectures/${lecture.id}`}
         name={lecture.name}
-        image={null}
+        image={lecture.image}
         corner={
           <div className="p-4">
             <div className="pointer-events-auto">

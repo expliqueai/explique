@@ -16,7 +16,6 @@ import clsx from "clsx";
 import { toast } from "sonner";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { PrimaryButton } from "./PrimaryButton";
-import { Button } from "./Button";
 
 export type State = {
   weekId: Id<"weeks">;
@@ -88,7 +87,7 @@ export default function LectureForm({
         <ThumbnailPicker
           image={image}
           setImage={setImage}
-          exerciseId={lectureId}
+          lectureId={lectureId}
           name={name}
         />
       )} */}

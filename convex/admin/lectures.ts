@@ -5,7 +5,6 @@ import {
   internalMutation,
   internalQuery,
 } from "../_generated/server";
-import OpenAI from "openai";
 import { internal } from "../_generated/api";
 import { lectureAdminSchema } from "../schema";
 import {
@@ -15,6 +14,7 @@ import {
 } from "../auth/withAuth";
 import { getCourseRegistration } from "../courses";
 import { Id } from "../_generated/dataModel";
+import { getImageForLecture } from "../lectures";
 
 export const get = queryWithAuth({
   args: {
@@ -70,7 +70,7 @@ export const list = queryWithAuth({
             id: lecture._id,
             name: lecture.name,
             url: lecture.url,
-            // image: await getImageForExercise(db, storage, lecture),
+            image: await getImageForLecture(db, storage, lecture),
           });
         }
       }
