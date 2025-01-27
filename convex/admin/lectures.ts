@@ -6,7 +6,7 @@ import {
   internalQuery,
 } from "../_generated/server";
 import { internal } from "../_generated/api";
-import { lectureAdminSchema } from "../schema";
+import { lectureSchema } from "../schema";
 import {
   actionWithAuth,
   mutationWithAuth,
@@ -86,7 +86,7 @@ export const list = queryWithAuth({
 });
 
 export const insertRow = internalMutation({
-  args: { ...lectureAdminSchema },
+  args: { ...lectureSchema },
   handler: async ({ db }, row) => {
     return await db.insert("lectures", row);
   },
@@ -96,7 +96,7 @@ export const updateRow = internalMutation({
   args: {
     id: v.id("lectures"),
     row: v.object({
-      ...lectureAdminSchema,
+      ...lectureSchema,
     }),
   },
   handler: async ({ db }, { id, row }) => {
@@ -129,9 +129,9 @@ export const updateRow = internalMutation({
 });
 
 export const createInternal = internalAction({
-  args: lectureAdminSchema,
-  handler: async ({ runMutation }, row) => {
-    await runMutation(internal.admin.lectures.insertRow, {
+  args: lectureSchema,
+  handler: async ({ runMutation }, row): Promise<Id<"lectures">> => {
+    return await runMutation(internal.admin.lectures.insertRow, {
       ...{ ...row, sessionId: undefined },
     });
   },
@@ -140,9 +140,9 @@ export const createInternal = internalAction({
 export const create = actionWithAuth({
   args: {
     courseSlug: v.string(),
-    lecture: v.object(lectureAdminSchema),
+    lecture: v.object(lectureSchema),
   },
-  handler: async (ctx, { courseSlug, lecture }) => {
+  handler: async (ctx, { courseSlug, lecture }): Promise<Id<"lectures">> => {
     const { course } = await getCourseRegistration(
       ctx,
       ctx.session,
@@ -163,7 +163,7 @@ export const create = actionWithAuth({
       throw new ConvexError("Invalid week");
     }
 
-    await ctx.runAction(internal.admin.lectures.createInternal, lecture);
+    return await ctx.runAction(internal.admin.lectures.createInternal, lecture);
   },
 });
 
@@ -212,7 +212,7 @@ export async function validateLectureInCourse(
 export const update = actionWithAuth({
   args: {
     id: v.id("lectures"),
-    lecture: v.object(lectureAdminSchema),
+    lecture: v.object(lectureSchema),
     courseSlug: v.string(),
   },
   handler: async (ctx, { id, lecture, courseSlug }) => {

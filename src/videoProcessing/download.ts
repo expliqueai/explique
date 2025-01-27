@@ -36,7 +36,7 @@ export async function downloadVideo(file: File): Promise<DownloadedVideoData> {
 
 export async function downloadYoutubeVideo(videoUrl: string) {
   if (!ytdl.validateURL(videoUrl)) {
-    throw new Error("Invalid youtube video URL");
+    return null;
   }
 
   const mediaDir = path.join(process.cwd(), "media");

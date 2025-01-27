@@ -11,7 +11,12 @@ export async function* processVideo(
   segments: Array<VideoSegment>,
 ) {
   const segmentPromises = segments.map(async (segment) => {
-    return processVideoSegment(google, segment.path, segment.offset);
+    return processVideoSegment(
+      google,
+      segment.path,
+      segment.duration,
+      segment.start,
+    );
   });
 
   for await (const segmentProcessData of segmentPromises) {
@@ -22,6 +27,7 @@ export async function* processVideo(
 export async function processVideoSegment(
   google: GoogleGenerativeAIProvider,
   segmentPath: string,
+  segmentDuration: number,
   segmentOffset: number,
 ) {
   const result = await generateText({
@@ -59,7 +65,11 @@ export async function processVideoSegment(
     ],
   });
 
-  return adjustTimestamps(result.text, segmentOffset);
+  return {
+    start: segmentOffset,
+    duration: segmentDuration,
+    content: adjustTimestamps(result.text, segmentOffset),
+  };
 }
 
 function parseTime(time: string) {

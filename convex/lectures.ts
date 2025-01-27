@@ -1,15 +1,21 @@
 import { ConvexError, v } from "convex/values";
 import { queryWithAuth } from "./auth/withAuth";
-import { DatabaseReader, internalQuery } from "./_generated/server";
+import { DatabaseReader, mutation, query } from "./_generated/server";
 import { getCourseRegistration } from "./courses";
 import { Doc, Id } from "./_generated/dataModel";
 import { StorageReader } from "convex/server";
+import { LECTURE_STATUS, lectureAdminSchema, lectureSchema } from "./schema";
 
-export const getRow = internalQuery({
+export const get = query({
   args: {
     id: v.id("lectures"),
+    // token: v.string(),
   },
   handler: async ({ db }, { id }) => {
+    // if (token !== process.env.NEXT_CONVEX_COMMUNICATION_TOKEN) {
+    //   throw new ConvexError("Invalid token");
+    // }
+
     return await db.get(id);
   },
 });
@@ -103,5 +109,42 @@ export const list = queryWithAuth({
       });
     }
     return result;
+  },
+});
+
+export const updateStatus = mutation({
+  args: {
+    id: v.id("lectures"),
+    status: lectureSchema.status,
+    // token: v.string(),
+  },
+  handler: async ({ db }, { id, status }) => {
+    // if (token !== process.env.NEXT_CONVEX_COMMUNICATION_TOKEN) {
+    //   throw new ConvexError("Invalid token");
+    // }
+
+    const lecture = await db.get(id);
+    if (!lecture) {
+      throw new ConvexError("Lecture not found");
+    }
+
+    return await db.patch(id, { status });
+  },
+});
+
+export const addChunk = mutation({
+  args: {
+    id: v.id("lectures"),
+    chunk: lectureSchema.chunks.element,
+  },
+  handler: async ({ db }, { id, chunk }) => {
+    const lecture = await db.get(id);
+    if (!lecture) {
+      throw new ConvexError("Lecture not found");
+    }
+
+    return await db.patch(id, {
+      chunks: [...lecture.chunks, chunk],
+    });
   },
 });

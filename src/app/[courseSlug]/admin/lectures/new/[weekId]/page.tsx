@@ -1,6 +1,6 @@
 "use client";
 
-import { useAction } from "@/usingSession";
+import { useAction, useQuery } from "@/usingSession";
 import { useParams, useRouter } from "next/navigation";
 
 import LectureForm, { toConvexState } from "@/components/LectureForm";
@@ -9,14 +9,15 @@ import { api } from "../../../../../../../convex/_generated/api";
 import Title from "@/components/typography";
 import { toast } from "sonner";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
+import { useAdminIdentity } from "@/hooks/useAdminIdentity";
 
 export default function NewLecture() {
   const router = useRouter();
   const params = useParams();
   const initialWeekId = params.weekId as Id<"weeks">;
   const courseSlug = useCourseSlug();
-
   const create = useAction(api.admin.lectures.create);
+  const jwt = useAdminIdentity();
 
   return (
     <div className="bg-slate-100 h-full p-10 flex justify-center">
@@ -31,8 +32,40 @@ export default function NewLecture() {
             url: "",
           }}
           onSubmit={async (state) => {
-            await create({ courseSlug, lecture: toConvexState(state) });
+            const lectureId = await create({
+              courseSlug,
+              lecture: {
+                ...toConvexState(state),
+                chunks: [],
+                status: "NOT_STARTED",
+              },
+            });
+
             toast.success("Lecture created successfully.");
+
+            const response = await fetch("/api/admin/processVideo", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${jwt}`,
+              },
+              body: JSON.stringify({
+                courseSlug,
+                lectureId,
+                lectureUrl: encodeURIComponent(state.url),
+              }),
+            });
+
+            if (!response.ok) {
+              toast.error(
+                "Failed to start processing the lecture. Please report this issue.",
+              );
+            } else {
+              toast.info(
+                "The lecture is being processed. It will be available soon.",
+              );
+            }
+
             router.push(`/${courseSlug}/admin/lectures`);
           }}
         />

@@ -7,7 +7,7 @@ import * as path from "path";
 export interface VideoSegment {
   path: string;
   duration: number;
-  offset: number;
+  start: number;
 }
 
 export async function splitVideoIntoSegments(
@@ -73,7 +73,7 @@ export async function splitVideoIntoSegments(
     segments.push({
       path: segmentPath,
       duration,
-      offset: cumulativeOffset,
+      start: cumulativeOffset,
     });
 
     cumulativeOffset += duration;
