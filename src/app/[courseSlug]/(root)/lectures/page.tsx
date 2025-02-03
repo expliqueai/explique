@@ -1,11 +1,6 @@
 "use client";
 
 import { api } from "../../../../../convex/_generated/api";
-import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import {
-  CheckIcon as CheckIconSmall,
-  XMarkIcon as XMarkIconSmall,
-} from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import { useQuery } from "@/usingSession";
 import { formatTimestampHumanFormat, timeFromNow } from "@/util/date";
@@ -52,7 +47,7 @@ function ProjectGrid() {
               {week.lectures.map((lecture) => (
                 <ImageLink
                   key={lecture.id}
-                  href={`/l/${lecture.id}`}
+                  href={`/lecture/${lecture.id}`}
                   name={lecture.name}
                   image={lecture.image}
                 />

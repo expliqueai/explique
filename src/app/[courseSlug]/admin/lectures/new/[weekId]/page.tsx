@@ -43,28 +43,30 @@ export default function NewLecture() {
 
             toast.success("Lecture created successfully.");
 
-            const response = await fetch("/api/admin/processVideo", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${jwt}`,
-              },
-              body: JSON.stringify({
-                courseSlug,
-                lectureId,
-                lectureUrl: encodeURIComponent(state.url),
-              }),
-            });
+            // const response = await fetch("/api/admin/processVideo", {
+            //   method: "POST",
+            //   headers: {
+            //     "Content-Type": "application/json",
+            //     Authorization: `Bearer ${jwt}`,
+            //   },
+            //   body: JSON.stringify({
+            //     courseSlug,
+            //     lectureId,
+            //     lectureUrl: encodeURIComponent(state.url),
+            //   }),
+            // });
 
-            if (!response.ok) {
-              toast.error(
-                "Failed to start processing the lecture. Please report this issue.",
-              );
-            } else {
-              toast.info(
-                "The lecture is being processed. It will be available soon.",
-              );
-            }
+            // if (!response.ok) {
+            //   toast.error(
+            //     "Failed to start processing the lecture. Please report this issue.",
+            //   );
+            // } else {
+            //   toast.info(
+            //     "The lecture is being processed. It will be available soon.",
+            //   );
+            // }
+
+            // TODO: Start video processing
 
             router.push(`/${courseSlug}/admin/lectures`);
           }}
