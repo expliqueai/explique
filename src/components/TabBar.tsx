@@ -31,13 +31,15 @@ function TabBarLink({ href, label }: { href: string; label: React.ReactNode }) {
 export function TabBar({
   items,
 }: {
-  items: {
+  items: ({
     label: string;
     href: string;
-  }[];
+  } | undefined)[];
 }) {
+  const shownItems = items.filter(i => i !== undefined);
+
   const pathName = usePathname();
-  const selectedIndex = items.findIndex((item) => item.href === pathName);
+  const selectedIndex = shownItems.findIndex((item) => item.href === pathName);
 
   return (
     <div className="mb-7 flex justify-center">
@@ -53,7 +55,7 @@ export function TabBar({
               }}
             ></span>
           )}
-          {items.map((item) => (
+          {shownItems.map((item) => (
             <TabBarLink key={item.href} href={item.href} label={item.label} />
           ))}
         </div>
