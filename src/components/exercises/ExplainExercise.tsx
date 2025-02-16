@@ -2,13 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import {
   HandThumbDownIcon,
   PaperAirplaneIcon,
-  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import {
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-} from "@heroicons/react/24/outline";
 import { useMutation, useQuery } from "@/usingSession";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -19,6 +14,7 @@ import Input from "../Input";
 import { Button } from "../Button";
 import { Modal } from "@/components/Modal";
 import { toast } from "sonner";
+import Instruction from "../Instruction";
 
 export default function ExplainExercise({
   hasQuiz,
@@ -49,20 +45,12 @@ export default function ExplainExercise({
           <div key={message.id}>
             {message.appearance === "finished" ? (
               <div className="flex flex-col items-center gap-4">
-                <p className="sm:text-lg font-light flex items-center justify-center gap-1">
-                  <CheckCircleIcon
-                    className="w-6 h-6 text-purple-700"
-                    aria-hidden="true"
-                  />
-                  <span>
-                    <strong className="font-medium text-purple-700">
-                      Great!
-                    </strong>{" "}
-                    {hasQuiz
-                      ? "Now, let’s go on to a quiz question."
-                      : "You have completed this exercise."}
-                  </span>
-                </p>
+                <Instruction variant="success">
+                  <strong>Great!</strong>
+                  {hasQuiz
+                    ? "Now, let’s go on to a quiz question."
+                    : "You have completed this exercise."}
+                </Instruction>
 
                 {!succeeded && nextButton !== "hide" && hasQuiz && (
                   <div className="flex flex-col gap-2 items-center">
@@ -81,18 +69,10 @@ export default function ExplainExercise({
             ) : message.appearance === "feedback" ? (
               <>
                 <div className="flex flex-col items-center gap-4">
-                  <p className="sm:text-lg font-light flex items-center justify-center gap-1">
-                    <CheckCircleIcon
-                      className="w-6 h-6 text-purple-700"
-                      aria-hidden="true"
-                    />
-                    <span>
-                      <strong className="font-medium text-purple-700">
-                        Great!
-                      </strong>{" "}
-                      We will now provide feedback on your explanation.
-                    </span>
-                  </p>
+                  <Instruction variant="success">
+                    <strong>Great!</strong> We will now provide feedback on your
+                    explanation.
+                  </Instruction>
 
                   {message.content === "" ? (
                     <div className="flex gap-2 my-4" aria-label="Loading">
@@ -101,17 +81,9 @@ export default function ExplainExercise({
                       <div className="w-3 h-3 rounded-full bg-slate-400 animate-pulse animation-delay-2-3"></div>
                     </div>
                   ) : message.content === "error" ? (
-                    <p className="font-light flex items-center justify-center gap-1">
-                      <ExclamationCircleIcon
-                        className="w-6 h-6 text-red-600"
-                        aria-hidden="true"
-                      />
-                      <span className="flex-1">
-                        <strong className="font-medium text-red-600">
-                          An error occurred.
-                        </strong>
-                      </span>
-                    </p>
+                    <Instruction variant="error">
+                      An error occurred.
+                    </Instruction>
                   ) : (
                     <div>
                       <div className="border-l-4 border-slate-300 pl-4 py-1">
@@ -166,18 +138,9 @@ export default function ExplainExercise({
                       </div>
                     ) : message.appearance === "error" ? (
                       <div>
-                        <p className="font-light flex items-center justify-center gap-1">
-                          <ExclamationCircleIcon
-                            className="w-6 h-6 text-red-600"
-                            aria-hidden="true"
-                          />
-                          <span className="flex-1">
-                            <strong className="font-medium text-red-600">
-                              An error occurred.
-                            </strong>{" "}
-                            Please try again.
-                          </span>
-                        </p>
+                        <Instruction variant="error">
+                          <strong>An error occurred.</strong> Please try again.
+                        </Instruction>
                       </div>
                     ) : (
                       <>
@@ -201,28 +164,15 @@ export default function ExplainExercise({
       {!writeDisabled && <NewMessage attemptId={attemptId} />}
 
       {succeeded && (
-        <p className="sm:text-lg font-light flex items-center justify-center gap-1">
-          <CheckCircleIcon
-            className="w-6 h-6 text-purple-700"
-            aria-hidden="true"
-          />
-          <span>
-            <strong className="font-medium text-purple-700">
-              Congratulations!
-            </strong>{" "}
-            You have finished this exercise.
-          </span>
-        </p>
+        <Instruction variant="success">
+          <strong>Congratulations!</strong> You have finished this exercise.
+        </Instruction>
       )}
 
       {nextButton === "disable" && (
-        <p className="sm:text-lg font-light flex items-center justify-center gap-1">
-          <ExclamationCircleIcon
-            className="w-6 h-6 text-red-600"
-            aria-hidden="true"
-          />
-          <span>The due date for this exercise has passed.</span>
-        </p>
+        <Instruction variant="error">
+          The due date for this exercise has passed.
+        </Instruction>
       )}
     </>
   );
