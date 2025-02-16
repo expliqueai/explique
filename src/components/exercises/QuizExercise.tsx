@@ -1,9 +1,4 @@
-import {
-  CheckCircleIcon,
-  InformationCircleIcon,
-  ExclamationCircleIcon,
-  XCircleIcon,
-} from "@heroicons/react/24/outline";
+import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { useEffect, useId, useState } from "react";
 import { ArrowRightIcon } from "@heroicons/react/16/solid";
 import { useMutation } from "@/usingSession";
@@ -11,19 +6,18 @@ import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import Markdown from "../Markdown";
 import { PrimaryButton } from "../PrimaryButton";
+import Instruction from "../Instruction";
 
 const ATTEMPT_TIMEOUT_MS = 1000 * 60 * 1;
 
 export default function QuizExercise({
   attemptId,
-  title,
   questions,
   lastSubmission,
   succeeded,
   isDue,
 }: {
   attemptId: Id<"attempts">;
-  title: string;
   questions: {
     question: string;
     answers: string[];
@@ -69,20 +63,16 @@ export default function QuizExercise({
 
   return (
     <>
-      <p className="sm:text-lg font-light flex items-center justify-center gap-1 my-8">
-        <InformationCircleIcon
-          className="w-6 h-6 text-purple-700"
-          aria-hidden="true"
-        />
-        <span className="flex-1">
-          <strong className="font-medium text-purple-700">
-            Answer the following{" "}
-            {questions.length === 1 ? "question" : "questions"}.
-          </strong>
-        </span>
-      </p>
-
       <div className="flex flex-col gap-4">
+        <div className="mt-4 mb-2">
+          <Instruction variant="info">
+            <strong>
+              Answer the following{" "}
+              {questions.length === 1 ? "question" : "questions"}.
+            </strong>
+          </Instruction>
+        </div>
+
         {questions.map(({ question, answers, correctAnswer }, index) => (
           <QuizContents
             key={index}
@@ -119,16 +109,11 @@ export default function QuizExercise({
 
         {!succeeded && !isDue && timeoutSeconds !== null && (
           <div>
-            <p className="sm:text-lg font-light flex items-center justify-center gap-1">
-              <ExclamationCircleIcon
-                className="w-6 h-6 text-red-600"
-                aria-hidden="true"
-              />
-              <span>
-                <strong className="font-medium text-red-600">Oops!</strong> Your
-                answer is incorrect. Please wait before trying again.
-              </span>
-            </p>
+            <Instruction variant="error">
+              <strong>Oops!</strong> Your answer is incorrect. Please wait
+              before trying again.
+            </Instruction>
+
             <p className="text-center mt-2 text-3xl font-extralight tabular-nums text-gray-600">
               {Math.floor(timeoutSeconds / 60)
                 .toString()
@@ -139,28 +124,15 @@ export default function QuizExercise({
         )}
 
         {succeeded && (
-          <p className="sm:text-lg font-light flex items-center justify-center gap-1">
-            <CheckCircleIcon
-              className="w-6 h-6 text-purple-700"
-              aria-hidden="true"
-            />
-            <span>
-              <strong className="font-medium text-purple-700">
-                Congratulations!
-              </strong>{" "}
-              You have finished this exercise.
-            </span>
-          </p>
+          <Instruction variant="success">
+            <strong>Congratulations!</strong> You have finished this exercise.
+          </Instruction>
         )}
 
         {!succeeded && isDue && (
-          <p className="sm:text-lg font-light flex items-center justify-center gap-1">
-            <ExclamationCircleIcon
-              className="w-6 h-6 text-red-600"
-              aria-hidden="true"
-            />
-            <span>This exercise due date has passed.</span>
-          </p>
+          <Instruction variant="error">
+            This exercise due date has passed.
+          </Instruction>
         )}
       </footer>
     </>

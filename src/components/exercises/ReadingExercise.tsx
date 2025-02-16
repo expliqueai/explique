@@ -1,18 +1,16 @@
 import { ArrowRightIcon } from "@heroicons/react/16/solid";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { Id } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
 import { useMutation } from "@/usingSession";
 import Markdown from "../Markdown";
 import { PrimaryButton } from "../PrimaryButton";
+import Instruction from "../Instruction";
 
 export default function ReadingExercise({
-  hasQuiz,
   text,
   attemptId,
   nextButton,
 }: {
-  hasQuiz: boolean;
   text: string;
   attemptId: Id<"attempts">;
   nextButton: "show" | "hide" | "disable";
@@ -21,17 +19,9 @@ export default function ReadingExercise({
 
   return (
     <>
-      <p className="sm:text-lg font-light flex items-center justify-center gap-1 my-8">
-        <InformationCircleIcon
-          className="w-6 h-6 text-purple-700"
-          aria-hidden="true"
-        />
-        <span className="flex-1">
-          <strong className="font-medium text-purple-700">
-            Read the following text.
-          </strong>
-        </span>
-      </p>
+      <Instruction variant="success">
+        <strong>Read the following text.</strong>
+      </Instruction>
 
       <Markdown text={text} />
 
