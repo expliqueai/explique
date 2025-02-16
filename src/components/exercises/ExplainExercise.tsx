@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { HandThumbDownIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useMutation, useQuery } from "@/usingSession";
 import { api } from "../../../convex/_generated/api";
@@ -7,12 +6,10 @@ import { Id } from "../../../convex/_generated/dataModel";
 import { ArrowRightIcon, SparklesIcon } from "@heroicons/react/16/solid";
 import Markdown from "../Markdown";
 import { PrimaryButton } from "../PrimaryButton";
-import Input from "../Input";
-import { Button } from "../Button";
-import { Modal } from "@/components/Modal";
-import { toast } from "sonner";
 import Instruction from "../Instruction";
 import MessageInput from "../MessageInput";
+import ReportMessage from "../ReportMessage";
+import ChatBubble from "../ChatBubble";
 
 export default function ExplainExercise({
   hasQuiz,
@@ -29,6 +26,9 @@ export default function ExplainExercise({
 }) {
   const chat = useQuery(api.chat.getMessages, { attemptId });
   const goToQuiz = useMutation(api.attempts.goToQuiz);
+
+  const reportMessage = useMutation(api.chat.reportMessage);
+  const unreportMessage = useMutation(api.chat.unreportMessage);
 
   useEffect(() => {
     setTimeout(() => {
@@ -112,48 +112,27 @@ export default function ExplainExercise({
                 </div>
               </>
             ) : (
-              <div
-                className={clsx(
-                  "flex",
-                  message.system && "mr-6",
-                  !message.system && "ml-6",
-                )}
-              >
-                <div
-                  className={clsx(
-                    "inline-block p-3 sm:p-4 rounded-xl shadow relative",
-                    message.system && "bg-white rounded-bl-none",
-                    !message.system &&
-                      "bg-gradient-to-b from-purple-500 to-purple-600 text-white rounded-br-none ml-auto",
-                  )}
-                >
-                  {message.system ? (
-                    message.appearance === "typing" ? (
-                      <div className="flex gap-1" aria-label="Loading">
-                        <div className="w-2 h-2 rounded-full bg-slate-500 animate-pulse"></div>
-                        <div className="w-2 h-2 rounded-full bg-slate-500 animate-pulse animation-delay-1-3"></div>
-                        <div className="w-2 h-2 rounded-full bg-slate-500 animate-pulse animation-delay-2-3"></div>
-                      </div>
-                    ) : message.appearance === "error" ? (
-                      <div>
-                        <Instruction variant="error">
-                          <strong>An error occurred.</strong> Please try again.
-                        </Instruction>
-                      </div>
-                    ) : (
-                      <>
-                        <Markdown text={message.content} />
-                        <ReportMessage
-                          messageId={message.id}
-                          isReported={message.isReported}
-                        />
-                      </>
-                    )
-                  ) : (
-                    <Markdown text={message.content} className="text-white" />
-                  )}
-                </div>
-              </div>
+              <ChatBubble
+                author={message.system ? "system" : "user"}
+                contents={
+                  message.appearance === "typing"
+                    ? { type: "typing" }
+                    : message.appearance === "error"
+                      ? { type: "error" }
+                      : { type: "message", message: message.content }
+                }
+                report={
+                  message.system && message.appearance === undefined
+                    ? {
+                        isReported: message.isReported,
+                        onReport: (reason) =>
+                          reportMessage({ messageId: message.id, reason }),
+                        onUnreport: () =>
+                          unreportMessage({ messageId: message.id }),
+                      }
+                    : undefined
+                }
+              />
             )}
           </div>
         ))}
@@ -172,89 +151,6 @@ export default function ExplainExercise({
           The due date for this exercise has passed.
         </Instruction>
       )}
-    </>
-  );
-}
-
-function ReportMessage({
-  messageId,
-  isReported,
-}: {
-  messageId: Id<"messages">;
-  isReported: boolean;
-}) {
-  const reportMessage = useMutation(api.chat.reportMessage);
-  const unreportMessage = useMutation(api.chat.unreportMessage);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [reason, setReason] = useState("");
-
-  return (
-    <>
-      <div className="flex items-center justify-end box-content p-1">
-        <button
-          className={clsx(
-            "w-8 h-8 rounded-full flex items-center justify-center shadow-md absolute bottom-0 -right-10",
-            isReported && "bg-purple-600 text-white",
-            !isReported && "bg-white text-purple-600",
-          )}
-          type="button"
-          title="Report"
-          onClick={async (e) => {
-            e.preventDefault();
-            if (isReported) {
-              await unreportMessage({ messageId });
-              toast.success("Your message report has been removed.");
-            } else {
-              setIsModalOpen(true);
-            }
-          }}
-        >
-          <HandThumbDownIcon className="w-5 h-5" />
-        </button>
-      </div>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Why are you reporting this message?"
-      >
-        <form
-          className="mt-5"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (reason.trim()) {
-              setIsModalOpen(false);
-              setReason("");
-              await reportMessage({ messageId, reason });
-              toast.success("The message has been reported. Thank you!");
-            }
-          }}
-        >
-          <Input
-            label=""
-            placeholder="Report reason"
-            value={reason}
-            onChange={(value) => setReason(value)}
-            required
-          />
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              onClick={() => {
-                setIsModalOpen(false);
-                setReason("");
-              }}
-              variant="secondary"
-              size="sm"
-            >
-              Cancel
-            </Button>
-            <Button type="submit" size="sm">
-              Report Message
-            </Button>
-          </div>
-        </form>
-      </Modal>
     </>
   );
 }
