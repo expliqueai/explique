@@ -460,11 +460,11 @@ function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
 
 function EditChat({ chatId }: { chatId: Id<"chats"> }) {
   const courseSlug = useCourseSlug();
-  const deleteChat = useMutation(api.sachat.deleteChat);
-  const renameChat = useMutation(api.sachat.rename);
+  const deleteChat = useMutation(api.superassistant.chat.deleteChat);
+  const renameChat = useMutation(api.superassistant.chat.rename);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
-  const name = useQuery(api.sachat.getName, { chatId });
+  const name = useQuery(api.superassistant.chat.getName, { chatId });
   const [newName, setNewName] = useState(name || "");
 
   useEffect(() => {
@@ -950,7 +950,7 @@ function SuperAssistant() {
   const generateFeedback = useMutation(api.feedback.generateFeedback);
   const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
   const { startUpload } = useUploadFiles(generateUploadUrl);
-  const generateChat = useMutation(api.sachat.generateChat);
+  const generateChat = useMutation(api.superassistant.chat.generateChat);
   const [feedbackName, setFeedbackName] = useState("");
   const weeks = useQuery(api.admin.sadatabase.getWeeks, { courseSlug });
   const [selectedFeedbackWeek, setSelectedFeedbackWeek] = useState<number>(

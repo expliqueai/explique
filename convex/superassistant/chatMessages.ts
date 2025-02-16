@@ -4,11 +4,11 @@ import {
   MutationCtx,
   internalAction,
   internalQuery,
-} from "./_generated/server";
+} from "../_generated/server";
 import { ConvexError, v } from "convex/values";
-import { Session, queryWithAuth, mutationWithAuth } from "./auth/withAuth";
-import { Id } from "./_generated/dataModel";
-import { internal } from "./_generated/api";
+import { Session, queryWithAuth, mutationWithAuth } from "../auth/withAuth";
+import { Id } from "../_generated/dataModel";
+import { internal } from "../_generated/api";
 import OpenAI from "openai";
 
 export const insertMessage = internalMutation({
@@ -183,11 +183,15 @@ async function sendMessageController(
     content: "",
   });
 
-  ctx.scheduler.runAfter(0, internal.sachatmessages.answerChatCompletionsApi, {
-    chatId,
-    userMessageId,
-    assistantMessageId,
-  });
+  ctx.scheduler.runAfter(
+    0,
+    internal.superassistant.chatMessages.answerChatCompletionsApi,
+    {
+      chatId,
+      userMessageId,
+      assistantMessageId,
+    },
+  );
 }
 
 export const generateTranscriptMessages = internalQuery({
@@ -265,7 +269,7 @@ export const answerChatCompletionsApi = internalAction({
     const openai = new OpenAI();
 
     const messages = await ctx.runQuery(
-      internal.sachatmessages.generateTranscriptMessages,
+      internal.superassistant.chatMessages.generateTranscriptMessages,
       {
         chatId,
       },
@@ -286,31 +290,40 @@ export const answerChatCompletionsApi = internalAction({
       );
     } catch (err) {
       console.error("Can’t create a completion", err);
-      await ctx.runMutation(internal.sachatmessages.writeSystemResponse, {
-        chatId,
-        assistantMessageId,
-        appearance: "error",
-        content: "",
-      });
+      await ctx.runMutation(
+        internal.superassistant.chatMessages.writeSystemResponse,
+        {
+          chatId,
+          assistantMessageId,
+          appearance: "error",
+          content: "",
+        },
+      );
       return;
     }
 
     const message = response.choices[0].message;
     if (!message.content) {
       console.error("No content in the response", message);
-      await ctx.runMutation(internal.sachatmessages.writeSystemResponse, {
-        chatId,
-        assistantMessageId,
-        appearance: "error",
-        content: "",
-      });
+      await ctx.runMutation(
+        internal.superassistant.chatMessages.writeSystemResponse,
+        {
+          chatId,
+          assistantMessageId,
+          appearance: "error",
+          content: "",
+        },
+      );
     } else {
-      await ctx.runMutation(internal.sachatmessages.writeSystemResponse, {
-        chatId,
-        assistantMessageId,
-        appearance: undefined,
-        content: message.content,
-      });
+      await ctx.runMutation(
+        internal.superassistant.chatMessages.writeSystemResponse,
+        {
+          chatId,
+          assistantMessageId,
+          appearance: undefined,
+          content: message.content,
+        },
+      );
     }
   },
 });
