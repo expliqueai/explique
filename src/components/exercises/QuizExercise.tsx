@@ -12,14 +12,12 @@ const ATTEMPT_TIMEOUT_MS = 1000 * 60 * 1;
 
 export default function QuizExercise({
   attemptId,
-  title,
   questions,
   lastSubmission,
   succeeded,
   isDue,
 }: {
   attemptId: Id<"attempts">;
-  title: string;
   questions: {
     question: string;
     answers: string[];

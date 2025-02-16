@@ -35,7 +35,6 @@ export default function Page({ params }: { params: { attemptId: string } }) {
             (metadata.quiz ? (
               <QuizExercise
                 attemptId={attemptId}
-                title={metadata.exerciseName}
                 questions={metadata.quiz}
                 lastSubmission={metadata.lastQuizSubmission}
                 succeeded={metadata.status === "quizCompleted"}
@@ -83,7 +82,6 @@ export default function Page({ params }: { params: { attemptId: string } }) {
 
                   <QuizExercise
                     attemptId={attemptId}
-                    title={metadata.exerciseName}
                     questions={metadata.quiz!}
                     lastSubmission={metadata.lastQuizSubmission}
                     succeeded={metadata.status === "quizCompleted"}
