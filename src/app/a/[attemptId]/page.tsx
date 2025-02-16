@@ -13,8 +13,8 @@ import Tooltip from "@/components/Tooltip";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
 
-export default function Page({ params }: { params: { id: string } }) {
-  const attemptId = params.id as Id<"attempts">;
+export default function Page({ params }: { params: { attemptId: string } }) {
+  const attemptId = params.attemptId as Id<"attempts">;
 
   const metadata = useQuery(api.attempts.get, { id: attemptId });
 
