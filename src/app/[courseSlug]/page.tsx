@@ -4,7 +4,6 @@ import { api } from "../../../convex/_generated/api";
 import {
   CheckIcon,
   ChevronUpDownIcon,
-  QuestionMarkCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import {
@@ -16,7 +15,6 @@ import { useQuery } from "@/usingSession";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { formatTimestampHumanFormat, timeFromNow } from "@/util/date";
-import Tooltip from "@/components/Tooltip";
 import { useIdentity } from "@/components/SessionProvider";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import {
