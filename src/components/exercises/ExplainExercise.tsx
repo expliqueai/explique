@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import clsx from "clsx";
+import { useEffect } from "react";
 import { useMutation, useQuery } from "@/usingSession";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -8,7 +7,6 @@ import Markdown from "../Markdown";
 import { PrimaryButton } from "../PrimaryButton";
 import Instruction from "../Instruction";
 import MessageInput from "../MessageInput";
-import ReportMessage from "../ReportMessage";
 import ChatBubble from "../ChatBubble";
 
 export default function ExplainExercise({
