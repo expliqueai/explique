@@ -6,10 +6,8 @@ import {
 } from "./auth/withAuth";
 import { getCourseRegistration } from "./courses";
 import OpenAI from "openai";
-import { internalAction, internalMutation } from "./_generated/server";
+import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { api } from "../convex/_generated/api";
-import { Id } from "../convex/_generated/dataModel";
 
 export const getName = queryWithAuth({
   args: {
