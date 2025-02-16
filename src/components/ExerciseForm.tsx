@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { PrimaryButton } from "./PrimaryButton";
 import { Button } from "./Button";
+import ChatBubble from "./ChatBubble";
 
 type Question = {
   question: string;
@@ -222,9 +223,13 @@ export default function ExerciseForm({
           />
           <div className="mt-6 flex justify-end items-start">
             {firstMessage.trim() && (
-              <div className="inline-block p-4 rounded-xl shadow bg-gradient-to-b from-purple-500 to-purple-600 text-white rounded-br-none ml-auto">
-                <Markdown text={firstMessage} className="text-white" />
-              </div>
+              <ChatBubble
+                author="user"
+                contents={{
+                  type: "message",
+                  message: firstMessage,
+                }}
+              />
             )}
           </div>
         </div>
