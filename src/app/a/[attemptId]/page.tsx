@@ -20,7 +20,7 @@ export default function Page({ params }: { params: { attemptId: string } }) {
 
   return (
     <ActivityLayout
-      courseSlug={metadata?.courseSlug}
+      backHref={metadata ? `/${metadata.courseSlug}` : undefined}
       title={metadata?.exerciseName}
       action={
         metadata &&

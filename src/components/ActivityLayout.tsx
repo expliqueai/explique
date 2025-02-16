@@ -3,11 +3,11 @@ import Link from "next/link";
 
 export default function ActivityLayout({
   children,
-  courseSlug,
+  backHref,
   title,
   action,
 }: React.PropsWithChildren<{
-  courseSlug: string | undefined;
+  backHref: string | undefined;
   title: string | undefined;
   action?: React.ReactNode;
 }>) {
@@ -15,9 +15,9 @@ export default function ActivityLayout({
     <div className="p-6">
       <div className="max-w-xl mx-auto">
         <header className="fixed h-14 sm:h-16 top-0 left-0 w-full bg-white bg-opacity-90 backdrop-blur-lg p-4 shadow-lg flex items-center justify-center z-10">
-          {courseSlug && (
+          {backHref && (
             <Link
-              href={`/${courseSlug}`}
+              href={backHref}
               title="Back"
               className="absolute top-0 left-0 sm:w-16 sm:h-16 w-14 h-14 flex items-center justify-center"
             >
