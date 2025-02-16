@@ -42,7 +42,6 @@ export default function Page({ params }: { params: { attemptId: string } }) {
               />
             ) : metadata.text ? (
               <ReadingExercise
-                hasQuiz={metadata.hasQuiz}
                 text={metadata.text}
                 attemptId={attemptId}
                 nextButton={metadata.isDue ? "disable" : "show"}
@@ -61,7 +60,6 @@ export default function Page({ params }: { params: { attemptId: string } }) {
             <>
               {metadata.text ? (
                 <ReadingExercise
-                  hasQuiz={metadata.hasQuiz}
                   text={metadata.text}
                   attemptId={attemptId}
                   nextButton="hide"

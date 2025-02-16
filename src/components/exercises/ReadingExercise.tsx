@@ -7,12 +7,10 @@ import { PrimaryButton } from "../PrimaryButton";
 import Instruction from "../Instruction";
 
 export default function ReadingExercise({
-  hasQuiz,
   text,
   attemptId,
   nextButton,
 }: {
-  hasQuiz: boolean;
   text: string;
   attemptId: Id<"attempts">;
   nextButton: "show" | "hide" | "disable";
