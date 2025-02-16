@@ -33,8 +33,6 @@ import type * as chat from "../chat.js";
 import type * as courses from "../courses.js";
 import type * as crons from "../crons.js";
 import type * as exercises from "../exercises.js";
-import type * as feedback from "../feedback.js";
-import type * as feedbackmessages from "../feedbackmessages.js";
 import type * as internal_seed from "../internal/seed.js";
 import type * as quiz from "../quiz.js";
 import type * as superadmin_courses from "../superadmin/courses.js";
@@ -42,6 +40,8 @@ import type * as superadmin_relocation from "../superadmin/relocation.js";
 import type * as superadmin_util from "../superadmin/util.js";
 import type * as superassistant_chat from "../superassistant/chat.js";
 import type * as superassistant_chatMessages from "../superassistant/chatMessages.js";
+import type * as superassistant_feedback from "../superassistant/feedback.js";
+import type * as superassistant_feedbackMessages from "../superassistant/feedbackMessages.js";
 import type * as weeks from "../weeks.js";
 
 /**
@@ -73,8 +73,6 @@ declare const fullApi: ApiFromModules<{
   courses: typeof courses;
   crons: typeof crons;
   exercises: typeof exercises;
-  feedback: typeof feedback;
-  feedbackmessages: typeof feedbackmessages;
   "internal/seed": typeof internal_seed;
   quiz: typeof quiz;
   "superadmin/courses": typeof superadmin_courses;
@@ -82,6 +80,8 @@ declare const fullApi: ApiFromModules<{
   "superadmin/util": typeof superadmin_util;
   "superassistant/chat": typeof superassistant_chat;
   "superassistant/chatMessages": typeof superassistant_chatMessages;
+  "superassistant/feedback": typeof superassistant_feedback;
+  "superassistant/feedbackMessages": typeof superassistant_feedbackMessages;
   weeks: typeof weeks;
 }>;
 export declare const api: FilterApi<

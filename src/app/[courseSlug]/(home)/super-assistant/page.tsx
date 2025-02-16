@@ -67,14 +67,18 @@ function NoSuperAssistant() {
 function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
   const [file, setFile] = useState<File | null>(null);
   const courseSlug = useCourseSlug();
-  const deleteFeedback = useMutation(api.feedback.deleteFeedback);
-  const renameFeedback = useMutation(api.feedback.rename);
+  const deleteFeedback = useMutation(
+    api.superassistant.feedback.deleteFeedback,
+  );
+  const renameFeedback = useMutation(api.superassistant.feedback.rename);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const updateFeedback = useMutation(api.feedback.updateFeedback);
+  const updateFeedback = useMutation(
+    api.superassistant.feedback.updateFeedback,
+  );
   const { startUpload } = useUploadFiles();
-  const name = useQuery(api.feedback.getName, { feedbackId });
+  const name = useQuery(api.superassistant.feedback.getName, { feedbackId });
   const [newName, setNewName] = useState(name || "");
   const router = useRouter();
 
@@ -393,7 +397,9 @@ const sortLastModifiedFn: SortingFn<Row> = (rowA, rowB, _columnId) => {
 
 function Table() {
   const courseSlug = useCourseSlug();
-  const list: Row[] | undefined = useQuery(api.feedback.data, { courseSlug });
+  const list: Row[] | undefined = useQuery(api.superassistant.feedback.data, {
+    courseSlug,
+  });
   const [data, setData] = useState(() => (list ? [...list] : []));
   const [sorting, setSorting] = useState<SortingState>([
     { id: "lastModified", desc: true },
@@ -738,7 +744,9 @@ function SuperAssistant() {
   const [chatName, setChatName] = useState("");
   const [statement, setStatement] = useState("");
   const router = useRouter();
-  const generateFeedback = useMutation(api.feedback.generateFeedback);
+  const generateFeedback = useMutation(
+    api.superassistant.feedback.generateFeedback,
+  );
   const { startUpload } = useUploadFiles();
   const generateChat = useMutation(api.superassistant.chat.generateChat);
   const [feedbackName, setFeedbackName] = useState("");

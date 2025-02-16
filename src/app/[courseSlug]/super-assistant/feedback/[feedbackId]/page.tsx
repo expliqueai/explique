@@ -24,12 +24,17 @@ type FeedbackProps = {
 export default function FeedbackPage({
   params: { courseSlug, feedbackId },
 }: FeedbackProps) {
-  const feedbackMessage = useQuery(api.feedbackmessages.getFeedback, {
+  const feedbackMessage = useQuery(
+    api.superassistant.feedbackMessages.getFeedback,
+    {
+      feedbackId,
+    },
+  );
+  const feedback = useQuery(api.superassistant.feedback.get, { feedbackId });
+  const imageUrl = useQuery(api.superassistant.feedback.getImage, {
     feedbackId,
   });
-  const feedback = useQuery(api.feedback.get, { feedbackId });
-  const imageUrl = useQuery(api.feedback.getImage, { feedbackId });
-  const goToChat = useMutation(api.feedback.goToChat);
+  const goToChat = useMutation(api.superassistant.feedback.goToChat);
 
   return (
     <>

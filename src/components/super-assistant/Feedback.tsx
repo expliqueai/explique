@@ -28,8 +28,12 @@ export default function Feedback({
   feedbackId: Id<"feedbacks">;
   courseSlug: string;
 }) {
-  const chat = useQuery(api.feedbackmessages.list, { feedbackId });
-  const imageUrl = useQuery(api.feedback.getImage, { feedbackId });
+  const chat = useQuery(api.superassistant.feedbackMessages.list, {
+    feedbackId,
+  });
+  const imageUrl = useQuery(api.superassistant.feedback.getImage, {
+    feedbackId,
+  });
 
   useEffect(() => {
     setTimeout(() => {
@@ -142,8 +146,12 @@ function ReportMessage({
   messageId: Id<"feedbackMessages">;
   isReported: boolean;
 }) {
-  const reportMessage = useMutation(api.feedbackmessages.reportMessage);
-  const unreportMessage = useMutation(api.feedbackmessages.unreportMessage);
+  const reportMessage = useMutation(
+    api.superassistant.feedbackMessages.reportMessage,
+  );
+  const unreportMessage = useMutation(
+    api.superassistant.feedbackMessages.unreportMessage,
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reason, setReason] = useState("");
 
@@ -225,12 +233,16 @@ function NewMessage({
   feedbackId: Id<"feedbacks">;
   courseSlug: string;
 }) {
-  const sendMessage = useMutation(api.feedbackmessages.sendMessage);
+  const sendMessage = useMutation(
+    api.superassistant.feedbackMessages.sendMessage,
+  );
   const [message, setMessage] = useState("");
   const [isNewAttemptModalOpen, setIsNewAttemptModalOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const { startUpload } = useUploadFiles();
-  const updateFeedback = useMutation(api.feedback.updateFeedbackInChat);
+  const updateFeedback = useMutation(
+    api.superassistant.feedback.updateFeedbackInChat,
+  );
 
   function autoResizeTextarea() {
     if (!textareaRef.current || !paddingRef.current) return;

@@ -1,9 +1,9 @@
 import { ConvexError, v } from "convex/values";
-import { queryWithAuth, mutationWithAuth } from "./auth/withAuth";
-import { getCourseRegistration } from "./courses";
+import { queryWithAuth, mutationWithAuth } from "../auth/withAuth";
+import { getCourseRegistration } from "../courses";
 import OpenAI from "openai";
-import { internalAction } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { internalAction } from "../_generated/server";
+import { internal } from "../_generated/api";
 
 export const getName = queryWithAuth({
   args: {
@@ -135,11 +135,14 @@ export const generateFirstMessages = internalAction({
       });
     }
 
-    await ctx.runMutation(internal.feedbackmessages.insertMessage, {
-      feedbackId: feedbackId,
-      role: "user",
-      content: message1,
-    });
+    await ctx.runMutation(
+      internal.superassistant.feedbackMessages.insertMessage,
+      {
+        feedbackId: feedbackId,
+        role: "user",
+        content: message1,
+      },
+    );
     messages.push({
       role: "user",
       content: message1,
@@ -157,11 +160,14 @@ export const generateFirstMessages = internalAction({
       },
     });
 
-    await ctx.runMutation(internal.feedbackmessages.insertMessage, {
-      feedbackId: feedbackId,
-      role: "user",
-      content: message2,
-    });
+    await ctx.runMutation(
+      internal.superassistant.feedbackMessages.insertMessage,
+      {
+        feedbackId: feedbackId,
+        role: "user",
+        content: message2,
+      },
+    );
     messages.push({
       role: "user",
       content: message2,
@@ -177,7 +183,7 @@ export const generateFirstMessages = internalAction({
     });
 
     const messageId = await ctx.runMutation(
-      internal.feedbackmessages.insertMessage,
+      internal.superassistant.feedbackMessages.insertMessage,
       {
         feedbackId: feedbackId,
         role: "assistant",
@@ -189,16 +195,22 @@ export const generateFirstMessages = internalAction({
     for await (const chunk of stream) {
       const newChunk = chunk.choices[0]?.delta?.content || "";
       if (newChunk !== "") {
-        await ctx.runMutation(internal.feedbackmessages.addChunk, {
-          messageId: messageId,
-          chunk: newChunk,
-        });
+        await ctx.runMutation(
+          internal.superassistant.feedbackMessages.addChunk,
+          {
+            messageId: messageId,
+            chunk: newChunk,
+          },
+        );
       }
     }
 
-    await ctx.runMutation(internal.feedbackmessages.streamingDone, {
-      messageId: messageId,
-    });
+    await ctx.runMutation(
+      internal.superassistant.feedbackMessages.streamingDone,
+      {
+        messageId: messageId,
+      },
+    );
   },
 });
 
@@ -239,14 +251,18 @@ export const generateFeedback = mutationWithAuth({
 
     if (fileUrl) {
       // schedule the action to generate feedback
-      await ctx.scheduler.runAfter(0, internal.feedback.generateFirstMessages, {
-        fileUrl: fileUrl,
-        courseId: course._id,
-        userId: userId,
-        storageId: storageId,
-        feedbackId: feedbackId,
-        weekNumber,
-      });
+      await ctx.scheduler.runAfter(
+        0,
+        internal.superassistant.feedback.generateFirstMessages,
+        {
+          fileUrl: fileUrl,
+          courseId: course._id,
+          userId: userId,
+          storageId: storageId,
+          feedbackId: feedbackId,
+          weekNumber,
+        },
+      );
     }
 
     return feedbackId;
@@ -275,7 +291,7 @@ export const generateUpdateMessages = internalAction({
     });
 
     const userMessageId = await ctx.runMutation(
-      internal.feedbackmessages.insertMessage,
+      internal.superassistant.feedbackMessages.insertMessage,
       {
         feedbackId: feedbackId,
         role: "user",
@@ -284,7 +300,7 @@ export const generateUpdateMessages = internalAction({
     );
 
     const assistantMessageId = await ctx.runMutation(
-      internal.feedbackmessages.insertMessage,
+      internal.superassistant.feedbackMessages.insertMessage,
       {
         feedbackId: feedbackId,
         role: "assistant",
@@ -295,7 +311,7 @@ export const generateUpdateMessages = internalAction({
 
     await ctx.scheduler.runAfter(
       0,
-      internal.feedbackmessages.answerChatCompletionsApi,
+      internal.superassistant.feedbackMessages.answerChatCompletionsApi,
       {
         feedbackId,
         userMessageId,
@@ -326,7 +342,7 @@ export const updateFeedback = mutationWithAuth({
       // schedule the action to generate feedback
       await ctx.scheduler.runAfter(
         0,
-        internal.feedback.generateUpdateMessages,
+        internal.superassistant.feedback.generateUpdateMessages,
         {
           fileUrl: fileUrl,
           courseId: course._id,
@@ -370,7 +386,7 @@ export const updateFeedbackInChat = mutationWithAuth({
       // schedule the action to generate feedback
       await ctx.scheduler.runAfter(
         0,
-        internal.feedback.generateUpdateMessages,
+        internal.superassistant.feedback.generateUpdateMessages,
         {
           fileUrl: fileUrl,
           courseId: course._id,
@@ -466,9 +482,13 @@ export const deleteFeedback = mutationWithAuth({
       await ctx.storage.delete(image);
     }
 
-    await ctx.scheduler.runAfter(0, internal.feedbackmessages.deleteMessages, {
-      feedbackId: feedback._id,
-    });
+    await ctx.scheduler.runAfter(
+      0,
+      internal.superassistant.feedbackMessages.deleteMessages,
+      {
+        feedbackId: feedback._id,
+      },
+    );
 
     await ctx.db.delete(id);
   },

@@ -4,11 +4,11 @@ import {
   MutationCtx,
   internalAction,
   internalQuery,
-} from "./_generated/server";
+} from "../_generated/server";
 import { ConvexError, v } from "convex/values";
-import { Session, queryWithAuth, mutationWithAuth } from "./auth/withAuth";
-import { Id } from "./_generated/dataModel";
-import { internal } from "./_generated/api";
+import { Session, queryWithAuth, mutationWithAuth } from "../auth/withAuth";
+import { Id } from "../_generated/dataModel";
+import { internal } from "../_generated/api";
 import OpenAI from "openai";
 
 async function getAttemptIfAuthorized(
@@ -243,7 +243,7 @@ async function sendMessageController(
 
   ctx.scheduler.runAfter(
     0,
-    internal.feedbackmessages.answerChatCompletionsApi,
+    internal.superassistant.feedbackMessages.answerChatCompletionsApi,
     {
       feedbackId,
       userMessageId,
@@ -348,7 +348,7 @@ export const answerChatCompletionsApi = internalAction({
     const openai = new OpenAI();
 
     const messages = await ctx.runQuery(
-      internal.feedbackmessages.generateTranscriptMessages,
+      internal.superassistant.feedbackMessages.generateTranscriptMessages,
       {
         feedbackId,
       },
@@ -369,34 +369,43 @@ export const answerChatCompletionsApi = internalAction({
       );
     } catch (err) {
       console.error("Can’t create a completion", err);
-      await ctx.runMutation(internal.feedbackmessages.writeSystemResponse, {
-        feedbackId,
-        userMessageId,
-        assistantMessageId,
-        appearance: "error",
-        content: "",
-      });
+      await ctx.runMutation(
+        internal.superassistant.feedbackMessages.writeSystemResponse,
+        {
+          feedbackId,
+          userMessageId,
+          assistantMessageId,
+          appearance: "error",
+          content: "",
+        },
+      );
       return;
     }
 
     const message = response.choices[0].message;
     if (!message.content) {
       console.error("No content in the response", message);
-      await ctx.runMutation(internal.feedbackmessages.writeSystemResponse, {
-        feedbackId,
-        userMessageId,
-        assistantMessageId,
-        appearance: "error",
-        content: "",
-      });
+      await ctx.runMutation(
+        internal.superassistant.feedbackMessages.writeSystemResponse,
+        {
+          feedbackId,
+          userMessageId,
+          assistantMessageId,
+          appearance: "error",
+          content: "",
+        },
+      );
     } else {
-      await ctx.runMutation(internal.feedbackmessages.writeSystemResponse, {
-        feedbackId,
-        userMessageId,
-        assistantMessageId,
-        appearance: undefined,
-        content: message.content,
-      });
+      await ctx.runMutation(
+        internal.superassistant.feedbackMessages.writeSystemResponse,
+        {
+          feedbackId,
+          userMessageId,
+          assistantMessageId,
+          appearance: undefined,
+          content: message.content,
+        },
+      );
     }
   },
 });
