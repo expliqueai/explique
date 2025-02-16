@@ -15,7 +15,7 @@ import { Modal } from "@/components/Modal";
 import { toast } from "sonner";
 
 export default function Chat({ chatId }: { chatId: Id<"chats"> }) {
-  const chat = useQuery(api.superAssistant.chatMessages.list, { chatId });
+  const chat = useQuery(api.superassistant.chatMessages.list, { chatId });
 
   useEffect(() => {
     setTimeout(() => {
@@ -106,10 +106,10 @@ function ReportMessage({
   isReported: boolean;
 }) {
   const reportMessage = useMutation(
-    api.superAssistant.chatMessages.reportMessage,
+    api.superassistant.chatMessages.reportMessage,
   );
   const unreportMessage = useMutation(
-    api.superAssistant.chatMessages.unreportMessage,
+    api.superassistant.chatMessages.unreportMessage,
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reason, setReason] = useState("");
