@@ -94,7 +94,7 @@ export const built = queryWithAuth({
   args: {
     courseSlug: v.string(),
   },
-  handler: async ({ db, session, storage }, { courseSlug }) => {
+  handler: async ({ db, session }, { courseSlug }) => {
     const { course } = await getCourseRegistration(
       db,
       session,
