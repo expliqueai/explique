@@ -281,8 +281,7 @@ function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const updateFeedback = useMutation(api.feedback.updateFeedback);
-  const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
-  const { startUpload } = useUploadFiles(generateUploadUrl);
+  const { startUpload } = useUploadFiles();
   const name = useQuery(api.feedback.getName, { feedbackId });
   const [newName, setNewName] = useState(name || "");
   const router = useRouter();
@@ -948,8 +947,7 @@ function SuperAssistant() {
   const [statement, setStatement] = useState("");
   const router = useRouter();
   const generateFeedback = useMutation(api.feedback.generateFeedback);
-  const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
-  const { startUpload } = useUploadFiles(generateUploadUrl);
+  const { startUpload } = useUploadFiles();
   const generateChat = useMutation(api.superassistant.chat.generateChat);
   const [feedbackName, setFeedbackName] = useState("");
   const weeks = useQuery(api.admin.sadatabase.getWeeks, { courseSlug });

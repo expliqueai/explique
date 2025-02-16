@@ -168,8 +168,7 @@ function EditWeek({ fileId }: { fileId: Id<"saDatabase"> }) {
 function UploadFile({}: {}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const uploadFile = useMutation(api.admin.sadatabase.uploadFile);
-  const generateUploadUrl = useMutation(api.admin.sadatabase.generateUploadUrl);
-  const { startUpload } = useUploadFiles(generateUploadUrl);
+  const { startUpload } = useUploadFiles();
   const [week, setWeek] = useState("");
   const courseSlug = useCourseSlug();
   const [file, setFile] = useState<File | null>(null);
@@ -329,7 +328,6 @@ function UploadFile({}: {}) {
 
 function OpenFile({ filename }: { filename: string }) {
   const courseSlug = useCourseSlug();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const url = useQuery(api.admin.sadatabase.getUrl, {
     courseSlug: courseSlug,
     name: filename,

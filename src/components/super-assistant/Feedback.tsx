@@ -229,8 +229,7 @@ function NewMessage({
   const [message, setMessage] = useState("");
   const [isNewAttemptModalOpen, setIsNewAttemptModalOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
-  const { startUpload } = useUploadFiles(generateUploadUrl);
+  const { startUpload } = useUploadFiles();
   const updateFeedback = useMutation(api.feedback.updateFeedbackInChat);
 
   function autoResizeTextarea() {
