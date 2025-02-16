@@ -1,9 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import {
-  queryWithAuth,
-  mutationWithAuth,
-  actionWithAuth,
-} from "./auth/withAuth";
+import { queryWithAuth, mutationWithAuth } from "./auth/withAuth";
 import { getCourseRegistration } from "./courses";
 import OpenAI from "openai";
 import { internalAction } from "./_generated/server";
