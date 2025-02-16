@@ -2,6 +2,7 @@ import clsx from "clsx";
 import Markdown from "./Markdown";
 import Instruction from "./Instruction";
 import ReportMessage, { ReportMessageProps } from "./ReportMessage";
+import React from "react";
 
 type ChatBubbleProps = {
   author: "user" | "system";
@@ -37,7 +38,7 @@ export default function ChatBubble({
   );
 }
 
-function ChatBubbleContents({
+const ChatBubbleContents = React.memo(function ChatBubbleContents({
   contents,
   isSystem,
 }: {
@@ -68,4 +69,4 @@ function ChatBubbleContents({
       className={isSystem ? undefined : "text-white"}
     />
   );
-}
+});
