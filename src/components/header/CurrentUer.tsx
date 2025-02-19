@@ -1,11 +1,13 @@
-import { useRouter } from "next/navigation";
-import { useCourseSlug } from "@/hooks/useCourseSlug";
-import { useEffect } from "react";
-import { useQuery } from "@/usingSession";
-import { api } from "../../convex/_generated/api";
-import { useIdentity } from "./SessionProvider";
+"use client";
 
-export function CurrentUser() {
+import { api } from "../../../convex/_generated/api";
+import { useQuery } from "@/usingSession";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useIdentity } from "@/components/SessionProvider";
+import { useCourseSlug } from "@/hooks/useCourseSlug";
+
+export default function CurrentUser() {
   const router = useRouter();
   const courseSlug = useCourseSlug();
   const user = useQuery(api.courses.getRegistration, { courseSlug });

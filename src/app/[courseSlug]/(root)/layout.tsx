@@ -4,12 +4,8 @@ import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { useQuery } from "@/usingSession";
 import { api } from "../../../../convex/_generated/api";
 import { TabBar } from "@/components/TabBar";
-import Login from "@/components/header/Login";
+import CurrentUser from "@/components/header/CurrentUer";
 import CourseSelector from "@/components/header/CourseSelector";
-
-function isDefined<T>(argument: T | false): argument is T {
-  return argument !== false;
-}
 
 export default function CourseLayout({
   children,
@@ -28,7 +24,7 @@ export default function CourseLayout({
               <div className="flex-1 text-3xl tracking-tight font-medium select-none cursor-default my-2">
                 explique.ai
               </div>
-              <Login />
+              <CurrentUser />
             </div>
 
             <div className="bg-white shadow-[0_-20px_40px_-12px_rgb(0_0_0_/_0.1)] rounded-t-2xl p-2 sm:p-8 md:p-14 w-full max-w-2xl mx-auto mt-8">
@@ -61,4 +57,8 @@ export default function CourseLayout({
       </div>
     </>
   );
+}
+
+function isDefined<T>(argument: T | false): argument is T {
+  return argument !== false;
 }
