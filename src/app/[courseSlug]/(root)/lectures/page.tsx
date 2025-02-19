@@ -82,24 +82,3 @@ function ProjectGridSkeleton() {
     </div>
   );
 }
-
-function Deadline({
-  timestamp,
-  red = false,
-}: {
-  timestamp: number;
-  red?: boolean;
-}) {
-  return (
-    <>
-      <strong
-        className={clsx("font-medium", red ? "text-red-800" : "text-gray-800")}
-      >
-        {formatTimestampHumanFormat(timestamp)}
-      </strong>
-      {Date.now() < timestamp && (
-        <span> ({timeFromNow(new Date(timestamp))})</span>
-      )}
-    </>
-  );
-}
