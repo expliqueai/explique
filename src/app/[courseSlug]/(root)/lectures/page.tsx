@@ -47,7 +47,7 @@ function ProjectGrid() {
               {week.lectures.map((lecture) => (
                 <ImageLink
                   key={lecture.id}
-                  href={`/lecture/${lecture.id}`}
+                  href={`/${courseSlug}/v/${lecture.id}`}
                   name={lecture.name}
                   image={lecture.image}
                 />
