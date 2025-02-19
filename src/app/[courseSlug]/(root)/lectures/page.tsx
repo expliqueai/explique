@@ -1,9 +1,8 @@
 "use client";
 
 import { api } from "../../../../../convex/_generated/api";
-import clsx from "clsx";
 import { useQuery } from "@/usingSession";
-import { formatTimestampHumanFormat, timeFromNow } from "@/util/date";
+import { formatTimestampHumanFormat } from "@/util/date";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { ImageLink } from "@/components/ImageLink";
 
