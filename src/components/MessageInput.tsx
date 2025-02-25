@@ -1,26 +1,40 @@
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
+import * as Sentry from "@sentry/nextjs";
 
 export default function MessageInput({
   onSend,
+  scroll,
 }: {
   onSend: (message: string) => void;
+  scroll: "body" | "parent";
 }) {
   const [message, setMessage] = useState("");
 
   function autoResizeTextarea() {
     if (!textareaRef.current || !paddingRef.current) return;
 
-    const isDocumentScrolledToBottom =
-      window.innerHeight + window.scrollY >= document.body.scrollHeight;
+    const scrollableElement =
+      scroll === "body" ? document.body : paddingRef.current.parentElement;
+    if (!scrollableElement) {
+      Sentry.captureMessage("Missing scrollable element");
+      return;
+    }
+
+    const isScrolledToBottom =
+      Math.abs(
+        scrollableElement.clientHeight +
+          scrollableElement.scrollTop -
+          scrollableElement.scrollHeight,
+      ) < 1;
 
     textareaRef.current.style.height = "0";
     const newHeight = Math.min(500, textareaRef.current.scrollHeight) + "px";
     textareaRef.current.style.height = newHeight;
     paddingRef.current.style.height = newHeight;
 
-    if (isDocumentScrolledToBottom) {
-      window.scrollTo({ top: document.body.scrollHeight });
+    if (isScrolledToBottom) {
+      scrollableElement.scrollTo({ top: scrollableElement.scrollHeight });
     }
   }
 

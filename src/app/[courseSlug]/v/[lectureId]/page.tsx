@@ -55,7 +55,7 @@ export default function VideoPage() {
       <div className="xl:min-w-[65ch] rounded-xl bg-blue-100 h-full [transform:translateZ(0)]">
         <div className="overflow-y-auto flex flex-col gap-6 h-full p-4">
           {chat?.messages.map((m) => <ChatMessage key={m.id} {...m} />)}
-          <MessageInput onSend={handleSend} />
+          <MessageInput onSend={handleSend} scroll="parent" />
         </div>
       </div>
     </div>
