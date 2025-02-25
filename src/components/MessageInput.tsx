@@ -46,7 +46,7 @@ export default function MessageInput({
 
   return (
     <>
-      <div className="box-content h-[60px] pt-4" ref={paddingRef} />
+      <div className="box-content h-[60px] pt-4 shrink-0" ref={paddingRef} />
       <form
         className="fixed bottom-2 left-2 flex w-[calc(100%-1rem)] shadow-xl rounded-xl"
         onSubmit={(e) => {
