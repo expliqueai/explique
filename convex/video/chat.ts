@@ -129,6 +129,12 @@ export const sendMessage = mutationWithAuth({
       throw new ConvexError("Chat not initialized");
     }
 
+    await ctx.db.insert("lectureChatMessages", {
+      lectureChatId: chat._id,
+      content: args.message,
+      system: false,
+    });
+
     const systemMessageId = await ctx.db.insert("lectureChatMessages", {
       lectureChatId: chat._id,
       content: "",
