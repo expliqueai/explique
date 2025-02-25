@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import ReactPlayer from "react-player/file";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "@/usingSession";
@@ -35,6 +35,17 @@ export default function VideoPage() {
   );
 
   const playerRef = useRef<ReactPlayer>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTo({
+          top: scrollRef.current.scrollHeight,
+        });
+      }
+    }, 0);
+  }, [chat?.messages]);
 
   return (
     <div className="flex flex-col xl:flex-row h-screen p-4 xl:p-8 space-y-4 xl:space-y-0 xl:space-x-8">
@@ -53,7 +64,10 @@ export default function VideoPage() {
 
       {/* use translateZ(0) to reset the fixed positioning of the chat */}
       <div className="xl:min-w-[65ch] rounded-xl bg-blue-100 h-full [transform:translateZ(0)]">
-        <div className="overflow-y-auto flex flex-col gap-6 h-full p-4">
+        <div
+          ref={scrollRef}
+          className="overflow-y-auto flex flex-col gap-6 h-full p-4"
+        >
           {chat?.messages.map((m) => <ChatMessage key={m.id} {...m} />)}
           <MessageInput onSend={handleSend} scroll="parent" />
         </div>
