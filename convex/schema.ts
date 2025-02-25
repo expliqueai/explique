@@ -20,6 +20,7 @@ export const lectureAdminSchema = {
 export const lectureSchema = {
   ...lectureAdminSchema,
   status: LECTURE_STATUS,
+  assistantId: v.optional(v.string()), // OpenAI assistant ID (set once the lecture is created)
   chunks: v.array(
     v.object({
       start: v.number(),
@@ -127,6 +128,19 @@ export default defineSchema(
     }).index("by_week_id", ["weekId"]),
 
     lectures: defineTable(lectureSchema).index("by_week_id", ["weekId"]),
+
+    lectureChats: defineTable({
+      lectureId: v.id("lectures"),
+      userId: v.id("users"),
+      threadId: v.string(), // OpenAI assistant thread ID
+    }).index("by_lecture_and_user", ["lectureId", "userId"]),
+
+    lectureChatMessages: defineTable({
+      lectureChatId: v.id("lectureChats"),
+      system: v.boolean(),
+      content: v.string(),
+      appearance: v.optional(v.union(v.literal("typing"), v.literal("error"))),
+    }).index("by_lecture_chat_id", ["lectureChatId"]),
 
     images: defineTable({
       storageId: v.id("_storage"),
