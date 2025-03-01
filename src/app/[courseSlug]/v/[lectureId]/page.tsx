@@ -3,16 +3,16 @@
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useRef } from "react";
 import ReactPlayer from "react-player/file";
-import { Id } from "../../../../../convex/_generated/dataModel";
+import type { Id } from "../../../../../convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "@/usingSession";
 import { api } from "../../../../../convex/_generated/api";
 import ChatBubble from "@/components/ChatBubble";
+import ActivityHeader from "@/components/ActivityHeader";
 import MessageInput from "@/components/MessageInput";
 
 export default function VideoPage() {
   const params = useParams();
   const lectureId = params.lectureId as Id<"lectures">;
-
   const chat = useQuery(api.video.chat.get, {
     lectureId,
   });
@@ -20,16 +20,13 @@ export default function VideoPage() {
 
   const initializeChat = useAction(api.video.chat.initializeChat);
   const send = useMutation(api.video.chat.sendMessage);
+
   const handleSend = useCallback(
     async (message: string) => {
       if (!hasThread) {
         await initializeChat({ lectureId });
       }
-
-      await send({
-        lectureId,
-        message,
-      });
+      await send({ lectureId, message });
     },
     [send, initializeChat, lectureId, hasThread],
   );
@@ -38,38 +35,36 @@ export default function VideoPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setTimeout(() => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollTo({
-          top: scrollRef.current.scrollHeight,
-        });
-      }
-    }, 0);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [chat?.messages]);
 
   return (
-    <div className="flex flex-col xl:flex-row h-screen p-4 xl:p-8 space-y-4 xl:space-y-0 xl:space-x-8">
-      <div className="xl:flex-1">
-        <div className="overflow-hidden rounded-xl shadow-lg relative">
+    <div className="flex flex-col h-screen overflow-hidden">
+      <ActivityHeader goBackTo={"/"} title={"Video player"} />
+      {/* Main content container - changed to row layout */}
+      <div className="flex flex-col lg:flex-row p-6 gap-2 h-full">
+        {/* Video Player Section with rounded corners */}
+        <div className="relative w-full rounded-xl overflow-hidden bg-black">
           <ReactPlayer
             ref={playerRef}
             url="https://streaming.cast.switch.ch/hls/p/113/sp/11300/serveFlavor/entryId/0_tfx5i6lk/v/2/ev/3/flavorId/0_mb7mr3wa/name/a.mp4/index.m3u8"
-            style={{ aspectRatio: "16 / 9" }}
-            controls
             width="100%"
             height="100%"
+            controls
           />
         </div>
-      </div>
 
-      {/* use translateZ(0) to reset the fixed positioning of the chat */}
-      <div className="xl:min-w-[65ch] rounded-xl bg-blue-100 h-full [transform:translateZ(0)]">
-        <div
-          ref={scrollRef}
-          className="overflow-y-auto flex flex-col gap-6 h-full p-4"
-        >
-          {chat?.messages.map((m) => <ChatMessage key={m.id} {...m} />)}
-          <MessageInput onSend={handleSend} scroll="parent" />
+        {/* Chat Section - adjusted to be next to video on larger screens */}
+        <div className="w-full lg:w-1/3 border rounded-xl lg:ml-4 h-1/2 lg:h-full [transform:translateZ(0)]">
+          <div
+            ref={scrollRef}
+            className="overflow-y-auto flex flex-col gap-6 h-full p-4"
+          >
+            {chat?.messages.map((m) => <ChatMessage key={m.id} {...m} />)}
+            <MessageInput onSend={handleSend} scroll="parent" />
+          </div>
         </div>
       </div>
     </div>

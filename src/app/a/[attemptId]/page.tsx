@@ -11,87 +11,93 @@ import { useState } from "react";
 import Tooltip from "@/components/Tooltip";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
-import ActivityLayout from "@/components/ActivityLayout";
+import ActivityHeader from "@/components/ActivityHeader";
 
 export default function Page({ params }: { params: { attemptId: string } }) {
   const attemptId = params.attemptId as Id<"attempts">;
-
   const metadata = useQuery(api.attempts.get, { id: attemptId });
 
   return (
-    <ActivityLayout
-      courseSlug={metadata?.courseSlug}
-      title={metadata?.exerciseName}
-      action={
-        metadata &&
-        ((metadata.status === "exercise" && metadata.text === null) ||
-          metadata.isAdmin) &&
-        !metadata.isDue && <RestartButton exerciseId={metadata.exerciseId} />
-      }
-    >
-      {metadata && (
-        <>
-          {!metadata.isSolutionShown &&
-            (metadata.quiz ? (
-              <QuizExercise
-                attemptId={attemptId}
-                questions={metadata.quiz}
-                lastSubmission={metadata.lastQuizSubmission}
-                succeeded={metadata.status === "quizCompleted"}
-                isDue={metadata.isDue}
-              />
-            ) : metadata.text ? (
-              <ReadingExercise
-                text={metadata.text}
-                attemptId={attemptId}
-                nextButton={metadata.isDue ? "disable" : "show"}
-              />
-            ) : (
-              <ExplainExercise
-                hasQuiz={metadata.hasQuiz}
-                writeDisabled={metadata.status !== "exercise" || metadata.isDue}
-                attemptId={attemptId}
-                nextButton={metadata.isDue ? "disable" : "show"}
-                succeeded={metadata.status === "quizCompleted"}
-              />
-            ))}
-
-          {metadata.isSolutionShown && (
-            <>
-              {metadata.text ? (
+    <div className="p-6">
+      <div className="max-w-xl mx-auto">
+        <ActivityHeader
+          goBackTo={metadata?.courseSlug + "/lectures"}
+          title={metadata?.exerciseName}
+          action={
+            metadata &&
+            ((metadata.status === "exercise" && metadata.text === null) ||
+              metadata.isAdmin) &&
+            !metadata.isDue && (
+              <RestartButton exerciseId={metadata.exerciseId} />
+            )
+          }
+        />
+        {metadata && (
+          <>
+            {!metadata.isSolutionShown &&
+              (metadata.quiz ? (
+                <QuizExercise
+                  attemptId={attemptId}
+                  questions={metadata.quiz}
+                  lastSubmission={metadata.lastQuizSubmission}
+                  succeeded={metadata.status === "quizCompleted"}
+                  isDue={metadata.isDue}
+                />
+              ) : metadata.text ? (
                 <ReadingExercise
                   text={metadata.text}
                   attemptId={attemptId}
-                  nextButton="hide"
+                  nextButton={metadata.isDue ? "disable" : "show"}
                 />
               ) : (
                 <ExplainExercise
                   hasQuiz={metadata.hasQuiz}
-                  writeDisabled
+                  writeDisabled={
+                    metadata.status !== "exercise" || metadata.isDue
+                  }
                   attemptId={attemptId}
-                  nextButton="hide"
+                  nextButton={metadata.isDue ? "disable" : "show"}
                   succeeded={metadata.status === "quizCompleted"}
                 />
-              )}
+              ))}
 
-              {metadata.hasQuiz && (
-                <>
-                  <hr className="mx-8 my-12" />
-
-                  <QuizExercise
+            {metadata.isSolutionShown && (
+              <>
+                {metadata.text ? (
+                  <ReadingExercise
+                    text={metadata.text}
                     attemptId={attemptId}
-                    questions={metadata.quiz!}
-                    lastSubmission={metadata.lastQuizSubmission}
-                    succeeded={metadata.status === "quizCompleted"}
-                    isDue={metadata.isDue}
+                    nextButton="hide"
                   />
-                </>
-              )}
-            </>
-          )}
-        </>
-      )}
-    </ActivityLayout>
+                ) : (
+                  <ExplainExercise
+                    hasQuiz={metadata.hasQuiz}
+                    writeDisabled
+                    attemptId={attemptId}
+                    nextButton="hide"
+                    succeeded={metadata.status === "quizCompleted"}
+                  />
+                )}
+
+                {metadata.hasQuiz && (
+                  <>
+                    <hr className="mx-8 my-12" />
+
+                    <QuizExercise
+                      attemptId={attemptId}
+                      questions={metadata.quiz!}
+                      lastSubmission={metadata.lastQuizSubmission}
+                      succeeded={metadata.status === "quizCompleted"}
+                      isDue={metadata.isDue}
+                    />
+                  </>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 

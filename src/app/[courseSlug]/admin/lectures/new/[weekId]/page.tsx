@@ -10,6 +10,7 @@ import Title from "@/components/typography";
 import { toast } from "sonner";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { useAdminIdentity } from "@/hooks/useAdminIdentity";
+import ReactPlayer from "react-player";
 
 export default function NewLecture() {
   const router = useRouter();
@@ -32,6 +33,11 @@ export default function NewLecture() {
             url: "",
           }}
           onSubmit={async (state) => {
+            if (!ReactPlayer.canPlay(state.url)) {
+              toast.error("Invalid video URL.");
+              return;
+            }
+
             const lectureId = await create({
               courseSlug,
               lecture: {
