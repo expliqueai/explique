@@ -245,6 +245,11 @@ export const processVideo = internalAction({
         lectureId,
         status: "READY",
       });
+
+      await ctx.runMutation(internal.admin.lectures.setAssistantId, {
+        lectureId,
+        assistantId: "gpt-4o",
+      });
     } catch (error) {
       // Set lecture status to error if something goes wrong
       await ctx.runMutation(internal.admin.lectures.setProcessingStatus, {
@@ -265,6 +270,16 @@ export const setProcessingStatus = internalMutation({
   },
   handler: async (ctx, { lectureId, status }) => {
     return await ctx.db.patch(lectureId, { status: status });
+  },
+});
+
+export const setAssistantId = internalMutation({
+  args: {
+    lectureId: v.id("lectures"),
+    assistantId: v.string(),
+  },
+  handler: async (ctx, { lectureId, assistantId }) => {
+    return await ctx.db.patch(lectureId, { assistantId });
   },
 });
 
