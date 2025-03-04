@@ -3,10 +3,8 @@ import { v } from "convex/values";
 
 export const LECTURE_STATUS = v.union(
   v.literal("NOT_STARTED"),
-  v.literal("DOWNLOADING"),
-  v.literal("PREPROCESSING"),
   v.literal("PROCESSING"),
-  v.literal("DONE"),
+  v.literal("READY"),
   v.literal("FAILED"),
 );
 
@@ -21,13 +19,7 @@ export const lectureSchema = {
   ...lectureAdminSchema,
   status: LECTURE_STATUS,
   assistantId: v.optional(v.string()), // OpenAI assistant ID (set once the lecture is created)
-  chunks: v.array(
-    v.object({
-      start: v.number(),
-      duration: v.number(),
-      content: v.string(),
-    }),
-  ),
+  chunks: v.array(v.string()),
 };
 
 export const exerciseAdminSchema = {

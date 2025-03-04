@@ -38,7 +38,7 @@ export default function NewLecture() {
               return;
             }
 
-            const lectureId = await create({
+            await create({
               courseSlug,
               lecture: {
                 ...toConvexState(state),
@@ -48,31 +48,7 @@ export default function NewLecture() {
             });
 
             toast.success("Lecture created successfully.");
-
-            // const response = await fetch("/api/admin/processVideo", {
-            //   method: "POST",
-            //   headers: {
-            //     "Content-Type": "application/json",
-            //     Authorization: `Bearer ${jwt}`,
-            //   },
-            //   body: JSON.stringify({
-            //     courseSlug,
-            //     lectureId,
-            //     lectureUrl: encodeURIComponent(state.url),
-            //   }),
-            // });
-
-            // if (!response.ok) {
-            //   toast.error(
-            //     "Failed to start processing the lecture. Please report this issue.",
-            //   );
-            // } else {
-            //   toast.info(
-            //     "The lecture is being processed. It will be available soon.",
-            //   );
-            // }
-
-            // TODO: Start video processing
+            toast.info("The video processing will start soon.");
 
             router.push(`/${courseSlug}/admin/lectures`);
           }}

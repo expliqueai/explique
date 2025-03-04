@@ -6,7 +6,7 @@ import {
   internalQuery,
 } from "../_generated/server";
 import { internal } from "../_generated/api";
-import { lectureSchema } from "../schema";
+import { LECTURE_STATUS, lectureSchema } from "../schema";
 import {
   actionWithAuth,
   mutationWithAuth,
@@ -163,7 +163,125 @@ export const create = actionWithAuth({
       throw new ConvexError("Invalid week");
     }
 
-    return await ctx.runAction(internal.admin.lectures.createInternal, lecture);
+    const id = await ctx.runAction(
+      internal.admin.lectures.createInternal,
+      lecture,
+    );
+
+    ctx.scheduler.runAfter(0, internal.admin.lectures.processVideo, {
+      lectureId: id,
+      ...lecture,
+    });
+
+    return id;
+  },
+});
+
+export const processVideo = internalAction({
+  args: {
+    lectureId: v.id("lectures"),
+    ...lectureSchema,
+  },
+  handler: async (ctx, { lectureId, url }) => {
+    if (!url) {
+      throw new ConvexError("No URL provided for the lecture video");
+    }
+
+    try {
+      // Check for the processing URL environment variable
+      const processingUrl = process.env.LECTURES_PROCESSING_URL;
+      if (!processingUrl) {
+        await ctx.runMutation(internal.admin.lectures.setProcessingStatus, {
+          lectureId,
+          status: "FAILED",
+        });
+        throw new Error(
+          "LECTURES_PROCESSING_URL environment variable is not configured",
+        );
+      }
+
+      // Set lecture status to processing
+      await ctx.runMutation(internal.admin.lectures.setProcessingStatus, {
+        lectureId,
+        status: "PROCESSING",
+      });
+
+      const response = await fetch(processingUrl, {
+        method: "POST",
+        body: JSON.stringify({ url }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok || !response.body) {
+        await ctx.runMutation(internal.admin.lectures.setProcessingStatus, {
+          lectureId,
+          status: "FAILED",
+        });
+        throw new Error(`Failed to fetch video: ${response.statusText}`);
+      }
+
+      // Process the streamed response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        // Convert the chunk to text and add it to the video
+        const chunk = decoder.decode(value);
+        await ctx.runMutation(internal.admin.lectures.addChunkToVideo, {
+          lectureId,
+          chunk,
+        });
+      }
+
+      // Set lecture status to ready when done
+      await ctx.runMutation(internal.admin.lectures.setProcessingStatus, {
+        lectureId,
+        status: "READY",
+      });
+    } catch (error) {
+      // Set lecture status to error if something goes wrong
+      await ctx.runMutation(internal.admin.lectures.setProcessingStatus, {
+        lectureId,
+        status: "FAILED",
+      });
+
+      console.error("Error processing video:", error);
+      throw error;
+    }
+  },
+});
+
+export const setProcessingStatus = internalMutation({
+  args: {
+    lectureId: v.id("lectures"),
+    status: LECTURE_STATUS,
+  },
+  handler: async (ctx, { lectureId, status }) => {
+    return await ctx.db.patch(lectureId, { status: status });
+  },
+});
+
+export const addChunkToVideo = internalMutation({
+  args: {
+    lectureId: v.id("lectures"),
+    chunk: v.string(),
+  },
+  handler: async (ctx, { lectureId, chunk }) => {
+    const lecture = await ctx.db.get(lectureId);
+    if (!lecture) {
+      throw new ConvexError("Lecture not found");
+    }
+
+    return await ctx.db.patch(lectureId, {
+      chunks: [...(lecture.chunks || []), chunk],
+    });
   },
 });
 

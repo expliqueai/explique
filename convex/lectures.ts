@@ -6,7 +6,7 @@ import { Doc, Id } from "./_generated/dataModel";
 import { StorageReader } from "convex/server";
 import { LECTURE_STATUS, lectureAdminSchema, lectureSchema } from "./schema";
 
-export const get = query({
+export const get = queryWithAuth({
   args: {
     id: v.id("lectures"),
     // token: v.string(),

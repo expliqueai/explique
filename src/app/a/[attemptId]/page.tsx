@@ -21,7 +21,7 @@ export default function Page({ params }: { params: { attemptId: string } }) {
     <div className="p-6">
       <div className="max-w-xl mx-auto">
         <ActivityHeader
-          goBackTo={metadata?.courseSlug + "/lectures"}
+          goBackTo={metadata?.courseSlug}
           title={metadata?.exerciseName}
           action={
             metadata &&
