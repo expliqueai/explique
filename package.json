@@ -25,7 +25,7 @@
     "better-sqlite3": "^9.4.3",
     "chance": "^1.1.11",
     "clsx": "^2.0.0",
-    "convex": "^1.15.0",
+    "convex": "^1.19.5",
     "crypto-js": "^4.2.0",
     "drizzle-orm": "^0.30.2",
     "jsrsasign": "^11.1.0",
