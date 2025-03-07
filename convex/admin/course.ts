@@ -3,7 +3,6 @@ import { mutationWithAuth, queryWithAuth } from "../auth/withAuth";
 import { getCourseRegistration } from "../courses";
 import slugify from "@sindresorhus/slugify";
 import { DatabaseReader } from "../_generated/server";
-import { generate } from "./image";
 import { Id } from "../_generated/dataModel";
 
 export const get = queryWithAuth({
