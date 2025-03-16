@@ -44,20 +44,26 @@ export default internalAction({
       // Check for the processing URL environment variable
       const processingUrl = process.env.LECTURES_PROCESSING_URL;
       if (!processingUrl) {
-        await ctx.runMutation(internal.admin.lectures.setProcessingStatus, {
-          lectureId,
-          status: "FAILED",
-        });
+        await ctx.runMutation(
+          internal.admin.videoProcessing.setProcessingStatus,
+          {
+            lectureId,
+            status: "FAILED",
+          },
+        );
         throw new Error(
           "LECTURES_PROCESSING_URL environment variable is not configured",
         );
       }
 
       // Set lecture status to processing
-      await ctx.runMutation(internal.admin.lectures.setProcessingStatus, {
-        lectureId,
-        status: "PROCESSING",
-      });
+      await ctx.runMutation(
+        internal.admin.videoProcessing.setProcessingStatus,
+        {
+          lectureId,
+          status: "PROCESSING",
+        },
+      );
 
       const response = await fetch(processingUrl, {
         method: "POST",
@@ -97,10 +103,13 @@ export default internalAction({
       }
 
       // Set lecture status to ready when done
-      await ctx.runMutation(internal.admin.lectures.setProcessingStatus, {
-        lectureId,
-        status: "READY",
-      });
+      await ctx.runMutation(
+        internal.admin.videoProcessing.setProcessingStatus,
+        {
+          lectureId,
+          status: "READY",
+        },
+      );
 
       const openai = new OpenAI();
       const assistant = await openai.beta.assistants.create({
