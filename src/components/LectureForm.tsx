@@ -81,7 +81,7 @@ export default function LectureForm({
         />
       )}
 
-      <Input label="Youtube URL" value={url} onChange={setUrl} required />
+      <Input label="Video file URL" value={url} onChange={setUrl} required />
 
       {/* {lectureId && (
         <ThumbnailPicker
