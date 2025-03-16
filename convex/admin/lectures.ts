@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import {
+  action,
   ActionCtx,
   internalAction,
   internalMutation,
@@ -198,7 +199,7 @@ export const create = actionWithAuth({
 
     await ctx.scheduler.runAfter(0, internal.admin.lectures.processVideo, {
       lectureId: id,
-      ...lecture,
+      url: lecture.url,
     });
 
     return id;
@@ -255,7 +256,7 @@ export const processVideo = internalAction({
   },
 });
 
-export const createAssistant = mutation({
+export const createAssistant = action({
   args: {
     lectureId: v.id("lectures"),
     authToken: v.string(),
@@ -265,18 +266,37 @@ export const createAssistant = mutation({
       throw new ConvexError("Invalid authentification token");
     }
 
-    const lecture = await ctx.db.get(lectureId);
-    if (!lecture) {
-      throw new ConvexError("Lecture not found");
+    const chunks = await ctx.runQuery(internal.admin.lectures.getChunks, {
+      lectureId,
+    });
+    if (!chunks) {
+      throw new ConvexError("Lecture chunks not found");
     }
 
     const openai = new OpenAI();
     const assistant = await openai.beta.assistants.create({
-      instructions: SYSTEM_PROMPT + lecture.chunks.join("\n"),
+      instructions: SYSTEM_PROMPT + chunks.join("\n"),
       model: "gpt-4o",
     });
 
-    return await ctx.db.patch(lectureId, { assistantId: assistant.id });
+    await ctx.runMutation(api.admin.lectures.setAssistantId, {
+      lectureId,
+      assistantId: assistant.id,
+      authToken,
+    });
+  },
+});
+
+export const getChunks = internalQuery({
+  args: {
+    lectureId: v.id("lectures"),
+  },
+  handler: async (ctx, { lectureId }) => {
+    const lecture = await ctx.db.get(lectureId);
+    if (!lecture) {
+      throw new ConvexError("Lecture not found");
+    }
+    return lecture.chunks || [];
   },
 });
 
