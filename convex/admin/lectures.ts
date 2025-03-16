@@ -195,7 +195,7 @@ export const create = actionWithAuth({
       lecture,
     );
 
-    ctx.scheduler.runAfter(0, internal.admin.lectures.processVideo, {
+    await ctx.scheduler.runAfter(0, internal.admin.lectures.processVideo, {
       lectureId: id,
       ...lecture,
     });
