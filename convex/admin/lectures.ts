@@ -4,8 +4,9 @@ import {
   internalAction,
   internalMutation,
   internalQuery,
+  mutation,
 } from "../_generated/server";
-import { internal } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { LECTURE_STATUS, lectureSchema } from "../schema";
 import {
   actionWithAuth,
@@ -237,14 +238,16 @@ export const processVideo = internalAction({
         );
       }
 
-      await ctx.runMutation(internal.admin.lectures.setStatus, {
+      await ctx.runMutation(api.admin.lectures.setStatus, {
         lectureId,
         status: "PROCESSING",
+        authToken: process.env.VIDEO_PROCESSING_API_TOKEN!,
       });
     } catch (error) {
-      await ctx.runMutation(internal.admin.lectures.setStatus, {
+      await ctx.runMutation(api.admin.lectures.setStatus, {
         lectureId,
         status: "FAILED",
+        authToken: process.env.VIDEO_PROCESSING_API_TOKEN!,
       });
 
       throw error;
@@ -252,11 +255,16 @@ export const processVideo = internalAction({
   },
 });
 
-export const createAssistant = internalMutation({
+export const createAssistant = mutation({
   args: {
     lectureId: v.id("lectures"),
+    authToken: v.string(),
   },
-  handler: async (ctx, { lectureId }) => {
+  handler: async (ctx, { lectureId, authToken }) => {
+    if (authToken !== process.env.VIDEO_PROCESSING_API_TOKEN) {
+      throw new ConvexError("Invalid authentification token");
+    }
+
     const lecture = await ctx.db.get(lectureId);
     if (!lecture) {
       throw new ConvexError("Lecture not found");
@@ -272,32 +280,47 @@ export const createAssistant = internalMutation({
   },
 });
 
-export const setAssistantId = internalMutation({
+export const setAssistantId = mutation({
   args: {
     lectureId: v.id("lectures"),
     assistantId: v.string(),
+    authToken: v.string(),
   },
-  handler: async (ctx, { lectureId, assistantId }) => {
+  handler: async (ctx, { lectureId, assistantId, authToken }) => {
+    if (authToken !== process.env.VIDEO_PROCESSING_API_TOKEN) {
+      throw new ConvexError("Invalid authentification token");
+    }
+
     return await ctx.db.patch(lectureId, { assistantId });
   },
 });
 
-export const setStatus = internalMutation({
+export const setStatus = mutation({
   args: {
     lectureId: v.id("lectures"),
     status: LECTURE_STATUS,
+    authToken: v.string(),
   },
-  handler: async (ctx, { lectureId, status }) => {
+  handler: async (ctx, { lectureId, status, authToken }) => {
+    if (authToken !== process.env.VIDEO_PROCESSING_API_TOKEN) {
+      throw new ConvexError("Invalid authentification token");
+    }
+
     return await ctx.db.patch(lectureId, { status: status });
   },
 });
 
-export const addChunk = internalMutation({
+export const addChunk = mutation({
   args: {
     lectureId: v.id("lectures"),
     chunk: v.string(),
+    authToken: v.string(),
   },
-  handler: async (ctx, { lectureId, chunk }) => {
+  handler: async (ctx, { lectureId, chunk, authToken }) => {
+    if (authToken !== process.env.VIDEO_PROCESSING_API_TOKEN) {
+      throw new ConvexError("Invalid authentification token");
+    }
+
     const lecture = await ctx.db.get(lectureId);
     if (!lecture) {
       throw new ConvexError("Lecture not found");
