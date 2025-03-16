@@ -20,6 +20,7 @@ import type * as admin_image from "../admin/image.js";
 import type * as admin_lectures from "../admin/lectures.js";
 import type * as admin_reports from "../admin/reports.js";
 import type * as admin_users from "../admin/users.js";
+import type * as admin_videoProcessing from "../admin/videoProcessing.js";
 import type * as admin_weeks from "../admin/weeks.js";
 import type * as attempts from "../attempts.js";
 import type * as auth_adapters_ConvexActionAdapter from "../auth/adapters/ConvexActionAdapter.js";
@@ -58,6 +59,7 @@ declare const fullApi: ApiFromModules<{
   "admin/lectures": typeof admin_lectures;
   "admin/reports": typeof admin_reports;
   "admin/users": typeof admin_users;
+  "admin/videoProcessing": typeof admin_videoProcessing;
   "admin/weeks": typeof admin_weeks;
   attempts: typeof attempts;
   "auth/adapters/ConvexActionAdapter": typeof auth_adapters_ConvexActionAdapter;
