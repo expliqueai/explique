@@ -68,10 +68,13 @@ export default internalAction({
       });
 
       if (!response.ok || !response.body) {
-        await ctx.runMutation(internal.admin.lectures.setProcessingStatus, {
-          lectureId,
-          status: "FAILED",
-        });
+        await ctx.runMutation(
+          internal.admin.videoProcessing.setProcessingStatus,
+          {
+            lectureId,
+            status: "FAILED",
+          },
+        );
         throw new Error(`Failed to fetch video: ${response.statusText}`);
       }
 
