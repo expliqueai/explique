@@ -67,7 +67,10 @@ export default internalAction({
 
       const response = await fetch(processingUrl, {
         method: "POST",
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({
+          url,
+          convexUrl: process.env.CONVEX_CLOUD_URL,
+        }),
         headers: {
           "Content-Type": "application/json",
         },
