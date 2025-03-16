@@ -209,39 +209,80 @@ export const checkAnswer = internalAction({
   },
   handler: async (ctx, args) => {
     const openai = new OpenAI();
+    const maxAttempts = 30; // Maximum number of polling attempts
+    const pollingInterval = 2000; // Time between polls in milliseconds
+    let attempts = 0;
 
-    let run;
-    try {
-      run = await openai.beta.threads.runs.retrieve(args.threadId, args.runId, {
-        timeout: 2 * 60 * 1000, // 2 minutes
-      });
-    } catch (err) {
-      console.error("Run retrieve error", err);
-      await sendError(ctx, args.systemMessageId);
-      return;
+    while (attempts < maxAttempts) {
+      let run;
+      try {
+        run = await openai.beta.threads.runs.retrieve(
+          args.threadId,
+          args.runId,
+        );
+      } catch (err) {
+        console.error("Run retrieve error", err);
+        await sendError(ctx, args.systemMessageId);
+        return;
+      }
+
+      // Check run status and handle accordingly
+      switch (run.status) {
+        case "completed":
+          // Run is complete, proceed to fetch messages
+          const { data: newMessages } = await openai.beta.threads.messages.list(
+            args.threadId,
+            { after: args.lastMessageId, order: "asc" },
+          );
+
+          const text = newMessages
+            .flatMap(({ content }) => content)
+            .filter((item): item is TextContentBlock => item.type === "text")
+            .map(({ text }) => text.value)
+            .join("\n\n");
+
+          await ctx.runMutation(internal.video.chat.writeSystemResponse, {
+            systemMessageId: args.systemMessageId,
+            appearance: undefined,
+            content: text,
+          });
+          return;
+
+        case "failed":
+        case "cancelled":
+          console.error("Run ended with status:", run.status, run.last_error);
+          await sendError(ctx, args.systemMessageId);
+          return;
+
+        case "queued":
+        case "in_progress":
+          // Still processing, wait and check again
+          attempts++;
+          if (attempts >= maxAttempts) {
+            console.error("Run timed out after maximum polling attempts");
+            await sendError(ctx, args.systemMessageId);
+            return;
+          }
+
+          // Schedule next check after polling interval
+          await ctx.scheduler.runAfter(
+            pollingInterval / 1000,
+            internal.video.chat.checkAnswer,
+            args,
+          );
+          return;
+
+        case "requires_action":
+          console.error("Run requires action which is not implemented");
+          await sendError(ctx, args.systemMessageId);
+          return;
+
+        default:
+          console.error("Unknown run status:", run.status);
+          await sendError(ctx, args.systemMessageId);
+          return;
+      }
     }
-
-    if (run.status !== "completed") {
-      console.error("Unexpected run status", run);
-      await sendError(ctx, args.systemMessageId);
-      return;
-    }
-
-    const { data: newMessages } = await openai.beta.threads.messages.list(
-      args.threadId,
-      { after: args.lastMessageId, order: "asc" },
-    );
-
-    const text = newMessages
-      .flatMap(({ content }) => content)
-      .filter((item): item is TextContentBlock => item.type === "text")
-      .map(({ text }) => text.value)
-      .join("\n\n");
-    await ctx.runMutation(internal.video.chat.writeSystemResponse, {
-      systemMessageId: args.systemMessageId,
-      appearance: undefined,
-      content: text,
-    });
   },
 });
 

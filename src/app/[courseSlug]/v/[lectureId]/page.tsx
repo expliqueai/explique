@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactPlayer from "react-player/file";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "@/usingSession";
@@ -16,19 +16,35 @@ export default function VideoPage() {
   const chat = useQuery(api.video.chat.get, {
     lectureId,
   });
-  const hasThread = chat?.hasThread;
 
+  const [currentTime, setCurrentTime] = useState(0);
+  const handleProgress = useCallback(
+    ({ playedSeconds }: { playedSeconds: number }) => {
+      setCurrentTime(playedSeconds);
+    },
+    [],
+  );
+
+  const hasThread = chat?.hasThread;
   const initializeChat = useAction(api.video.chat.initializeChat);
   const send = useMutation(api.video.chat.sendMessage);
 
   const handleSend = useCallback(
     async (message: string) => {
+      const formatTimestamp = (seconds: number): string => {
+        const pad = (num: number): string => num.toString().padStart(2, "0");
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        return `[${pad(hours)}:${pad(minutes)}:${pad(secs)}]`;
+      };
+      const timestampedMessage = `${formatTimestamp(currentTime)} ${message}`;
       if (!hasThread) {
         await initializeChat({ lectureId });
       }
-      await send({ lectureId, message });
+      await send({ lectureId, message: timestampedMessage });
     },
-    [send, initializeChat, lectureId, hasThread],
+    [send, initializeChat, lectureId, hasThread, currentTime],
   );
 
   const playerRef = useRef<ReactPlayer>(null);
@@ -53,11 +69,12 @@ export default function VideoPage() {
             width="100%"
             height="100%"
             controls
+            onProgress={handleProgress}
           />
         </div>
 
         {/* Chat Section - adjusted to be next to video on larger screens */}
-        <div className="w-full lg:w-1/3 border rounded-xl lg:ml-4 h-1/2 lg:h-full [transform:translateZ(0)]">
+        <div className="min-w-[65ch] w-full lg:w-1/3 border rounded-xl lg:ml-4 h-1/2 lg:h-full [transform:translateZ(0)]">
           <div
             ref={scrollRef}
             className="overflow-y-auto flex flex-col gap-6 h-full p-4"
