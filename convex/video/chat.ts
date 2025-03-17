@@ -4,15 +4,46 @@ import {
   mutationWithAuth,
   queryWithAuth,
 } from "../auth/withAuth";
-import OpenAI from "openai";
+import {
+  GoogleGenerativeAI,
+  HarmBlockThreshold,
+  HarmCategory,
+} from "@google/generative-ai";
 import {
   ActionCtx,
   internalAction,
   internalMutation,
+  internalQuery,
 } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
 import { TextContentBlock } from "openai/resources/beta/threads/messages";
+
+const SYSTEM_PROMPT = `
+You are an AI language model designed to assist users in navigating and understanding the content of a video. Your capabilities include answering questions about specific moments in the video using the preprocessed data provided. You can also suggest insightful questions to help users explore the video content more deeply.
+
+Instructions for User Interaction:
+- Allow the user to ask questions related to specific timestamps in the video.
+- Utilize the processed video and audio data efficiently to answer inquiries.
+- Provide clear, concise, and informative answers based on the content at the specified timestamps.
+- Offer to guide the user to related or relevant segments of the video if needed.
+- Suggest potential questions the user may find interesting on the topics of the video.
+- Do not describe what's happening on the video segment except if it is useful for your answer. The user is watching the video, so he already knows.
+- Do not answer a question that is not related to the video or to the subject of the video. (e.g.: Make a react component...)
+- Make your answers as concise as possible.
+- Before answering, check if the segment contains an error. If so, ONLY provide the next timestamp where you can answer and say that you cannot safely provide an answer because there was an error in the video processing.
+
+Important: You MUST put timestamps inside <timestamp> and </timestamp> tags. NEVER mention anything about the preprocessed video segments, events and slides. These are keywords used internally by you to differenciate data.
+
+Ensure all interactions are concise and accurate, based on the comprehensive preprocessed data, while maintaining a friendly and helpful tone to assist the user in understanding the video's educational content. Strive for brevity while ensuring all information is rooted in the data above, fostering a deeper understanding of the video’s educational content through thoughtful dialog. Use LaTeX for any necessary mathematical expressions to maintain clarity and precision.
+
+---
+
+Video data:
+
+Important: The timestamp of the beginning of a segment is inclusive but the timestamp of the end of a segment is exclusive.
+
+`;
 
 export const get = queryWithAuth({
   args: {
@@ -63,14 +94,34 @@ export const initializeChat = actionWithAuth({
       throw new ConvexError("Unauthenticated");
     }
 
-    const openai = new OpenAI();
-    const thread = await openai.beta.threads.create();
+    // Get lecture using internal query instead of direct db access
+    const lecture = await ctx.runQuery(internal.video.chat._getLecture, {
+      lectureId: args.lectureId,
+    });
+
+    if (!lecture) {
+      throw new ConvexError("Lecture not found");
+    }
+
+    // Initialize an empty chat history for Gemini
+    const emptyHistory = JSON.stringify([]);
 
     await ctx.runMutation(internal.video.chat._createChat, {
       lectureId: args.lectureId,
       userId: ctx.session.user._id,
-      threadId: thread.id,
+      threadId: emptyHistory,
+      modelType: "gemini",
     });
+  },
+});
+
+// Internal query to get lecture data
+export const _getLecture = internalQuery({
+  args: {
+    lectureId: v.id("lectures"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.lectureId);
   },
 });
 
@@ -79,6 +130,7 @@ export const _createChat = internalMutation({
     lectureId: v.id("lectures"),
     userId: v.id("users"),
     threadId: v.string(),
+    modelType: v.union(v.literal("openai"), v.literal("gemini")),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -95,6 +147,7 @@ export const _createChat = internalMutation({
       lectureId: args.lectureId,
       userId: args.userId,
       threadId: args.threadId,
+      modelType: args.modelType,
     });
   },
 });
@@ -142,150 +195,140 @@ export const sendMessage = mutationWithAuth({
       appearance: "typing",
     });
 
-    await ctx.scheduler.runAfter(0, internal.video.chat.answer, {
-      message: args.message,
-      threadId: chat.threadId,
-      assistantId: lecture.assistantId,
-      lectureChatId: chat._id,
-      systemMessageId,
-    });
+    // Check which model type to use
+    const modelType = chat.modelType || "gemini";
+
+    if (modelType === "gemini") {
+      await ctx.scheduler.runAfter(0, internal.video.chat.answerWithGemini, {
+        message: args.message,
+        chatHistory: chat.threadId,
+        modelName: lecture.assistantId, // repurpose assistantId as model name
+        lectureChatId: chat._id,
+        systemMessageId,
+      });
+    }
   },
 });
 
-export const answer = internalAction({
+// New function for Gemini
+export const answerWithGemini = internalAction({
   args: {
     message: v.string(),
-    threadId: v.string(),
-    assistantId: v.string(),
+    chatHistory: v.string(),
+    modelName: v.string(),
     lectureChatId: v.id("lectureChats"),
     systemMessageId: v.id("lectureChatMessages"),
   },
   handler: async (ctx, args) => {
-    const openai = new OpenAI();
-
-    let lastMessageId;
-    let runId;
-
     try {
-      const { id } = await openai.beta.threads.messages.create(args.threadId, {
-        role: "user",
-        content: args.message,
-      });
-      lastMessageId = id;
-    } catch (err) {
-      console.error("Can’t create a message", err);
-      await sendError(ctx, args.systemMessageId);
-      return;
-    }
+      // Import the utility functions
+      const {
+        getGeminiClient,
+        getDefaultSafetySettings,
+        defaultGenerationConfig,
+      } = await import("./geminiUtils");
 
-    try {
-      const { id } = await openai.beta.threads.runs.create(args.threadId, {
-        assistant_id: args.assistantId,
+      // Get lecture data to include in system prompt
+      const lecture = await ctx.runQuery(internal.video.chat._getLecture, {
+        lectureId: await ctx.runQuery(internal.video.chat._getChatLectureId, {
+          lectureChatId: args.lectureChatId,
+        }),
       });
-      runId = id;
-    } catch (err) {
-      console.error("Can’t create a run", err);
-      await sendError(ctx, args.systemMessageId);
-      return;
-    }
 
-    await ctx.scheduler.runAfter(2000, internal.video.chat.checkAnswer, {
-      runId,
-      threadId: args.threadId,
-      lectureChatId: args.lectureChatId,
-      lastMessageId,
-      systemMessageId: args.systemMessageId,
+      // Combine system prompt with lecture chunks
+      const enhancedSystemPrompt =
+        SYSTEM_PROMPT + (lecture?.chunks?.join("\n") || "");
+
+      const genAI = getGeminiClient();
+      const model = genAI.getGenerativeModel({
+        model: args.modelName,
+        systemInstruction: enhancedSystemPrompt,
+      });
+
+      // Parse chat history
+      let chatHistory;
+      try {
+        chatHistory = JSON.parse(args.chatHistory) || [];
+      } catch (e) {
+        console.error("Failed to parse chat history:", e);
+        chatHistory = [];
+      }
+
+      // For empty chat history, we don't add an initial message
+      // Gemini requires that the first message must be from the user
+
+      // Create a new chat without history for the first message
+      // so we can later use the system instructions
+      const chat =
+        chatHistory.length === 0
+          ? model.startChat({
+              generationConfig: defaultGenerationConfig,
+              safetySettings: getDefaultSafetySettings(),
+            })
+          : model.startChat({
+              generationConfig: defaultGenerationConfig,
+              safetySettings: getDefaultSafetySettings(),
+              history: chatHistory,
+            });
+
+      // Send the message to Gemini and get the response
+      const result = await chat.sendMessage(args.message);
+      const response = result.response.text();
+
+      // Update the chat history - for first message we store just the user's actual message
+      // not the one with system prompt included
+      const updatedHistory = [
+        ...chatHistory,
+        { role: "user", parts: [{ text: args.message }] },
+        { role: "model", parts: [{ text: response }] },
+      ];
+
+      // Save the updated chat history to the database
+      await ctx.runMutation(internal.video.chat.updateChatHistory, {
+        lectureChatId: args.lectureChatId,
+        chatHistory: JSON.stringify(updatedHistory),
+      });
+
+      // Update the system message with the response
+      await ctx.runMutation(internal.video.chat.writeSystemResponse, {
+        systemMessageId: args.systemMessageId,
+        appearance: undefined,
+        content: response,
+      });
+    } catch (err) {
+      console.error("Error generating response from Gemini:", err);
+      await sendError(ctx, args.systemMessageId);
+    }
+  },
+});
+
+// Add this new query to get lecture ID from lecture chat
+export const _getChatLectureId = internalQuery({
+  args: {
+    lectureChatId: v.id("lectureChats"),
+  },
+  handler: async (ctx, args) => {
+    const chat = await ctx.db.get(args.lectureChatId);
+    if (!chat) {
+      throw new ConvexError("Chat not found");
+    }
+    return chat.lectureId;
+  },
+});
+
+export const updateChatHistory = internalMutation({
+  args: {
+    lectureChatId: v.id("lectureChats"),
+    chatHistory: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.lectureChatId, {
+      threadId: args.chatHistory, // Reuse threadId field to store chat history
     });
   },
 });
 
-export const checkAnswer = internalAction({
-  args: {
-    runId: v.string(),
-    threadId: v.string(),
-    lectureChatId: v.id("lectureChats"),
-    lastMessageId: v.string(),
-    systemMessageId: v.id("lectureChatMessages"),
-  },
-  handler: async (ctx, args) => {
-    const openai = new OpenAI();
-    const maxAttempts = 30; // Maximum number of polling attempts
-    const pollingInterval = 2000; // Time between polls in milliseconds
-    let attempts = 0;
-
-    while (attempts < maxAttempts) {
-      let run;
-      try {
-        run = await openai.beta.threads.runs.retrieve(
-          args.threadId,
-          args.runId,
-        );
-      } catch (err) {
-        console.error("Run retrieve error", err);
-        await sendError(ctx, args.systemMessageId);
-        return;
-      }
-
-      // Check run status and handle accordingly
-      switch (run.status) {
-        case "completed":
-          // Run is complete, proceed to fetch messages
-          const { data: newMessages } = await openai.beta.threads.messages.list(
-            args.threadId,
-            { after: args.lastMessageId, order: "asc" },
-          );
-
-          const text = newMessages
-            .flatMap(({ content }) => content)
-            .filter((item): item is TextContentBlock => item.type === "text")
-            .map(({ text }) => text.value)
-            .join("\n\n");
-
-          await ctx.runMutation(internal.video.chat.writeSystemResponse, {
-            systemMessageId: args.systemMessageId,
-            appearance: undefined,
-            content: text,
-          });
-          return;
-
-        case "failed":
-        case "cancelled":
-          console.error("Run ended with status:", run.status, run.last_error);
-          await sendError(ctx, args.systemMessageId);
-          return;
-
-        case "queued":
-        case "in_progress":
-          // Still processing, wait and check again
-          attempts++;
-          if (attempts >= maxAttempts) {
-            console.error("Run timed out after maximum polling attempts");
-            await sendError(ctx, args.systemMessageId);
-            return;
-          }
-
-          // Schedule next check after polling interval
-          await ctx.scheduler.runAfter(
-            pollingInterval / 1000,
-            internal.video.chat.checkAnswer,
-            args,
-          );
-          return;
-
-        case "requires_action":
-          console.error("Run requires action which is not implemented");
-          await sendError(ctx, args.systemMessageId);
-          return;
-
-        default:
-          console.error("Unknown run status:", run.status);
-          await sendError(ctx, args.systemMessageId);
-          return;
-      }
-    }
-  },
-});
-
+// Keep the existing functions for writing responses
 export const writeSystemResponse = internalMutation({
   args: {
     content: v.string(),
