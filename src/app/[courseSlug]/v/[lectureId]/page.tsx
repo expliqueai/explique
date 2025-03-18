@@ -13,6 +13,9 @@ import MessageInput from "@/components/MessageInput";
 export default function VideoPage() {
   const params = useParams();
   const lectureId = params.lectureId as Id<"lectures">;
+  const lectureUrl = useQuery(api.lectures.getUrl, {
+    lectureId,
+  });
   const chat = useQuery(api.video.chat.get, {
     lectureId,
   });
@@ -65,7 +68,7 @@ export default function VideoPage() {
         <div className="relative w-full rounded-xl overflow-hidden bg-black">
           <ReactPlayer
             ref={playerRef}
-            url="https://streaming.cast.switch.ch/hls/p/113/sp/11300/serveFlavor/entryId/0_tfx5i6lk/v/2/ev/3/flavorId/0_mb7mr3wa/name/a.mp4/index.m3u8"
+            url={lectureUrl}
             width="100%"
             height="100%"
             controls
