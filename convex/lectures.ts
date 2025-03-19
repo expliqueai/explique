@@ -102,7 +102,10 @@ export const list = queryWithAuth({
       .collect();
 
     // FIXME: Only query the lectures from this course
-    const lectures = await db.query("lectures").collect();
+    const lectures = await db
+      .query("lectures")
+      .filter((q) => q.eq(q.field("status"), "READY"))
+      .collect();
 
     const result = [];
     for (const week of weeks) {
