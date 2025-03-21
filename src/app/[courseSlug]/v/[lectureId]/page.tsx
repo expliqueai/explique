@@ -79,12 +79,12 @@ export default function VideoPage() {
   }, [searchParams]);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-screen">
       <ActivityHeader goBackTo={"/"} title={"Video player"} isSolid />
-      {/* Main content container - changed to row layout */}
-      <div className="flex flex-col lg:flex-row p-6 gap-2 h-full">
-        {/* Video Player Section with rounded corners */}
-        <div className="relative w-full rounded-xl overflow-hidden bg-black">
+      {/* Main content container - responsive layout */}
+      <div className="flex flex-col lg:flex-row p-6 flex-grow overflow-hidden">
+        {/* Video Player Section */}
+        <div className="min-h-[40vh] lg:min-h-0 max-h-[50vh] lg:max-h-none items-center relative w-full lg:flex-1 rounded-xl overflow-hidden bg-black">
           <ReactPlayer
             ref={playerRef}
             url={lectureUrl}
@@ -95,18 +95,18 @@ export default function VideoPage() {
           />
         </div>
 
-        {/* Chat Section - adjusted to be next to video on larger screens */}
-        <div className="min-w-[65ch] w-full lg:w-1/3 border rounded-xl lg:ml-4 h-1/2 lg:h-full [transform:translateZ(0)] flex flex-col">
+        {/* Chat Section - height constrained in mobile */}
+        <div className="w-full max-h-[45vh] lg:max-h-none lg:min-w-[65ch] lg:w-[65ch] border rounded-xl lg:ml-4 flex flex-col flex-shrink-0 mt-4 lg:mt-0 overflow-hidden">
           <div
             ref={scrollRef}
-            className="overflow-y-auto flex-1 flex flex-col gap-6 p-4 max-h-[70vh]"
+            className="overflow-y-auto flex-1 flex flex-col gap-6 p-4"
           >
             {chat?.messages.map((m) => (
               <ChatMessage key={m.id} {...m} seekToTime={seekToTime} />
             ))}
           </div>
-          <div className="p-4 pt-0">
-            <MessageInput onSend={handleSend} scroll="parent" />
+          <div className="p-4 border-t">
+            <MessageInput onSend={handleSend} scroll="parent" variant="solid" />
           </div>
         </div>
       </div>

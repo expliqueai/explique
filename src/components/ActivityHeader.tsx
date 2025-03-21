@@ -6,7 +6,7 @@ export default function ActivityHeader({
   goBackTo,
   title,
   action,
-  isSolid = true,
+  isSolid = false,
 }: {
   goBackTo: string | undefined;
   title: string | undefined;
