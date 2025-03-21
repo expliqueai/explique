@@ -98,15 +98,7 @@ export const insertRow = internalMutation({
 export const updateRow = internalMutation({
   args: {
     id: v.id("lectures"),
-    row: v.object({
-      name: v.optional(v.string()),
-      weekId: v.optional(v.union(v.id("weeks"), v.null())),
-      image: v.optional(v.id("images")),
-      url: v.optional(v.string()),
-      status: v.optional(LECTURE_STATUS),
-      modelName: v.optional(v.string()),
-      chunks: v.optional(v.array(v.string())),
-    }),
+    row: v.optional(v.object(lectureSchema)),
   },
   handler: async ({ db }, { id, row }) => {
     // Verify that the course isn't changed
@@ -116,7 +108,7 @@ export const updateRow = internalMutation({
     }
 
     // Only validate weekId if it's being updated
-    if (row.weekId !== undefined) {
+    if (row && row.weekId !== undefined) {
       const oldWeekId = existing.weekId;
       const newWeekId = row.weekId;
 
@@ -134,6 +126,10 @@ export const updateRow = internalMutation({
       if (!oldWeek || !newWeek || newWeek.courseId !== oldWeek.courseId) {
         throw new ConvexError("The course of an exercise cannot be changed");
       }
+    }
+
+    if (!row) {
+      throw new ConvexError("Invalid data");
     }
 
     return await db.patch(id, row);
@@ -374,15 +370,7 @@ export async function validateLectureInCourse(
 export const update = actionWithAuth({
   args: {
     id: v.id("lectures"),
-    lecture: v.object({
-      name: v.optional(v.string()),
-      weekId: v.optional(v.union(v.id("weeks"), v.null())),
-      image: v.optional(v.id("images")),
-      url: v.optional(v.string()),
-      status: v.optional(LECTURE_STATUS),
-      modelName: v.optional(v.string()),
-      chunks: v.optional(v.array(v.string())),
-    }),
+    lecture: v.optional(v.object(lectureSchema)),
     courseSlug: v.string(),
   },
   handler: async (ctx, { id, lecture, courseSlug }) => {

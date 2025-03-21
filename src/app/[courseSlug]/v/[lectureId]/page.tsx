@@ -80,6 +80,13 @@ export default function VideoPage() {
     }
   }, [searchParams]);
 
+  // Initialize chat on page load if it doesn't exist yet
+  useEffect(() => {
+    if (chat && !hasThread) {
+      initializeChat({ lectureId }).catch(console.error);
+    }
+  }, [chat, hasThread, initializeChat, lectureId]);
+
   return (
     <div className="flex flex-col h-screen">
       <ActivityHeader

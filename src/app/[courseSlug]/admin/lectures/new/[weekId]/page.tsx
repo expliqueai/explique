@@ -31,6 +31,8 @@ export default function NewLecture() {
             name: "",
             image: undefined,
             url: "",
+            firstMessage:
+              "Hi there! 👋 I'm Questionable Prof, your AI assistant for this lecture video. Feel free to ask me any questions you have about the material. Let's learn together!",
           }}
           onSubmit={async (state) => {
             if (!ReactPlayer.canPlay(state.url)) {

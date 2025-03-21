@@ -22,6 +22,7 @@ export type State = {
   name: string;
   image?: Id<"images">;
   url: string;
+  firstMessage?: string;
 };
 
 export function toConvexState(state: State) {
@@ -30,6 +31,7 @@ export function toConvexState(state: State) {
     image: state.image,
     weekId: state.weekId,
     url: state.url,
+    firstMessage: state.firstMessage,
   };
 }
 
@@ -48,6 +50,9 @@ export default function LectureForm({
   const [weekId, setWeekId] = useState(initialState.weekId);
   const [image, setImage] = useState(initialState.image);
   const [url, setUrl] = useState(initialState.url);
+  const [firstMessage, setFirstMessage] = useState(
+    initialState.firstMessage ?? "",
+  );
 
   const courseSlug = useCourseSlug();
   const weeks = useQuery(convexApi.admin.weeks.list, { courseSlug });
@@ -61,6 +66,7 @@ export default function LectureForm({
           image,
           weekId,
           url,
+          firstMessage,
         });
       }}
     >
@@ -92,6 +98,19 @@ export default function LectureForm({
         />
       )}
 
+      <Textarea
+        label="First message"
+        value={firstMessage}
+        onChange={setFirstMessage}
+        hint={
+          <>
+            This message will be sent automatically{" "}
+            <strong>by the chatbot</strong> when accessing the lecture. This
+            message will be visible to students.
+          </>
+        }
+      />
+
       <div className="h-36"></div>
 
       <div className="p-8 bg-white/60 backdrop-blur-xl fixed bottom-0 left-0 w-full flex justify-end shadow-2xl">
@@ -121,7 +140,9 @@ function ThumbnailPicker({
 
   return (
     <div className="mb-6">
-      <div className="block mb-1 text-sm font-medium text-slate-800">Thumbnail</div>
+      <div className="block mb-1 text-sm font-medium text-slate-800">
+        Thumbnail
+      </div>
 
       <div className="flex gap-4 flex-wrap">
         <button

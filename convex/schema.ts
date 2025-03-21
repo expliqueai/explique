@@ -13,12 +13,13 @@ export const lectureAdminSchema = {
   weekId: v.union(v.id("weeks"), v.null()), // null = soft-deleted exercise
   image: v.optional(v.id("images")),
   url: v.string(),
+  firstMessage: v.optional(v.string()),
 };
 
 export const lectureSchema = {
   ...lectureAdminSchema,
   status: LECTURE_STATUS,
-  modelName: v.optional(v.string()), // Used for Gemini model name
+  modelName: v.optional(v.string()),
   chunks: v.array(v.string()),
 };
 

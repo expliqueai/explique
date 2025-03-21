@@ -36,12 +36,17 @@ export default function EditExercise() {
               name: lecture.name,
               url: lecture.url,
               image: lecture.image,
+              firstMessage: lecture.firstMessage,
             }}
             onSubmit={async (state) => {
               await update({
                 courseSlug,
                 id: lecture._id,
-                lecture: toConvexState(state),
+                lecture: {
+                  ...toConvexState(state),
+                  chunks: [],
+                  status: lecture.status,
+                },
               });
               toast.success("Lecture updated successfully.");
               router.push(`/${courseSlug}/admin/lectures`);

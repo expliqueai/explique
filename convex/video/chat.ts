@@ -17,6 +17,7 @@ import {
 } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
+import { lectureSchema } from "../schema";
 
 const SYSTEM_PROMPT = `
 You are an AI language model designed to assist users in navigating and understanding the content of a video. Your capabilities include answering questions about specific moments in the video using the preprocessed data provided. You can also suggest insightful questions to help users explore the video content more deeply.
@@ -107,6 +108,7 @@ export const initialize = actionWithAuth({
     await ctx.runMutation(internal.video.chat._createChat, {
       lectureId: args.lectureId,
       userId: ctx.session.user._id,
+      firstMessage: lecture.firstMessage,
     });
   },
 });
@@ -124,6 +126,7 @@ export const _getLecture = internalQuery({
 export const _createChat = internalMutation({
   args: {
     lectureId: v.id("lectures"),
+    firstMessage: lectureSchema.firstMessage,
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
@@ -133,14 +136,24 @@ export const _createChat = internalMutation({
         q.eq("lectureId", args.lectureId).eq("userId", args.userId),
       )
       .first();
+
     if (existing) {
       throw new ConvexError("Chat already initialized");
     }
 
-    await ctx.db.insert("lectureChats", {
+    const chatId = await ctx.db.insert("lectureChats", {
       lectureId: args.lectureId,
       userId: args.userId,
     });
+
+    // Add welcome message from the system
+    if (args.firstMessage) {
+      await ctx.db.insert("lectureChatMessages", {
+        lectureChatId: chatId,
+        content: args.firstMessage,
+        system: true,
+      });
+    }
   },
 });
 
