@@ -10,16 +10,31 @@ import { StorageActionWriter } from "convex/server";
 import { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { getCourseRegistration } from "../courses";
+import { ConvexError } from "convex/values";
 
 export default actionWithAuth({
   args: {
     prompt: v.string(),
-    exerciseId: v.id("exercises"),
+    exerciseId: v.optional(v.id("exercises")),
+    lectureId: v.optional(v.id("lectures")),
     courseSlug: v.string(),
   },
-  handler: async (ctx, { prompt, exerciseId, courseSlug }) => {
+  handler: async (ctx, { prompt, exerciseId, lectureId, courseSlug }) => {
+    if (!exerciseId && !lectureId) {
+      throw new ConvexError("Either exerciseId or lectureId must be provided");
+    }
+
     await getCourseRegistration(ctx, ctx.session, courseSlug, "admin");
-    await validateExerciseInCourse(ctx, courseSlug, exerciseId);
+    
+    // Validate the entity exists
+    if (exerciseId) {
+      await validateExerciseInCourse(ctx, courseSlug, exerciseId);
+    } else if (lectureId) {
+      const lecture = await ctx.runQuery(internal.lectures.get, { id: lectureId });
+      if (!lecture) {
+        throw new ConvexError("Lecture not found");
+      }
+    }
 
     const model = "dall-e-3";
     const size = "1792x1024";
@@ -38,19 +53,22 @@ export default actionWithAuth({
     const blob = await (await fetch(imageUrl)).blob();
     const storageId = await ctx.storage.store(blob);
 
+    const thumbnails = [
+      await generateThumbnail(blob, ctx.storage, "image/avif"),
+      await generateThumbnail(blob, ctx.storage, "image/webp"),
+      await generateThumbnail(blob, ctx.storage, "image/jpeg"),
+    ];
+
     const imageId: Id<"images"> = await ctx.runMutation(
       internal.admin.image.store,
       {
         storageId,
-        thumbnails: [
-          await generateThumbnail(blob, ctx.storage, "image/avif"),
-          await generateThumbnail(blob, ctx.storage, "image/webp"),
-          await generateThumbnail(blob, ctx.storage, "image/jpeg"),
-        ],
+        thumbnails,
         model,
         size,
         quality,
         exerciseId,
+        lectureId,
         prompt,
       },
     );

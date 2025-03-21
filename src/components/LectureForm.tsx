@@ -117,7 +117,7 @@ function ThumbnailPicker({
     courseSlug,
     lectureId,
   });
-  const generateImage = useAction(convexApi.admin.image.generate);
+  const generateImage = useAction(convexApi.admin.imageGeneration.default);
 
   return (
     <div className="mb-6">
