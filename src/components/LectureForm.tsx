@@ -83,14 +83,14 @@ export default function LectureForm({
 
       <Input label="Video file URL" value={url} onChange={setUrl} required />
 
-      {/* {lectureId && (
+      {lectureId && (
         <ThumbnailPicker
           image={image}
           setImage={setImage}
           lectureId={lectureId}
           name={name}
         />
-      )} */}
+      )}
 
       <div className="h-36"></div>
 
@@ -98,5 +98,109 @@ export default function LectureForm({
         <PrimaryButton type="submit">{submitLabel}</PrimaryButton>
       </div>
     </form>
+  );
+}
+
+function ThumbnailPicker({
+  image,
+  setImage,
+  lectureId,
+  name,
+}: {
+  image: Id<"images"> | undefined;
+  setImage: (value: Id<"images"> | undefined) => void;
+  lectureId: Id<"lectures">;
+  name: string;
+}) {
+  const courseSlug = useCourseSlug();
+  const images = useQuery(convexApi.admin.image.list, {
+    courseSlug,
+    lectureId,
+  });
+  const generateImage = useAction(convexApi.admin.image.generate);
+
+  return (
+    <div className="mb-6">
+      <div className="block mb-1 text-sm font-medium text-slate-800">Thumbnail</div>
+
+      <div className="flex gap-4 flex-wrap">
+        <button
+          type="button"
+          className={clsx(
+            "w-40 h-28 p-2 rounded-xl bg-slate-200 cursor-pointer hover:bg-slate-300 text-xl font-light transition-colors",
+            image === undefined && "ring-4 ring-purple-500",
+          )}
+          onClick={() => setImage(undefined)}
+        >
+          None
+        </button>
+
+        {images?.map((i) => (
+          <button
+            key={i._id}
+            type="button"
+            className={clsx(
+              "w-40 h-28 p-2 rounded-xl bg-slate-200 cursor-pointer hover:bg-slate-300 transition-colors",
+              i._id === image && "ring-4 ring-purple-500",
+            )}
+            onClick={() => setImage(i._id)}
+          >
+            <picture>
+              {i.thumbnails.map((t, tIndex) => (
+                <source
+                  key={tIndex}
+                  srcSet={t.src}
+                  type={t.type}
+                  sizes={t.sizes}
+                />
+              ))}
+              <img
+                className="w-full h-full rounded-lg object-cover"
+                src={
+                  i.thumbnails.find((t) => t.type === "image/avif")?.src ??
+                  i.src
+                }
+                alt={i.prompt}
+                title={i.prompt}
+              />
+            </picture>
+          </button>
+        ))}
+
+        <button
+          type="button"
+          className={clsx(
+            "w-40 h-28 p-2 flex items-center justify-center rounded-xl bg-slate-200 cursor-pointer hover:bg-slate-300 text-xl font-light transition-colors",
+          )}
+          onClick={async () => {
+            const answer = prompt(
+              "Which prompt to use to generate the image?",
+              (images ?? []).find((i) => i._id === image)?.prompt ??
+                `Generate a thumbnail for a lecture video about "${name}"`,
+            );
+            if (!answer) {
+              return;
+            }
+
+            async function generate(prompt: string) {
+              const imageId = await generateImage({
+                prompt,
+                lectureId,
+                courseSlug,
+              });
+
+              setImage(imageId);
+            }
+
+            toast.promise(generate(answer), {
+              loading: "Generating thumbnail…",
+              success: "Thumbnail generated",
+            });
+          }}
+        >
+          <PlusIconLarge className="w-6 h-6" />
+        </button>
+      </div>
+    </div>
   );
 }

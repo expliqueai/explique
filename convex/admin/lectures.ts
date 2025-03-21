@@ -99,35 +99,44 @@ export const updateRow = internalMutation({
   args: {
     id: v.id("lectures"),
     row: v.object({
-      ...lectureSchema,
+      name: v.optional(v.string()),
+      weekId: v.optional(v.union(v.id("weeks"), v.null())),
+      image: v.optional(v.id("images")),
+      url: v.optional(v.string()),
+      status: v.optional(LECTURE_STATUS),
+      modelName: v.optional(v.string()),
+      chunks: v.optional(v.array(v.string())),
     }),
   },
   handler: async ({ db }, { id, row }) => {
-    // Verify that the course isn’t changed
+    // Verify that the course isn't changed
     const existing = await db.get(id);
     if (!existing) {
       throw new ConvexError("Lecture not found");
     }
 
-    const oldWeekId = existing.weekId;
-    const newWeekId = row.weekId;
+    // Only validate weekId if it's being updated
+    if (row.weekId !== undefined) {
+      const oldWeekId = existing.weekId;
+      const newWeekId = row.weekId;
 
-    if (newWeekId === null) {
-      throw new ConvexError("Invalid data");
+      if (newWeekId === null) {
+        throw new ConvexError("Invalid data");
+      }
+
+      if (oldWeekId === null) {
+        throw new ConvexError("Can't unpublish this lecture");
+      }
+
+      // Verify that the lecture stays in the same course
+      const oldWeek = await db.get(oldWeekId);
+      const newWeek = await db.get(newWeekId);
+      if (!oldWeek || !newWeek || newWeek.courseId !== oldWeek.courseId) {
+        throw new ConvexError("The course of an exercise cannot be changed");
+      }
     }
 
-    if (oldWeekId === null) {
-      throw new ConvexError("Can’t unpublish this lecture");
-    }
-
-    // Verify that the lecture stays in the same course
-    const oldWeek = await db.get(oldWeekId);
-    const newWeek = await db.get(newWeekId);
-    if (!oldWeek || !newWeek || newWeek.courseId !== oldWeek.courseId) {
-      throw new ConvexError("The course of an exercise cannot be changed");
-    }
-
-    return await db.replace(id, row);
+    return await db.patch(id, row);
   },
 });
 
@@ -365,7 +374,15 @@ export async function validateLectureInCourse(
 export const update = actionWithAuth({
   args: {
     id: v.id("lectures"),
-    lecture: v.object(lectureSchema),
+    lecture: v.object({
+      name: v.optional(v.string()),
+      weekId: v.optional(v.union(v.id("weeks"), v.null())),
+      image: v.optional(v.id("images")),
+      url: v.optional(v.string()),
+      status: v.optional(LECTURE_STATUS),
+      modelName: v.optional(v.string()),
+      chunks: v.optional(v.array(v.string())),
+    }),
     courseSlug: v.string(),
   },
   handler: async (ctx, { id, lecture, courseSlug }) => {
@@ -411,5 +428,14 @@ export const softDelete = mutationWithAuth({
     }
 
     await ctx.db.patch(lecture._id, { weekId: null });
+  },
+});
+
+export const getInternal = internalQuery({
+  args: {
+    id: v.id("lectures"),
+  },
+  handler: async (ctx, { id }) => {
+    return await ctx.db.get(id);
   },
 });

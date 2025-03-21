@@ -146,8 +146,11 @@ export default defineSchema(
       size: v.string(),
       prompt: v.string(),
       quality: v.union(v.literal("standard"), v.literal("hd")),
-      exerciseId: v.id("exercises"),
-    }).index("by_exercise_id", ["exerciseId"]),
+      exerciseId: v.optional(v.id("exercises")),
+      lectureId: v.optional(v.id("lectures")),
+    })
+      .index("by_exercise", ["exerciseId"])
+      .index("by_lecture", ["lectureId"]),
 
     messages: defineTable({
       attemptId: v.id("attempts"),
