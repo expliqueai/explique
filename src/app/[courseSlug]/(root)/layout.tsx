@@ -35,22 +35,20 @@ export default function CourseLayout({
       </div>
       <div className="relative p-6 sm:p-10 flex justify-center shadow-[0_-10px_10px_-3px_rgba(0_0_0_/_0.08)]">
         <div className="max-w-6xl flex-1">
-          {(user?.isAdmin || user?.isSuperadmin) && (
-            <TabBar
-              items={[
-                { label: "Exercises", href: `/${courseSlug}/exercises` },
-                { label: "Lectures", href: `/${courseSlug}/lectures` },
-                user.isAdmin && {
-                  label: "Admin",
-                  href: `/${courseSlug}/admin`,
-                },
-                user.isSuperadmin && {
-                  label: "Superadmin",
-                  href: `/superadmin`,
-                },
-              ].filter(isDefined)}
-            />
-          )}
+          <TabBar
+            items={[
+              { label: "Exercises", href: `/${courseSlug}/exercises` },
+              { label: "Lectures", href: `/${courseSlug}/lectures` },
+              user?.isAdmin && {
+                label: "Admin",
+                href: `/${courseSlug}/admin`,
+              },
+              user?.isSuperadmin && {
+                label: "Superadmin",
+                href: `/superadmin`,
+              },
+            ].filter(isDefined)}
+          />
           {children}
           <div className="h-10" />
         </div>
@@ -59,6 +57,6 @@ export default function CourseLayout({
   );
 }
 
-function isDefined<T>(argument: T | false): argument is T {
-  return argument !== false;
+function isDefined<T>(argument: T | false | undefined): argument is T {
+  return argument != undefined && argument !== false;
 }
