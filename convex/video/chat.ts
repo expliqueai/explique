@@ -86,7 +86,7 @@ export const get = queryWithAuth({
   },
 });
 
-export const initializeChat = actionWithAuth({
+export const initialize = actionWithAuth({
   args: {
     lectureId: v.id("lectures"),
   },
@@ -346,3 +346,32 @@ async function sendError(
     systemMessageId,
   });
 }
+
+export const clearHistory = mutationWithAuth({
+  args: {
+    lectureId: v.id("lectures"),
+  },
+  handler: async (ctx, args) => {
+    if (!ctx.session) {
+      throw new ConvexError("Unauthenticated");
+    }
+
+    const chat = await ctx.db
+      .query("lectureChats")
+      .withIndex("by_lecture_and_user", (q) =>
+        q.eq("lectureId", args.lectureId).eq("userId", ctx.session!.user._id),
+      )
+      .first();
+
+    if (chat) {
+      const messages = await ctx.db
+        .query("lectureChatMessages")
+        .withIndex("by_lecture_chat_id", (q) => q.eq("lectureChatId", chat._id))
+        .collect();
+
+      for (const message of messages) {
+        await ctx.db.delete(message._id);
+      }
+    }
+  },
+});

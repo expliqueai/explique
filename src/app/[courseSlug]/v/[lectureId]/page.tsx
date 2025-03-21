@@ -9,6 +9,7 @@ import { api } from "../../../../../convex/_generated/api";
 import ChatBubble from "@/components/ChatBubble";
 import ActivityHeader from "@/components/ActivityHeader";
 import MessageInput from "@/components/MessageInput";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
 export default function VideoPage() {
   const params = useParams();
@@ -30,8 +31,9 @@ export default function VideoPage() {
   );
 
   const hasThread = chat?.hasThread;
-  const initializeChat = useAction(api.video.chat.initializeChat);
+  const initializeChat = useAction(api.video.chat.initialize);
   const send = useMutation(api.video.chat.sendMessage);
+  const clearChatHistory = useMutation(api.video.chat.clearHistory);
 
   const handleSend = useCallback(
     async (message: string) => {
@@ -80,7 +82,19 @@ export default function VideoPage() {
 
   return (
     <div className="flex flex-col h-screen">
-      <ActivityHeader goBackTo={"/"} title={"Video player"} isSolid />
+      <ActivityHeader
+        goBackTo={"/"}
+        title={"Video player"}
+        action={
+          <button
+            className="sm:w-16 sm:h-16 w-14 h-14 flex items-center justify-center"
+            onClick={() => clearChatHistory({ lectureId })}
+          >
+            <ArrowPathIcon className="w-6 h-6" />
+          </button>
+        }
+        isSolid
+      />
       {/* Main content container - responsive layout */}
       <div className="flex flex-col lg:flex-row p-6 flex-grow overflow-hidden">
         {/* Video Player Section */}
