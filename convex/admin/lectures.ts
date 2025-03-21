@@ -249,8 +249,7 @@ export const createAssistant = action({
 
     await ctx.runMutation(api.admin.lectures.setAssistantId, {
       lectureId,
-      assistantId: "gemini-2.0-flash-thinking-exp-01-21",
-      modelType: "gemini",
+      modelName: "gemini-2.0-flash-thinking-exp-01-21",
       authToken,
     });
   },
@@ -272,16 +271,15 @@ export const getChunks = internalQuery({
 export const setAssistantId = mutation({
   args: {
     lectureId: v.id("lectures"),
-    assistantId: lectureSchema.assistantId,
-    modelType: lectureSchema.modelType,
+    modelName: lectureSchema.modelName,
     authToken: v.string(),
   },
-  handler: async (ctx, { lectureId, assistantId, authToken, modelType }) => {
+  handler: async (ctx, { lectureId, authToken, modelName }) => {
     if (authToken !== process.env.VIDEO_PROCESSING_API_TOKEN) {
       throw new ConvexError("Invalid authentification token");
     }
 
-    return await ctx.db.patch(lectureId, { assistantId, modelType });
+    return await ctx.db.patch(lectureId, { modelName });
   },
 });
 

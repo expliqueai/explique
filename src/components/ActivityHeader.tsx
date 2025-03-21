@@ -1,18 +1,26 @@
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
 import Link from "next/link";
 
 export default function ActivityHeader({
   goBackTo,
   title,
   action,
+  isSolid = true,
 }: {
   goBackTo: string | undefined;
   title: string | undefined;
   action?: React.ReactNode;
+  isSolid?: boolean;
 }) {
   return (
     <>
-      <header className="fixed h-14 sm:h-16 top-0 left-0 w-full bg-white bg-opacity-90 backdrop-blur-lg p-4 shadow-lg flex items-center justify-center z-10">
+      <header
+        className={clsx(
+          "h-14 sm:h-16 top-0 left-0 w-full bg-white bg-opacity-90 backdrop-blur-lg p-4 shadow-lg flex items-center justify-center z-10",
+          isSolid ? "block" : "fixed",
+        )}
+      >
         {goBackTo && (
           <Link
             href={goBackTo}
@@ -31,7 +39,7 @@ export default function ActivityHeader({
 
         {action && <div className="absolute top-0 right-0">{action}</div>}
       </header>
-      <div className="h-14 sm:h-16" />
+      {!isSolid && <div className="h-14 sm:h-16" />}
     </>
   );
 }

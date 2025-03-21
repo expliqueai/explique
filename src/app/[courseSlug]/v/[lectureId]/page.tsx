@@ -79,8 +79,8 @@ export default function VideoPage() {
   }, [searchParams]);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      <ActivityHeader goBackTo={"/"} title={"Video player"} />
+    <div className="flex flex-col">
+      <ActivityHeader goBackTo={"/"} title={"Video player"} isSolid />
       {/* Main content container - changed to row layout */}
       <div className="flex flex-col lg:flex-row p-6 gap-2 h-full">
         {/* Video Player Section with rounded corners */}
@@ -96,14 +96,16 @@ export default function VideoPage() {
         </div>
 
         {/* Chat Section - adjusted to be next to video on larger screens */}
-        <div className="min-w-[65ch] w-full lg:w-1/3 border rounded-xl lg:ml-4 h-1/2 lg:h-full [transform:translateZ(0)]">
+        <div className="min-w-[65ch] w-full lg:w-1/3 border rounded-xl lg:ml-4 h-1/2 lg:h-full [transform:translateZ(0)] flex flex-col">
           <div
             ref={scrollRef}
-            className="overflow-y-auto flex flex-col gap-6 h-full p-4"
+            className="overflow-y-auto flex-1 flex flex-col gap-6 p-4 max-h-[70vh]"
           >
             {chat?.messages.map((m) => (
               <ChatMessage key={m.id} {...m} seekToTime={seekToTime} />
             ))}
+          </div>
+          <div className="p-4 pt-0">
             <MessageInput onSend={handleSend} scroll="parent" />
           </div>
         </div>

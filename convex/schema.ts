@@ -18,8 +18,7 @@ export const lectureAdminSchema = {
 export const lectureSchema = {
   ...lectureAdminSchema,
   status: LECTURE_STATUS,
-  assistantId: v.optional(v.string()), // Used for OpenAI assistant ID or Gemini model name
-  modelType: v.optional(v.union(v.literal("openai"), v.literal("gemini"))), // Specify which AI model is being used
+  modelName: v.optional(v.string()), // Used for Gemini model name
   chunks: v.array(v.string()),
 };
 
@@ -125,8 +124,6 @@ export default defineSchema(
     lectureChats: defineTable({
       lectureId: v.id("lectures"),
       userId: v.id("users"),
-      threadId: v.string(), // OpenAI thread ID or JSON stringified Gemini chat history
-      modelType: v.optional(v.union(v.literal("openai"), v.literal("gemini"))), // Specify which AI model is being used
     }).index("by_lecture_and_user", ["lectureId", "userId"]),
 
     lectureChatMessages: defineTable({

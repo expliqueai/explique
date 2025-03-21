@@ -17,7 +17,6 @@ import {
 } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
-import { TextContentBlock } from "openai/resources/beta/threads/messages";
 
 const SYSTEM_PROMPT = `
 You are an AI language model designed to assist users in navigating and understanding the content of a video. Your capabilities include answering questions about specific moments in the video using the preprocessed data provided. You can also suggest insightful questions to help users explore the video content more deeply.
@@ -33,9 +32,10 @@ Instructions for User Interaction:
 - Make your answers as concise as possible.
 - Before answering, check if the segment contains an error. If so, ONLY provide the next timestamp where you can answer and say that you cannot safely provide an answer because there was an error in the video processing.
 
+Important: You MUST use markdown to format your messages and LaTeX for math equations or math symbols. For example, you can use the following syntax to write a math formula: $x^2 + y^2 = z^2$.
 Important: You MUST put timestamps inside <timestamp> and </timestamp> tags. NEVER mention anything about the preprocessed video segments, events and slides. These are keywords used internally by you to differenciate data.
 
-Ensure all interactions are concise and accurate, based on the comprehensive preprocessed data, while maintaining a friendly and helpful tone to assist the user in understanding the video's educational content. Strive for brevity while ensuring all information is rooted in the data above, fostering a deeper understanding of the video’s educational content through thoughtful dialog. Use LaTeX for any necessary mathematical expressions to maintain clarity and precision.
+Ensure all interactions are concise and accurate, based on the comprehensive preprocessed data, while maintaining a friendly and helpful tone to assist the user in understanding the video's educational content. Strive for brevity while ensuring all information is rooted in the data above, fostering a deeper understanding of the video's educational content through thoughtful dialog.
 
 ---
 
@@ -103,14 +103,9 @@ export const initializeChat = actionWithAuth({
       throw new ConvexError("Lecture not found");
     }
 
-    // Initialize an empty chat history for Gemini
-    const emptyHistory = JSON.stringify([]);
-
     await ctx.runMutation(internal.video.chat._createChat, {
       lectureId: args.lectureId,
       userId: ctx.session.user._id,
-      threadId: emptyHistory,
-      modelType: "gemini",
     });
   },
 });
@@ -129,8 +124,6 @@ export const _createChat = internalMutation({
   args: {
     lectureId: v.id("lectures"),
     userId: v.id("users"),
-    threadId: v.string(),
-    modelType: v.union(v.literal("openai"), v.literal("gemini")),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -146,8 +139,6 @@ export const _createChat = internalMutation({
     await ctx.db.insert("lectureChats", {
       lectureId: args.lectureId,
       userId: args.userId,
-      threadId: args.threadId,
-      modelType: args.modelType,
     });
   },
 });
@@ -168,8 +159,8 @@ export const sendMessage = mutationWithAuth({
       throw new ConvexError("Lecture not found");
     }
 
-    if (!lecture.assistantId) {
-      throw new ConvexError("This lecture hasn’t been initialized yet");
+    if (!lecture.modelName) {
+      throw new ConvexError("This lecture hasn't been initialized yet");
     }
 
     const chat = await ctx.db
@@ -195,26 +186,64 @@ export const sendMessage = mutationWithAuth({
       appearance: "typing",
     });
 
-    // Check which model type to use
-    const modelType = chat.modelType || "gemini";
-
-    if (modelType === "gemini") {
-      await ctx.scheduler.runAfter(0, internal.video.chat.answerWithGemini, {
-        message: args.message,
-        chatHistory: chat.threadId,
-        modelName: lecture.assistantId, // repurpose assistantId as model name
-        lectureChatId: chat._id,
-        systemMessageId,
-      });
-    }
+    await ctx.scheduler.runAfter(0, internal.video.chat.answerWithGemini, {
+      message: args.message,
+      modelName: lecture.modelName,
+      lectureChatId: chat._id,
+      systemMessageId,
+    });
   },
 });
 
-// New function for Gemini
+// Function to build conversation history from lectureChatMessages
+export const _getConversationHistory = internalQuery({
+  args: {
+    lectureChatId: v.id("lectureChats"),
+  },
+  handler: async (ctx, args) => {
+    const messages = await ctx.db
+      .query("lectureChatMessages")
+      .withIndex("by_lecture_chat_id", (q) =>
+        q.eq("lectureChatId", args.lectureChatId),
+      )
+      .collect();
+
+    // Sort messages by _creationTime to ensure correct order
+    const sortedMessages = [...messages].sort(
+      (a, b) => a._creationTime - b._creationTime,
+    );
+
+    // Build conversation history in Gemini format
+    // Pair user messages with system responses
+    const history = [];
+    for (let i = 0; i < sortedMessages.length; i += 2) {
+      const userMessage = sortedMessages[i];
+      const systemMessage = sortedMessages[i + 1];
+
+      // Only add complete message pairs to history
+      if (
+        userMessage &&
+        !userMessage.system &&
+        systemMessage &&
+        systemMessage.system &&
+        systemMessage.appearance !== "typing" &&
+        systemMessage.appearance !== "error"
+      ) {
+        history.push(
+          { role: "user", parts: [{ text: userMessage.content }] },
+          { role: "model", parts: [{ text: systemMessage.content }] },
+        );
+      }
+    }
+
+    return history;
+  },
+});
+
+// Function for Gemini
 export const answerWithGemini = internalAction({
   args: {
     message: v.string(),
-    chatHistory: v.string(),
     modelName: v.string(),
     lectureChatId: v.id("lectureChats"),
     systemMessageId: v.id("lectureChatMessages"),
@@ -235,6 +264,14 @@ export const answerWithGemini = internalAction({
         }),
       });
 
+      // Get conversation history from messages
+      const chatHistory = await ctx.runQuery(
+        internal.video.chat._getConversationHistory,
+        {
+          lectureChatId: args.lectureChatId,
+        },
+      );
+
       // Combine system prompt with lecture chunks
       const enhancedSystemPrompt =
         SYSTEM_PROMPT + (lecture?.chunks?.join("\n") || "");
@@ -245,49 +282,16 @@ export const answerWithGemini = internalAction({
         systemInstruction: enhancedSystemPrompt,
       });
 
-      // Parse chat history
-      let chatHistory;
-      try {
-        chatHistory = JSON.parse(args.chatHistory) || [];
-      } catch (e) {
-        console.error("Failed to parse chat history:", e);
-        chatHistory = [];
-      }
-
-      // For empty chat history, we don't add an initial message
-      // Gemini requires that the first message must be from the user
-
-      // Create a new chat without history for the first message
-      // so we can later use the system instructions
-      const chat =
-        chatHistory.length === 0
-          ? model.startChat({
-              generationConfig: defaultGenerationConfig,
-              safetySettings: getDefaultSafetySettings(),
-            })
-          : model.startChat({
-              generationConfig: defaultGenerationConfig,
-              safetySettings: getDefaultSafetySettings(),
-              history: chatHistory,
-            });
+      // Create a new chat with history from messages
+      const chat = model.startChat({
+        generationConfig: defaultGenerationConfig,
+        safetySettings: getDefaultSafetySettings(),
+        history: chatHistory,
+      });
 
       // Send the message to Gemini and get the response
       const result = await chat.sendMessage(args.message);
       const response = result.response.text();
-
-      // Update the chat history - for first message we store just the user's actual message
-      // not the one with system prompt included
-      const updatedHistory = [
-        ...chatHistory,
-        { role: "user", parts: [{ text: args.message }] },
-        { role: "model", parts: [{ text: response }] },
-      ];
-
-      // Save the updated chat history to the database
-      await ctx.runMutation(internal.video.chat.updateChatHistory, {
-        lectureChatId: args.lectureChatId,
-        chatHistory: JSON.stringify(updatedHistory),
-      });
 
       // Update the system message with the response
       await ctx.runMutation(internal.video.chat.writeSystemResponse, {
@@ -302,7 +306,7 @@ export const answerWithGemini = internalAction({
   },
 });
 
-// Add this new query to get lecture ID from lecture chat
+// Add this query to get lecture ID from lecture chat
 export const _getChatLectureId = internalQuery({
   args: {
     lectureChatId: v.id("lectureChats"),
@@ -313,18 +317,6 @@ export const _getChatLectureId = internalQuery({
       throw new ConvexError("Chat not found");
     }
     return chat.lectureId;
-  },
-});
-
-export const updateChatHistory = internalMutation({
-  args: {
-    lectureChatId: v.id("lectureChats"),
-    chatHistory: v.string(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.lectureChatId, {
-      threadId: args.chatHistory, // Reuse threadId field to store chat history
-    });
   },
 });
 
