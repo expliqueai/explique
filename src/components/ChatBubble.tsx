@@ -3,6 +3,7 @@ import Markdown from "./Markdown";
 import Instruction from "./Instruction";
 import ReportMessage, { ReportMessageProps } from "./ReportMessage";
 import React from "react";
+import { Components } from "react-markdown";
 
 type ChatBubbleProps = {
   author: "user" | "system";
@@ -11,12 +12,14 @@ type ChatBubbleProps = {
     | { type: "error" }
     | { type: "message"; message: string };
   report?: ReportMessageProps;
+  components?: Partial<Components> | null;
 };
 
 export default function ChatBubble({
   author,
   contents,
   report,
+  components,
 }: ChatBubbleProps) {
   const isSystem = author === "system";
 
@@ -24,13 +27,17 @@ export default function ChatBubble({
     <div className={clsx("flex", isSystem ? "mr-6" : "ml-6")}>
       <div
         className={clsx(
-          "inline-block p-3 sm:p-4 rounded-xl shadow relative",
+          "inline-block p-3 sm:p-4 rounded-xl shadow relative break-words max-w-[90%]",
           isSystem && "bg-white rounded-bl-none",
           !isSystem &&
             "bg-gradient-to-b from-purple-500 to-purple-600 text-white rounded-br-none ml-auto",
         )}
       >
-        <ChatBubbleContents contents={contents} isSystem={isSystem} />
+        <ChatBubbleContents
+          contents={contents}
+          isSystem={isSystem}
+          components={components}
+        />
 
         {report && <ReportMessage {...report} />}
       </div>
@@ -41,9 +48,11 @@ export default function ChatBubble({
 const ChatBubbleContents = React.memo(function ChatBubbleContents({
   contents,
   isSystem,
+  components,
 }: {
   contents: ChatBubbleProps["contents"];
   isSystem: boolean;
+  components?: Partial<Components> | null;
 }) {
   if (contents.type === "typing") {
     return (
@@ -67,6 +76,7 @@ const ChatBubbleContents = React.memo(function ChatBubbleContents({
     <Markdown
       text={contents.message}
       className={isSystem ? undefined : "text-white"}
+      components={components}
     />
   );
 });

@@ -195,6 +195,7 @@ function NewMessage({ attemptId }: { attemptId: Id<"attempts"> }) {
       onSend={(message) => {
         sendMessage({ attemptId, message });
       }}
+      scroll="body"
     />
   );
 }

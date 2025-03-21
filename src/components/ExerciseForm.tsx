@@ -12,7 +12,6 @@ import Markdown from "@/components/Markdown";
 import { Id } from "../../convex/_generated/dataModel";
 import { api as convexApi } from "../../convex/_generated/api";
 import { useAction, useQuery } from "@/usingSession";
-import Chance from "chance";
 import clsx from "clsx";
 import { toast } from "sonner";
 import { useCourseSlug } from "@/hooks/useCourseSlug";

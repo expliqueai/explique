@@ -1,16 +1,16 @@
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
-import { useRouter } from "next/navigation";
+import { useCourseSlug } from "@/hooks/useCourseSlug";
 import {
   Listbox,
   ListboxButton,
-  ListboxOption,
-  ListboxOptions,
   Transition,
+  ListboxOptions,
+  ListboxOption,
 } from "@headlessui/react";
+import { ChevronUpDownIcon, CheckIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import { useCourseSlug } from "@/hooks/useCourseSlug";
-import { api } from "../../convex/_generated/api";
 import { useQuery } from "@/usingSession";
+import { useRouter } from "next/navigation";
+import { api } from "../../../convex/_generated/api";
 
 export default function CourseSelector() {
   const router = useRouter();

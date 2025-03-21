@@ -1,6 +1,6 @@
 "use client";
 
-import { api } from "../../../../convex/_generated/api";
+import { api } from "../../../../../convex/_generated/api";
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import {
   CheckIcon as CheckIconSmall,
@@ -8,14 +8,11 @@ import {
 } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import { useQuery } from "@/usingSession";
-
 import { formatTimestampHumanFormat, timeFromNow } from "@/util/date";
-
-import { ExerciseLink } from "@/components/ExerciseLink";
-
 import { useCourseSlug } from "@/hooks/useCourseSlug";
+import { ImageLink } from "@/components/ImageLink";
 
-export default function CoursePage() {
+export default function ExercisesPage() {
   const courseSlug = useCourseSlug();
   const user = useQuery(api.courses.getRegistration, { courseSlug });
 
@@ -92,7 +89,7 @@ function ProjectGrid() {
             </div>
             <div className="grid gap-6 md:grid-cols-2">
               {week.exercises.map((exercise) => (
-                <ExerciseLink
+                <ImageLink
                   key={exercise.id}
                   href={`/e/${exercise.id}`}
                   name={exercise.name}

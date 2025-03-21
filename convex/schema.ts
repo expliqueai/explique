@@ -1,6 +1,27 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+export const LECTURE_STATUS = v.union(
+  v.literal("NOT_STARTED"),
+  v.literal("PROCESSING"),
+  v.literal("READY"),
+  v.literal("FAILED"),
+);
+
+export const lectureAdminSchema = {
+  name: v.string(),
+  weekId: v.union(v.id("weeks"), v.null()), // null = soft-deleted exercise
+  image: v.optional(v.id("images")),
+  url: v.string(),
+};
+
+export const lectureSchema = {
+  ...lectureAdminSchema,
+  status: LECTURE_STATUS,
+  modelName: v.optional(v.string()), // Used for Gemini model name
+  chunks: v.array(v.string()),
+};
+
 export const exerciseAdminSchema = {
   name: v.string(),
   weekId: v.union(v.id("weeks"), v.null()), // null = soft-deleted exercise
@@ -98,6 +119,20 @@ export default defineSchema(
       assistantId: v.string(),
     }).index("by_week_id", ["weekId"]),
 
+    lectures: defineTable(lectureSchema).index("by_week_id", ["weekId"]),
+
+    lectureChats: defineTable({
+      lectureId: v.id("lectures"),
+      userId: v.id("users"),
+    }).index("by_lecture_and_user", ["lectureId", "userId"]),
+
+    lectureChatMessages: defineTable({
+      lectureChatId: v.id("lectureChats"),
+      system: v.boolean(),
+      content: v.string(),
+      appearance: v.optional(v.union(v.literal("typing"), v.literal("error"))),
+    }).index("by_lecture_chat_id", ["lectureChatId"]),
+
     images: defineTable({
       storageId: v.id("_storage"),
       thumbnails: v.array(
@@ -111,8 +146,11 @@ export default defineSchema(
       size: v.string(),
       prompt: v.string(),
       quality: v.union(v.literal("standard"), v.literal("hd")),
-      exerciseId: v.id("exercises"),
-    }).index("by_exercise_id", ["exerciseId"]),
+      exerciseId: v.optional(v.id("exercises")),
+      lectureId: v.optional(v.id("lectures")),
+    })
+      .index("by_exercise", ["exerciseId"])
+      .index("by_lecture", ["lectureId"]),
 
     messages: defineTable({
       attemptId: v.id("attempts"),

@@ -39,3 +39,5 @@ next-env.d.ts
 .sentryclirc
 
 *storybook.log
+
+bun.lock

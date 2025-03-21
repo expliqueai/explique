@@ -5,25 +5,25 @@ import { api } from "../../../../../../convex/_generated/api";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { WeekList } from "@/components/admin/WeekList";
 import { toast } from "sonner";
-import { ExerciseLinkWithMenu } from "@/components/admin/ExerciseLinkWithMenu";
+import { LectureLinkWithMenu } from "@/components/admin/LectureLinkWithMenu";
 
-export default function AdminExercisesPage() {
+export default function AdminLecturesPage() {
   const courseSlug = useCourseSlug();
-  const weeks = useQuery(api.admin.exercises.list, { courseSlug });
+  const weeks = useQuery(api.admin.lectures.list, { courseSlug });
   const deleteWeek = useMutation(api.admin.weeks.remove);
 
   return (
     <WeekList
-      title="Exercises"
-      weeks={weeks?.map((week) => ({ ...week, items: week.exercises }))}
+      title="Lectures"
+      weeks={weeks?.map((week) => ({ ...week, items: week.lectures }))}
       onDeleteWeek={async (weekId) => {
         await deleteWeek({ id: weekId, courseSlug });
         toast.success("Week deleted successfully");
       }}
-      renderItem={(exercise) => (
-        <ExerciseLinkWithMenu key={exercise.id} exercise={exercise} />
+      renderItem={(lecture) => (
+        <LectureLinkWithMenu key={lecture.id} lecture={lecture} />
       )}
-      newItemPath="/admin/exercises/new"
+      newItemPath="/admin/lectures/new"
     />
   );
 }
