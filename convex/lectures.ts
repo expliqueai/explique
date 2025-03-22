@@ -10,7 +10,7 @@ import { getCourseRegistration } from "./courses";
 import { Doc, Id } from "./_generated/dataModel";
 import { StorageReader } from "convex/server";
 
-export const getUrl = queryWithAuth({
+export const getMetadata = queryWithAuth({
   args: {
     lectureId: v.id("lectures"),
   },
@@ -24,7 +24,10 @@ export const getUrl = queryWithAuth({
       throw new ConvexError("Lecture not found");
     }
 
-    return lecture.url;
+    return {
+      name: lecture.name,
+      url: lecture.url,
+    };
   },
 });
 

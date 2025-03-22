@@ -15,7 +15,7 @@ export default function VideoPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const lectureId = params.lectureId as Id<"lectures">;
-  const lectureUrl = useQuery(api.lectures.getUrl, {
+  const lectureMetadata = useQuery(api.lectures.getMetadata, {
     lectureId,
   });
   const chat = useQuery(api.video.chat.get, {
@@ -91,7 +91,7 @@ export default function VideoPage() {
     <div className="flex flex-col h-screen">
       <ActivityHeader
         goBackTo={"/"}
-        title={"Video player"}
+        title={lectureMetadata?.name}
         action={
           <button
             className="sm:w-16 sm:h-16 w-14 h-14 flex items-center justify-center"
@@ -108,7 +108,7 @@ export default function VideoPage() {
         <div className="min-h-[40vh] lg:min-h-0 max-h-[50vh] lg:max-h-none items-center relative w-full lg:flex-1 rounded-xl overflow-hidden bg-black">
           <ReactPlayer
             ref={playerRef}
-            url={lectureUrl}
+            url={lectureMetadata?.url}
             width="100%"
             height="100%"
             controls
