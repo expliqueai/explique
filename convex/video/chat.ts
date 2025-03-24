@@ -203,6 +203,7 @@ export const sendMessage = mutationWithAuth({
     await ctx.scheduler.runAfter(0, internal.video.chat.answerWithGemini, {
       message: args.message,
       modelName: lecture.modelName,
+      lectureId: args.lectureId,
       lectureChatId: chat._id,
       systemMessageId,
     });
@@ -259,6 +260,7 @@ export const answerWithGemini = internalAction({
   args: {
     message: v.string(),
     modelName: v.string(),
+    lectureId: v.id("lectures"),
     lectureChatId: v.id("lectureChats"),
     systemMessageId: v.id("lectureChatMessages"),
   },
@@ -273,10 +275,12 @@ export const answerWithGemini = internalAction({
 
       // Get lecture data to include in system prompt
       const lecture = await ctx.runQuery(internal.video.chat._getLecture, {
-        lectureId: await ctx.runQuery(internal.video.chat._getChatLectureId, {
-          lectureChatId: args.lectureChatId,
-        }),
+        lectureId: args.lectureId,
       });
+
+      if (!lecture) {
+        throw new ConvexError("Lecture not found");
+      }
 
       // Get conversation history from messages
       const chatHistory = await ctx.runQuery(
@@ -285,6 +289,10 @@ export const answerWithGemini = internalAction({
           lectureChatId: args.lectureChatId,
         },
       );
+
+      if (lecture.chunks.length === 0) {
+        throw new ConvexError("Lecture chunks not found");
+      }
 
       // Combine system prompt with lecture chunks
       const enhancedSystemPrompt =
