@@ -150,7 +150,6 @@ const ChatMessage = React.memo(function ChatMessage({
   const processContent = useCallback(
     (text: string) => {
       if (appearance !== undefined || !text) return text;
-      console.log("Processing content", text);
 
       // Replace [hh:mm:ss] with markdown links
       return text.replace(
