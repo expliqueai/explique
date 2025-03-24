@@ -10,10 +10,12 @@ import ChatBubble from "@/components/ChatBubble";
 import ActivityHeader from "@/components/ActivityHeader";
 import MessageInput from "@/components/MessageInput";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { useCourseSlug } from "@/hooks/useCourseSlug";
 
 export default function VideoPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const courseSlug = useCourseSlug();
   const lectureId = params.lectureId as Id<"lectures">;
   const lectureMetadata = useQuery(api.lectures.getMetadata, {
     lectureId,
@@ -90,7 +92,7 @@ export default function VideoPage() {
   return (
     <div className="flex flex-col h-screen">
       <ActivityHeader
-        goBackTo={"/"}
+        goBackTo={`/${courseSlug}`}
         title={lectureMetadata?.name}
         action={
           <button
