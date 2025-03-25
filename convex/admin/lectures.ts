@@ -17,7 +17,6 @@ import {
 import { getCourseRegistration } from "../courses";
 import { Id } from "../_generated/dataModel";
 import { getImageForLecture } from "../lectures";
-import OpenAI from "openai";
 
 export const get = queryWithAuth({
   args: {
@@ -235,42 +234,57 @@ export const processVideo = internalAction({
   },
 });
 
-// export const reprocessVideo = actionWithAuth({
-//   args: {
-//     lectureId: v.id("lectures"),
-//     courseSlug: v.string(),
-//     authToken: v.string(),
-//   },
-//   handler: async (ctx, { lectureId, courseSlug, authToken }) => {
-//     await getCourseRegistration(ctx, ctx.session, courseSlug, "admin");
-//     await validateLectureInCourse(ctx, courseSlug, lectureId);
+export const reprocessVideo = actionWithAuth({
+  args: {
+    lectureId: v.id("lectures"),
+    courseSlug: v.string(),
+  },
+  handler: async (ctx, { lectureId, courseSlug }) => {
+    await getCourseRegistration(ctx, ctx.session, courseSlug, "admin");
+    await validateLectureInCourse(ctx, courseSlug, lectureId);
 
-//     const lecture = await ctx.runQuery(internal.admin.lectures.getInternal, {
-//       id: lectureId,
-//     });
+    const lecture = await ctx.runQuery(internal.admin.lectures.getInternal, {
+      id: lectureId,
+    });
 
-//     if (!lecture) {
-//       throw new ConvexError("Lecture not found");
-//     }
+    if (!lecture) {
+      throw new ConvexError("Lecture not found");
+    }
 
-//     await ctx.runMutation(api.admin.lectures.setStatus, {
-//       lectureId,
-//       status: "NOT_STARTED",
-//       authToken,
-//     });
+    if (lecture.status === "PROCESSING") {
+      throw new ConvexError("The video is already being processed");
+    }
 
-//     // Erase all previous chunks
-//     await ctx.runAction(api.admin.lectures.update, {
-//       id: lectureId,
-//       row: { chunks: [] },
-//     });
+    if (!process.env.VIDEO_PROCESSING_API_TOKEN) {
+      throw new ConvexError(
+        "VIDEO_PROCESSING_API_TOKEN environment variable is not configured",
+      );
+    }
 
-//     await ctx.runAction(internal.admin.lectures.processVideo, {
-//       lectureId,
-//       url: lecture.url,
-//     });
-//   },
-// });
+    await ctx.runMutation(api.admin.lectures.setStatus, {
+      lectureId,
+      status: "NOT_STARTED",
+      authToken: process.env.VIDEO_PROCESSING_API_TOKEN,
+    });
+
+    // Erase all previous chunks
+    await ctx.runMutation(internal.admin.lectures.deleteChunks, { lectureId });
+
+    await ctx.runAction(internal.admin.lectures.processVideo, {
+      lectureId,
+      url: lecture.url,
+    });
+  },
+});
+
+export const deleteChunks = internalMutation({
+  args: {
+    lectureId: v.id("lectures"),
+  },
+  handler: async (ctx, { lectureId }) => {
+    return await ctx.db.patch(lectureId, { chunks: [] });
+  },
+});
 
 export const createAssistant = action({
   args: {

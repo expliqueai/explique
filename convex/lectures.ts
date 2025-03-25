@@ -110,10 +110,16 @@ export const list = queryWithAuth({
       .filter((q) => q.eq(q.field("status"), "READY"))
       .collect();
 
+    const lecturesWithChunks = lectures.filter(
+      (lecture) => lecture.chunks.length > 0,
+    );
+
     const result = [];
     for (const week of weeks) {
       const lecturesResult = [];
-      for (const lecture of lectures.filter((x) => x.weekId === week._id)) {
+      for (const lecture of lecturesWithChunks.filter(
+        (x) => x.weekId === week._id,
+      )) {
         lecturesResult.push({
           id: lecture._id,
           name: lecture.name,

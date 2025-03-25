@@ -16,6 +16,7 @@ import clsx from "clsx";
 import { toast } from "sonner";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { PrimaryButton } from "./PrimaryButton";
+import { Button } from "./Button";
 
 export type State = {
   weekId: Id<"weeks">;
@@ -39,11 +40,13 @@ export default function LectureForm({
   lectureId,
   initialState,
   onSubmit,
+  onReprocess,
   submitLabel,
 }: {
   lectureId?: Id<"lectures">;
   initialState: State;
   onSubmit: (state: State) => void;
+  onReprocess?: (state: State) => void;
   submitLabel: string;
 }) {
   const [name, setName] = useState(initialState.name);
@@ -53,21 +56,37 @@ export default function LectureForm({
   const [firstMessage, setFirstMessage] = useState(
     initialState.firstMessage ?? "",
   );
+  const [isReprocessing, setIsReprocessing] = useState(false);
 
   const courseSlug = useCourseSlug();
   const weeks = useQuery(convexApi.admin.weeks.list, { courseSlug });
+  const reprocessVideo = useAction(convexApi.admin.lectures.reprocessVideo);
 
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault();
-        onSubmit({
+        const state = {
           name,
           image,
           weekId,
           url,
           firstMessage,
-        });
+        };
+
+        onSubmit(state);
+
+        if (isReprocessing) {
+          await reprocessVideo({
+            lectureId,
+            courseSlug,
+          });
+
+          toast.info("The video processing will start soon.");
+        }
+
+        // Reset reprocessing flag after submission
+        setIsReprocessing(false);
       }}
     >
       <Input
@@ -113,7 +132,14 @@ export default function LectureForm({
 
       <div className="h-36"></div>
 
-      <div className="p-8 bg-white/60 backdrop-blur-xl fixed bottom-0 left-0 w-full flex justify-end shadow-2xl">
+      <div className="p-8 gap-4 bg-white/60 backdrop-blur-xl fixed bottom-0 left-0 w-full flex justify-end shadow-2xl">
+        <Button
+          type="submit"
+          variant="danger"
+          onClick={() => setIsReprocessing(true)}
+        >
+          Save & Reprocess video
+        </Button>
         <PrimaryButton type="submit">{submitLabel}</PrimaryButton>
       </div>
     </form>
