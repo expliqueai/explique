@@ -8,7 +8,7 @@ import {
   mutation,
 } from "../_generated/server";
 import { api, internal } from "../_generated/api";
-import { LECTURE_STATUS, lectureSchema } from "../schema";
+import { LECTURE_STATUS, lectureAdminSchema, lectureSchema } from "../schema";
 import {
   actionWithAuth,
   mutationWithAuth,
@@ -98,7 +98,7 @@ export const insertRow = internalMutation({
 export const updateRow = internalMutation({
   args: {
     id: v.id("lectures"),
-    row: v.optional(v.object(lectureSchema)),
+    row: v.object(lectureAdminSchema),
   },
   handler: async ({ db }, { id, row }) => {
     // Verify that the course isn't changed
@@ -234,6 +234,43 @@ export const processVideo = internalAction({
     }
   },
 });
+
+// export const reprocessVideo = actionWithAuth({
+//   args: {
+//     lectureId: v.id("lectures"),
+//     courseSlug: v.string(),
+//     authToken: v.string(),
+//   },
+//   handler: async (ctx, { lectureId, courseSlug, authToken }) => {
+//     await getCourseRegistration(ctx, ctx.session, courseSlug, "admin");
+//     await validateLectureInCourse(ctx, courseSlug, lectureId);
+
+//     const lecture = await ctx.runQuery(internal.admin.lectures.getInternal, {
+//       id: lectureId,
+//     });
+
+//     if (!lecture) {
+//       throw new ConvexError("Lecture not found");
+//     }
+
+//     await ctx.runMutation(api.admin.lectures.setStatus, {
+//       lectureId,
+//       status: "NOT_STARTED",
+//       authToken,
+//     });
+
+//     // Erase all previous chunks
+//     await ctx.runAction(api.admin.lectures.update, {
+//       id: lectureId,
+//       row: { chunks: [] },
+//     });
+
+//     await ctx.runAction(internal.admin.lectures.processVideo, {
+//       lectureId,
+//       url: lecture.url,
+//     });
+//   },
+// });
 
 export const createAssistant = action({
   args: {
@@ -373,7 +410,7 @@ export async function validateLectureInCourse(
 export const update = actionWithAuth({
   args: {
     id: v.id("lectures"),
-    lecture: v.optional(v.object(lectureSchema)),
+    lecture: v.object(lectureAdminSchema),
     courseSlug: v.string(),
   },
   handler: async (ctx, { id, lecture, courseSlug }) => {

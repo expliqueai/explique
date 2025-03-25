@@ -42,11 +42,7 @@ export default function EditExercise() {
               await update({
                 courseSlug,
                 id: lecture._id,
-                lecture: {
-                  ...toConvexState(state),
-                  chunks: [],
-                  status: lecture.status,
-                },
+                lecture: toConvexState(state),
               });
               toast.success("Lecture updated successfully.");
               router.push(`/${courseSlug}/admin/lectures`);
