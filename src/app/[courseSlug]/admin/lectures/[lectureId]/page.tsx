@@ -30,7 +30,7 @@ export default function EditExercise() {
         {lecture && (
           <LectureForm
             lectureId={lecture._id}
-            submitLabel="Save"
+            type="update"
             initialState={{
               weekId: lecture.weekId,
               name: lecture.name,

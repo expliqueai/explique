@@ -41,13 +41,13 @@ export default function LectureForm({
   initialState,
   onSubmit,
   onReprocess,
-  submitLabel,
+  type,
 }: {
   lectureId?: Id<"lectures">;
   initialState: State;
   onSubmit: (state: State) => void;
   onReprocess?: (state: State) => void;
-  submitLabel: string;
+  type: "create" | "update";
 }) {
   const [name, setName] = useState(initialState.name);
   const [weekId, setWeekId] = useState(initialState.weekId);
@@ -133,14 +133,18 @@ export default function LectureForm({
       <div className="h-36"></div>
 
       <div className="p-8 gap-4 bg-white/60 backdrop-blur-xl fixed bottom-0 left-0 w-full flex justify-end shadow-2xl">
-        <Button
-          type="submit"
-          variant="danger"
-          onClick={() => setIsReprocessing(true)}
-        >
-          Save & Reprocess video
-        </Button>
-        <PrimaryButton type="submit">{submitLabel}</PrimaryButton>
+        {type === "update" && (
+          <Button
+            type="submit"
+            variant="danger"
+            onClick={() => setIsReprocessing(true)}
+          >
+            Save & Reprocess video
+          </Button>
+        )}
+        <PrimaryButton type="submit">
+          {type === "create" ? "Create" : "Save"}
+        </PrimaryButton>
       </div>
     </form>
   );

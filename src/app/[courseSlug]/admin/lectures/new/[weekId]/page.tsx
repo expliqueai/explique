@@ -25,7 +25,7 @@ export default function NewLecture() {
       <div className="max-w-6xl flex-1">
         <Title backHref={`/${courseSlug}/admin/lectures`}>New Lecture</Title>
         <LectureForm
-          submitLabel="Create"
+          type="create"
           initialState={{
             weekId: initialWeekId,
             name: "",
