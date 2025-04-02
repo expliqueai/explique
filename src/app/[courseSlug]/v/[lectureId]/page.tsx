@@ -141,11 +141,13 @@ const ChatMessage = React.memo(function ChatMessage({
   content,
   system,
   appearance,
+  isFallbackModel,
   seekToTime,
 }: {
   content: string;
   system: boolean;
   appearance: "typing" | "error" | undefined;
+  isFallbackModel: boolean;
   seekToTime: (seconds: number) => void;
 }) {
   // Parse timestamp pattern and convert to markdown links
@@ -171,6 +173,7 @@ const ChatMessage = React.memo(function ChatMessage({
   return (
     <ChatBubble
       author={system ? "system" : "user"}
+      isFallbackModel={isFallbackModel}
       contents={
         appearance === "typing"
           ? { type: "typing" }

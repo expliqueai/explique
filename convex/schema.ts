@@ -132,6 +132,7 @@ export default defineSchema(
       system: v.boolean(),
       content: v.string(),
       appearance: v.optional(v.union(v.literal("typing"), v.literal("error"))),
+      isFallbackModel: v.optional(v.boolean()),
     }).index("by_lecture_chat_id", ["lectureChatId"]),
 
     images: defineTable({

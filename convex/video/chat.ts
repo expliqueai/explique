@@ -55,6 +55,8 @@ Important: The timestamp of the beginning of a segment is inclusive but the time
 
 `;
 
+const FALLBACK_MODEL = "gemini-2.0-flash";
+
 export const get = queryWithAuth({
   args: {
     lectureId: v.id("lectures"),
@@ -90,6 +92,7 @@ export const get = queryWithAuth({
         content: message.content,
         system: message.system,
         appearance: message.appearance,
+        isFallbackModel: message.isFallbackModel,
       })),
     };
   },
@@ -273,14 +276,14 @@ export const answerWithGemini = internalAction({
     systemMessageId: v.id("lectureChatMessages"),
   },
   handler: async (ctx, args) => {
-    try {
-      // Import the utility functions
-      const {
-        getGeminiClient,
-        getDefaultSafetySettings,
-        defaultGenerationConfig,
-      } = await import("./geminiUtils");
+    // Import the utility functions
+    const {
+      getGeminiClient,
+      getDefaultSafetySettings,
+      defaultGenerationConfig,
+    } = await import("./geminiUtils");
 
+    try {
       // Get lecture data to include in system prompt
       const lecture = await ctx.runQuery(internal.video.chat._getLecture, {
         lectureId: args.lectureId,
@@ -307,30 +310,60 @@ export const answerWithGemini = internalAction({
         SYSTEM_PROMPT + (lecture?.chunks?.join("\n") || "");
 
       const genAI = getGeminiClient();
-      const model = genAI.getGenerativeModel({
-        model: args.modelName,
-        systemInstruction: enhancedSystemPrompt,
-      });
 
-      // Create a new chat with history from messages
-      const chat = model.startChat({
-        generationConfig: defaultGenerationConfig,
-        safetySettings: getDefaultSafetySettings(),
-        history: chatHistory,
-      });
+      // Try with original model first
+      try {
+        const model = genAI.getGenerativeModel({
+          model: args.modelName,
+          systemInstruction: enhancedSystemPrompt,
+        });
 
-      // Send the message to Gemini and get the response
-      const result = await chat.sendMessage(args.message);
-      const response = result.response.text();
+        // Create a new chat with history from messages
+        const chat = model.startChat({
+          generationConfig: defaultGenerationConfig,
+          safetySettings: getDefaultSafetySettings(),
+          history: chatHistory,
+        });
 
-      // Update the system message with the response
-      await ctx.runMutation(internal.video.chat.writeSystemResponse, {
-        systemMessageId: args.systemMessageId,
-        appearance: undefined,
-        content: response,
-      });
+        // Send the message to Gemini and get the response
+        const result = await chat.sendMessage(args.message);
+        const response = result.response.text();
+
+        // Update the system message with the response
+        await ctx.runMutation(internal.video.chat.writeSystemResponse, {
+          systemMessageId: args.systemMessageId,
+          appearance: undefined,
+          content: response,
+        });
+
+        return; // Successfully completed with primary model
+      } catch (primaryError) {
+        const fallbackModel = genAI.getGenerativeModel({
+          model: FALLBACK_MODEL,
+          systemInstruction: enhancedSystemPrompt,
+        });
+
+        const fallbackChat = fallbackModel.startChat({
+          generationConfig: defaultGenerationConfig,
+          safetySettings: getDefaultSafetySettings(),
+          history: chatHistory,
+        });
+
+        const fallbackResult = await fallbackChat.sendMessage(args.message);
+        const fallbackResponse = fallbackResult.response.text();
+
+        await ctx.runMutation(internal.video.chat.writeSystemResponse, {
+          systemMessageId: args.systemMessageId,
+          appearance: undefined,
+          content: fallbackResponse,
+          isFallbackModel: true,
+        });
+      }
     } catch (err) {
-      console.error("Error generating response from Gemini:", err);
+      console.error(
+        "Error generating response, even with fallback model:",
+        err,
+      );
       await sendError(ctx, args.systemMessageId);
     }
   },
@@ -356,11 +389,13 @@ export const writeSystemResponse = internalMutation({
     content: v.string(),
     appearance: v.optional(v.literal("error")),
     systemMessageId: v.id("lectureChatMessages"),
+    isFallbackModel: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.systemMessageId, {
       content: args.content,
       appearance: args.appearance,
+      isFallbackModel: args.isFallbackModel,
     });
   },
 });
