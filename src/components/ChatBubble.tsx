@@ -89,7 +89,7 @@ const ChatBubbleContents = React.memo(function ChatBubbleContents({
       )}
       <Markdown
         text={contents.message}
-        className={isSystem ? undefined : "text-white"}
+        className={isSystem ? undefined : "prose-userMessage"}
         components={components}
       />
     </>

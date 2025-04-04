@@ -46,7 +46,7 @@ export default function VideoPage() {
         const secs = Math.floor(seconds % 60);
         return `<timestamp>${pad(hours)}:${pad(minutes)}:${pad(secs)}</timestamp>`;
       };
-      const timestampedMessage = `${formatTimestamp(currentTime)} ${message}`;
+      const timestampedMessage = `${formatTimestamp(currentTime)}\n${message}`;
       if (!hasThread) {
         await initializeChat({ lectureId });
       }
@@ -141,13 +141,13 @@ const ChatMessage = React.memo(function ChatMessage({
   content,
   system,
   appearance,
-  isFallbackModel,
+  isFallbackModel = false,
   seekToTime,
 }: {
   content: string;
   system: boolean;
   appearance: "typing" | "error" | undefined;
-  isFallbackModel: boolean;
+  isFallbackModel: boolean | undefined;
   seekToTime: (seconds: number) => void;
 }) {
   // Parse timestamp pattern and convert to markdown links
