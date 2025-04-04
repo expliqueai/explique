@@ -32,8 +32,4 @@ spec:
           requests:
             cpu: "2"
             memory: "256Mi"
-      volumes:
-      - name: data
-        persistentVolumeClaim:
-          claimName: PVC_NAME
       restartPolicy: Always
