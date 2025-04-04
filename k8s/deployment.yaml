@@ -25,9 +25,6 @@ spec:
         env:
         - name: EXAMPLE
           value: "Your example value"
-        volumeMounts:
-        - mountPath: /app/drizzle/storage
-          name: data
         resources:
           requests:
             cpu: "2"
