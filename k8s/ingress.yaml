@@ -2,14 +2,11 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: APPLICATION-NAME-app
-  annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "0"
-    nginx.ingress.kubernetes.io/affinity: "cookie"
-    nginx.ingress.kubernetes.io/session-cookie-name: "route"
-    nginx.ingress.kubernetes.io/session-cookie-expires: "172800"
-    nginx.ingress.kubernetes.io/session-cookie-max-age: "172800"
-
 spec:
+  tls:
+    - hosts:
+      - APPLICATION-HOSTS-FQDN
+      secretName: APPLICATION-HOSTS-FQDN-tls
   rules:
   - host: APPLICATION-HOSTS-FQDN
     http:
