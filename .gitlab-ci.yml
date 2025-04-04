@@ -4,18 +4,18 @@ stages:
 
 variables:
   HARBOR_REGISTRY: "ic-registry.epfl.ch"
-  APPLICATION_NAME: "cs250" 
-  REPO_NAME: "cs250"
-  IMAGE_NAME: "cs250"
+  APPLICATION_NAME: "explique" 
+  REPO_NAME: "explique"
+  IMAGE_NAME: "explique"
   TAG: "test"
-  REGISTRY_ROBOT: 'robot$$CS250-gitlab'
+  REGISTRY_ROBOT: 'robot$$explique+cicd'
   DOCKERFILE_PATH: "prod.Dockerfile"
   DOCKER_AUTH_CONFIG: "{\"auths\":{\"$HARBOR_REGISTRY\":{\"username\":\"$REGISTRY_ROBOT\",\"password\":\"$HARBOR_PASSWORD\"}}}"
-  FQDN: cs250.epfl.ch
-  PVC_NAME: cs250
+  FQDN: explique.epfl.ch
+  PVC_NAME: explique
   PVC_NSPACE: thl2
   PVC_SERVER: ic1files.epfl.ch
-  PVC_PATH: /u10394_ic_icit_003_files_nfs/cs250.epfl.ch
+  PVC_PATH: /u10394_ic_icit_003_files_nfs/explique.epfl.ch
 
 .EXEC_SCRIPT: &EXEC_SCRIPT
   - mkdir -p ~/.kube
@@ -32,6 +32,7 @@ variables:
   - sed -i "s%PVC_NSPACE%$PVC_NSPACE%g" $CI_PROJECT_DIR/k8s/persistentvolumeclaim.yaml
   - sed -i "s%PVC_SERVER%$PVC_SERVER%g" $CI_PROJECT_DIR/k8s/persistentvolumeclaim.yaml
   - sed -i "s%PVC_PATH%$PVC_PATH%g" $CI_PROJECT_DIR/k8s/persistentvolumeclaim.yaml
+  - kubectl apply -f $CI_PROJECT_DIR/k8s/persistentvolumeclaim.yaml -n thl2
   - kubectl apply -f $CI_PROJECT_DIR/k8s/ingress.yaml -n thl2
   - kubectl apply -f $CI_PROJECT_DIR/k8s/service.yaml -n thl2
   - kubectl delete -f $CI_PROJECT_DIR/k8s/deployment.yaml --ignore-not-found -n thl2
@@ -42,7 +43,7 @@ build-a-docker:
   stage: build
   only:
     refs:
-      - main
+      - questionable-prof-preview
 
   image:
     name: gcr.io/kaniko-project/executor:debug
@@ -51,7 +52,7 @@ build-a-docker:
     - mkdir -p /kaniko/.docker
     - echo $DOCKER_AUTH_CONFIG > /kaniko/.docker/config.json
     - cat /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE_PATH --destination $HARBOR_REGISTRY/$REPO_NAME/$APPLICATION_NAME:$TAG --build-arg CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg BASE_URL=$BASE_URL --build-arg "JWT_KEY='$JWT_KEY'" --build-arg "ADMIN_API_PUBLIC_KEY='$ADMIN_API_PUBLIC_KEY'" --build-arg IDENTIFIER_SALT=$IDENTIFIER_SALT
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE_PATH --destination $HARBOR_REGISTRY/$REPO_NAME/$APPLICATION_NAME:$TAG --build-arg CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg BASE_URL=$BASE_URL --build-arg "JWT_KEY='$JWT_KEY'" --build-arg "ADMIN_API_PUBLIC_KEY='$ADMIN_API_PUBLIC_KEY'" --build-arg IDENTIFIER_SALT=$IDENTIFIER_SALT --build-arg 
 
 deploy-to-prod:
   stage: deploy

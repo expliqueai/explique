@@ -14,6 +14,8 @@ spec:
       labels:
         name: APPLICATION-NAME-app
     spec:
+      imagePullSecrets:
+      - name: APPLICATION-NAME-regcred
       containers:
       - name: APPLICATION-NAME-app
         imagePullPolicy: Always
@@ -26,8 +28,12 @@ spec:
         volumeMounts:
         - mountPath: /app/drizzle/storage
           name: data
+        resources:
+          requests:
+            cpu: "2"
+            memory: "200Mi"
       volumes:
       - name: data
         persistentVolumeClaim:
-          claimName: PVC_NAME
+          claimName: PVC_NAME-pvc
       restartPolicy: Always
