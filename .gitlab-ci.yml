@@ -43,7 +43,7 @@ build-a-docker:
   stage: build
   only:
     refs:
-      - questionable-prof-preview
+      - main
 
   image:
     name: gcr.io/kaniko-project/executor:debug
