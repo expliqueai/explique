@@ -14,7 +14,7 @@ type ChatBubbleProps = {
     | { type: "message"; message: string };
   report?: ReportMessageProps;
   components?: Partial<Components> | null;
-  isFallbackModel: boolean;
+  isFallbackModel?: boolean;
 };
 
 export default function ChatBubble({
@@ -58,7 +58,7 @@ const ChatBubbleContents = React.memo(function ChatBubbleContents({
   contents: ChatBubbleProps["contents"];
   isSystem: boolean;
   components?: Partial<Components> | null;
-  isFallbackModel: boolean;
+  isFallbackModel?: boolean;
 }) {
   if (contents.type === "typing") {
     return (

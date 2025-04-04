@@ -141,7 +141,7 @@ const ChatMessage = React.memo(function ChatMessage({
   content,
   system,
   appearance,
-  isFallbackModel = false,
+  isFallbackModel,
   seekToTime,
 }: {
   content: string;
