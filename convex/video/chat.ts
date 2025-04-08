@@ -58,7 +58,7 @@ Important: The timestamp of the beginning of a segment is inclusive but the time
 
 `;
 
-const FALLBACK_MODEL = "gemini-2.0-flash";
+const FALLBACK_MODEL = "gemini-2.5-pro-preview-03-25";
 
 export const get = queryWithAuth({
   args: {
