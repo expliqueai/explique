@@ -305,7 +305,7 @@ export const createAssistant = action({
 
     await ctx.runMutation(api.admin.lectures.setAssistantId, {
       lectureId,
-      modelName: "gemini-2.0-flash-thinking-exp",
+      modelName: "gemini-2.5-flash-preview-04-17",
       authToken,
     });
   },
