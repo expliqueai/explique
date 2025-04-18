@@ -1,0 +1,50 @@
+"use client";
+
+import { useMutation, useQuery } from "@/usingSession";
+import React from "react";
+import { useParams, useRouter } from "next/navigation";
+import LectureWeekForm from "@/components/LectureWeekForm";
+import Title from "@/components/typography";
+import { useCourseSlug } from "@/hooks/useCourseSlug";
+import { api } from "../../../../../../convex/_generated/api";
+import { Id } from "../../../../../../convex/_generated/dataModel";
+
+export default function EditLectureWeek() {
+  const router = useRouter();
+  const params = useParams();
+  const update = useMutation(api.admin.lectureWeeks.update);
+  const courseSlug = useCourseSlug();
+
+  const week = useQuery(api.admin.lectureWeeks.get, {
+    id: params.weekId as Id<"lectureWeeks">,
+    courseSlug,
+  });
+
+  return (
+    <div className="bg-slate-100 h-full p-10 flex justify-center">
+      <div className="max-w-xl flex-1">
+        <Title backHref={`/${courseSlug}/admin/lectures`}>
+          Edit Lecture Week
+        </Title>
+
+        {week === null && <p>Not found</p>}
+        {week && (
+          <LectureWeekForm
+            onSubmit={async (state) => {
+              await update({
+                weekDetails: state,
+                courseSlug,
+                id: week._id,
+              });
+              router.push(`/${courseSlug}/admin/lectures`);
+            }}
+            initialState={{
+              name: week.name,
+            }}
+            submitLabel="Save"
+          />
+        )}
+      </div>
+    </div>
+  );
+}

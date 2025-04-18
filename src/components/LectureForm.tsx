@@ -19,7 +19,7 @@ import { PrimaryButton } from "./PrimaryButton";
 import { Button } from "./Button";
 
 export type State = {
-  weekId: Id<"weeks">;
+  weekId: Id<"lectureWeeks">;
   name: string;
   image?: Id<"images">;
   url: string;
@@ -59,7 +59,7 @@ export default function LectureForm({
   const [isReprocessing, setIsReprocessing] = useState(false);
 
   const courseSlug = useCourseSlug();
-  const weeks = useQuery(convexApi.admin.weeks.list, { courseSlug });
+  const weeks = useQuery(convexApi.admin.lectureWeeks.list, { courseSlug });
   const reprocessVideo = useAction(convexApi.admin.lectures.reprocessVideo);
 
   return (

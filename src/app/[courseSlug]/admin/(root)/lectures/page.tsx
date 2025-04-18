@@ -10,7 +10,7 @@ import { LectureLinkWithMenu } from "@/components/admin/LectureLinkWithMenu";
 export default function AdminLecturesPage() {
   const courseSlug = useCourseSlug();
   const weeks = useQuery(api.admin.lectures.list, { courseSlug });
-  const deleteWeek = useMutation(api.admin.weeks.remove);
+  const deleteWeek = useMutation(api.admin.lectureWeeks.remove);
 
   return (
     <WeekList
@@ -24,6 +24,7 @@ export default function AdminLecturesPage() {
         <LectureLinkWithMenu key={lecture.id} lecture={lecture} />
       )}
       newItemPath="/admin/lectures/new"
+      weekType="lectureWeeks"
     />
   );
 }

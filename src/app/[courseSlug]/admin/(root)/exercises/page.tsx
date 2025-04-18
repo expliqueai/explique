@@ -24,6 +24,7 @@ export default function AdminExercisesPage() {
         <ExerciseLinkWithMenu key={exercise.id} exercise={exercise} />
       )}
       newItemPath="/admin/exercises/new"
+      weekType="weeks"
     />
   );
 }

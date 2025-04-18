@@ -52,19 +52,16 @@ export const list = queryWithAuth({
       "admin",
     );
 
-    const weeks = await db
-      .query("weeks")
-      .withIndex("by_course_and_start_date", (q) =>
-        q.eq("courseId", course._id),
-      )
-      .order("desc")
+    const lectureWeeks = await db
+      .query("lectureWeeks")
+      .withIndex("by_course", (q) => q.eq("courseId", course._id))
       .collect();
 
     // @TODO Only query the lectures from this course
     const lectures = await db.query("lectures").collect();
 
     const result = [];
-    for (const week of weeks) {
+    for (const week of lectureWeeks) {
       const resultLectures = [];
       for (const lecture of lectures) {
         if (lecture.weekId === week._id) {
@@ -123,7 +120,7 @@ export const updateRow = internalMutation({
       const oldWeek = await db.get(oldWeekId);
       const newWeek = await db.get(newWeekId);
       if (!oldWeek || !newWeek || newWeek.courseId !== oldWeek.courseId) {
-        throw new ConvexError("The course of an exercise cannot be changed");
+        throw new ConvexError("The course of a lecture cannot be changed");
       }
     }
 
@@ -163,7 +160,7 @@ export const create = actionWithAuth({
     }
 
     // Validate the week ID
-    const week = await ctx.runQuery(internal.admin.weeks.getInternal, {
+    const week = await ctx.runQuery(internal.admin.lectureWeeks.getInternal, {
       id: weekId,
     });
     if (!week || week.courseId !== course._id) {

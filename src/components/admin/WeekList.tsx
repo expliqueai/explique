@@ -18,10 +18,11 @@ interface BaseItem {
 
 interface WeekListProps<T extends BaseItem> {
   title: string;
-  weeks: (Doc<"weeks"> & { items: T[] })[] | undefined;
-  onDeleteWeek: (weekId: Id<"weeks">) => Promise<void>;
+  weeks: (Doc<"weeks" | "lectureWeeks"> & { items: T[] })[] | undefined;
+  onDeleteWeek: (weekId: Id<"weeks" | "lectureWeeks">) => Promise<void>;
   renderItem: (item: T) => React.ReactNode;
   newItemPath: string;
+  weekType?: "weeks" | "lectureWeeks";
 }
 
 export function WeekList<T extends BaseItem>({
@@ -30,6 +31,7 @@ export function WeekList<T extends BaseItem>({
   onDeleteWeek,
   renderItem,
   newItemPath,
+  weekType = "weeks",
 }: WeekListProps<T>) {
   const courseSlug = useCourseSlug();
 
@@ -38,7 +40,7 @@ export function WeekList<T extends BaseItem>({
       <Title>
         <span className="flex-1">{title}</span>
         <Button
-          href={`/${courseSlug}/admin/weeks/new?from=${title.toLowerCase()}`}
+          href={`/${courseSlug}/admin/${weekType}/new?from=${title.toLowerCase()}`}
         >
           <PlusIcon className="w-5 h-5" />
           Add Week
@@ -53,6 +55,7 @@ export function WeekList<T extends BaseItem>({
             onDelete={() => onDeleteWeek(week._id)}
             renderItem={renderItem}
             newItemPath={newItemPath}
+            weekType={weekType}
           />
         ))}
       </div>
@@ -65,21 +68,27 @@ function Week<T extends BaseItem>({
   onDelete,
   renderItem,
   newItemPath,
+  weekType = "weeks",
 }: {
-  week: Doc<"weeks"> & { items: T[] };
+  week: Doc<"weeks" | "lectureWeeks"> & { items: T[] };
   onDelete: () => Promise<void>;
   renderItem: (item: T) => React.ReactNode;
   newItemPath: string;
+  weekType?: "weeks" | "lectureWeeks";
 }) {
   const courseSlug = useCourseSlug();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const isRegularWeek = "startDate" in week;
 
   return (
     <div>
       <h2 className="text-3xl font-medium flex mb-4 gap-3 flex-wrap items-center">
         <span className="flex-1">{week.name}</span>
         <DropdownMenu>
-          <DropdownMenuItem href={`/${courseSlug}/admin/weeks/${week._id}`}>
+          <DropdownMenuItem
+            href={`/${courseSlug}/admin/${weekType}/${week._id}`}
+          >
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -91,31 +100,35 @@ function Week<T extends BaseItem>({
         </DropdownMenu>
       </h2>
 
-      <p className="text-gray-700">
-        <strong className="font-medium text-gray-800">
-          {formatTimestampHumanFormat(week.startDate)}
-        </strong>{" "}
-        {week.softEndDate ? (
-          <>
-            to{" "}
-            <strong className="font-medium text-gray-800">
-              {formatTimestampHumanFormat(week.softEndDate)}
-            </strong>{" "}
-            (late deadline:{" "}
-            <strong className="font-medium text-gray-800">
-              {formatTimestampHumanFormat(week.endDate)}
-            </strong>
-            )
-          </>
-        ) : (
-          <>
-            to{" "}
-            <strong className="font-medium text-gray-800">
-              {formatTimestampHumanFormat(week.endDate)}
-            </strong>
-          </>
-        )}
-      </p>
+      {isRegularWeek && (
+        <p className="text-gray-700">
+          <strong className="font-medium text-gray-800">
+            {formatTimestampHumanFormat((week as Doc<"weeks">).startDate)}
+          </strong>{" "}
+          {(week as Doc<"weeks">).softEndDate ? (
+            <>
+              to{" "}
+              <strong className="font-medium text-gray-800">
+                {formatTimestampHumanFormat(
+                  (week as Doc<"weeks">).softEndDate!,
+                )}
+              </strong>{" "}
+              (late deadline:{" "}
+              <strong className="font-medium text-gray-800">
+                {formatTimestampHumanFormat((week as Doc<"weeks">).endDate)}
+              </strong>
+              )
+            </>
+          ) : (
+            <>
+              to{" "}
+              <strong className="font-medium text-gray-800">
+                {formatTimestampHumanFormat((week as Doc<"weeks">).endDate)}
+              </strong>
+            </>
+          )}
+        </p>
+      )}
 
       <div className="mt-4 grid gap-6 md:grid-cols-2">
         {week.items.map((item) => renderItem(item))}

@@ -18,6 +18,7 @@ import type * as admin_exercises from "../admin/exercises.js";
 import type * as admin_identitiesJwt from "../admin/identitiesJwt.js";
 import type * as admin_image from "../admin/image.js";
 import type * as admin_imageGeneration from "../admin/imageGeneration.js";
+import type * as admin_lectureWeeks from "../admin/lectureWeeks.js";
 import type * as admin_lectures from "../admin/lectures.js";
 import type * as admin_reports from "../admin/reports.js";
 import type * as admin_users from "../admin/users.js";
@@ -58,6 +59,7 @@ declare const fullApi: ApiFromModules<{
   "admin/identitiesJwt": typeof admin_identitiesJwt;
   "admin/image": typeof admin_image;
   "admin/imageGeneration": typeof admin_imageGeneration;
+  "admin/lectureWeeks": typeof admin_lectureWeeks;
   "admin/lectures": typeof admin_lectures;
   "admin/reports": typeof admin_reports;
   "admin/users": typeof admin_users;

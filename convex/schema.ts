@@ -10,7 +10,7 @@ export const LECTURE_STATUS = v.union(
 
 export const lectureAdminSchema = {
   name: v.string(),
-  weekId: v.union(v.id("weeks"), v.null()), // null = soft-deleted exercise
+  weekId: v.union(v.id("lectureWeeks"), v.null()), // null = soft-deleted exercise
   image: v.optional(v.id("images")),
   url: v.string(),
   firstMessage: v.optional(v.string()),
@@ -114,6 +114,11 @@ export default defineSchema(
       // are invalidated.
       cacheInvalidation: v.optional(v.number()),
     }).index("by_course_and_start_date", ["courseId", "startDate"]),
+
+    lectureWeeks: defineTable({
+      courseId: v.id("courses"),
+      name: v.string(),
+    }).index("by_course", ["courseId"]),
 
     exercises: defineTable({
       ...exerciseAdminSchema,

@@ -15,7 +15,7 @@ import ReactPlayer from "react-player";
 export default function NewLecture() {
   const router = useRouter();
   const params = useParams();
-  const initialWeekId = params.weekId as Id<"weeks">;
+  const initialWeekId = params.weekId as Id<"lectureWeeks">;
   const courseSlug = useCourseSlug();
   const create = useAction(api.admin.lectures.create);
   const jwt = useAdminIdentity();
