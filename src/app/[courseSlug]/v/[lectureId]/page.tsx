@@ -40,11 +40,7 @@ export default function VideoPage() {
   const handleSend = useCallback(
     async (message: string) => {
       const formatTimestamp = (seconds: number): string => {
-        const pad = (num: number): string => num.toString().padStart(2, "0");
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = Math.floor(seconds % 60);
-        return `<timestamp>${pad(hours)}:${pad(minutes)}:${pad(secs)}</timestamp>`;
+        return `<timestamp>${Math.floor(seconds)}</timestamp>`;
       };
       const timestampedMessage = `${formatTimestamp(currentTime)}\n${message}`;
       if (!hasThread) {
@@ -155,13 +151,16 @@ const ChatMessage = React.memo(function ChatMessage({
     (text: string) => {
       if (appearance !== undefined || !text) return text;
 
-      // Replace [hh:mm:ss] with markdown links
+      // Replace <timestamp>seconds</timestamp> with markdown links
       return text.replace(
-        /<timestamp>(\d{2}):(\d{2}):(\d{2})<\/timestamp>/g,
-        (_, hours, minutes, seconds) => {
-          const totalSeconds =
-            parseInt(hours) * 3600 + parseInt(minutes) * 60 + parseInt(seconds);
-          return `[${hours}:${minutes}:${seconds}](timestamp=${totalSeconds})`;
+        /<timestamp>(\d+)<\/timestamp>/g,
+        (match, seconds) => {
+          const totalSeconds = parseInt(seconds);
+          const pad = (num: number): string => num.toString().padStart(2, "0");
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const secs = Math.floor(totalSeconds % 60);
+          return `[${pad(hours)}:${pad(minutes)}:${pad(secs)}](timestamp=${totalSeconds})`;
         },
       );
     },

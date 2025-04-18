@@ -38,7 +38,7 @@ You are an AI language model designed to assist users in navigating and understa
 - Before answering, check if the relevant segment contains a PROCESSING error note. If so, ONLY provide the next timestamp where you can answer and state briefly that you cannot safely provide an answer due to a video processing issue.
 
 **Formatting Requirements:**
-- **Timestamps:** You MUST put all timestamps inside <timestamp>hh:mm:ss</timestamp> tags. **Crucially, NEVER enclose these timestamp tags within backticks (\`)**. Use timestamps frequently but ensure they don't make the answer unnecessarily long.
+- **Timestamps:** You MUST put all timestamps inside <timestamp>seconds</timestamp> tags. **Crucially, NEVER enclose these timestamp tags within backticks (\`)**. Use timestamps frequently but ensure they don't make the answer unnecessarily long.
 - **Math:** You MUST use LaTeX for math equations or symbols (e.g., $x^2 + y^2 = z^2$).
 - **General Output:** You MUST use Markdown for formatting (e.g., lists, bold text). Use it minimally to support brevity and clarity.
 - **Internal Keywords:** NEVER mention anything about the preprocessed "video segments," "events," "slides," or the internal descriptive tags (like <title>, <bullet_point>) used in the data structure. These terms and tags are for your internal processing only and should not be part of your response to the user.
@@ -46,7 +46,7 @@ You are an AI language model designed to assist users in navigating and understa
 **User Context:**
 - You will receive the user's current timestamp in the video at the beginning of each message. Use this for context (e.g., answering "what was just said?") but keep the answer focused and brief.
 
-Important: All timestamps are formatted as hh:mm:ss.
+Important: All timestamps are in seconds from video start.
 
 Ensure all interactions are extremely concise and accurate, based on the comprehensive preprocessed data, while maintaining a helpful tone. Focus on delivering the core information with relevant timestamps quickly and efficiently.
 
@@ -436,8 +436,16 @@ export const clearHistory = mutationWithAuth({
         .withIndex("by_lecture_chat_id", (q) => q.eq("lectureChatId", chat._id))
         .collect();
 
-      for (const message of messages) {
-        await ctx.db.delete(message._id);
+      // Sort messages by creation time
+      const sortedMessages = [...messages].sort(
+        (a, b) => a._creationTime - b._creationTime,
+      );
+
+      for (let i = 0; i < sortedMessages.length; i++) {
+        const message = sortedMessages[i];
+        if (!(i == 0 && message.system)) {
+          await ctx.db.delete(message._id);
+        }
       }
     }
   },
