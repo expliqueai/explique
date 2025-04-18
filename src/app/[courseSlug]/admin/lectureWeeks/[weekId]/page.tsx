@@ -8,6 +8,7 @@ import Title from "@/components/typography";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
+import { toDatetimeLocalString } from "@/util/date";
 
 export default function EditLectureWeek() {
   const router = useRouter();
@@ -40,6 +41,7 @@ export default function EditLectureWeek() {
             }}
             initialState={{
               name: week.name,
+              startDate: toDatetimeLocalString(new Date(week.startDate)),
             }}
             submitLabel="Save"
           />

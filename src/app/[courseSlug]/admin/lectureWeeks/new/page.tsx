@@ -7,6 +7,7 @@ import LectureWeekForm from "@/components/LectureWeekForm";
 import { api } from "../../../../../../convex/_generated/api";
 import Title from "@/components/typography";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
+import { toDatetimeLocalString } from "@/util/date";
 
 export default function NewLectureWeek() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function NewLectureWeek() {
           }}
           initialState={{
             name: "",
+            startDate: toDatetimeLocalString(new Date()),
           }}
           submitLabel="Create"
         />

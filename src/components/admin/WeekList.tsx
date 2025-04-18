@@ -79,7 +79,8 @@ function Week<T extends BaseItem>({
   const courseSlug = useCourseSlug();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const isRegularWeek = "startDate" in week;
+  const isRegularWeek = weekType === "weeks";
+  const isLectureWeek = weekType === "lectureWeeks";
 
   return (
     <div>
@@ -127,6 +128,15 @@ function Week<T extends BaseItem>({
               </strong>
             </>
           )}
+        </p>
+      )}
+
+      {isLectureWeek && week.startDate && (
+        <p className="text-gray-700">
+          Starting from{" "}
+          <strong className="font-medium text-gray-800">
+            {formatTimestampHumanFormat(week.startDate)}
+          </strong>
         </p>
       )}
 

@@ -19,11 +19,14 @@ export const list = queryWithAuth({
     return (
       await db
         .query("lectureWeeks")
-        .withIndex("by_course", (q) => q.eq("courseId", course._id))
+        .withIndex("by_course_and_start_date", (q) =>
+          q.eq("courseId", course._id),
+        )
         .collect()
     ).map((week) => ({
       id: week._id,
       name: week.name,
+      startDate: week.startDate,
     }));
   },
 });
@@ -65,6 +68,7 @@ export const get = queryWithAuth({
 
 const weekDetails = v.object({
   name: v.string(),
+  startDate: v.number(),
 });
 
 export const create = mutationWithAuth({

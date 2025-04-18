@@ -88,10 +88,20 @@ export const list = queryWithAuth({
 
     const { user } = session;
 
-    // Get lecture weeks for this course
+    const now = +new Date();
     const lectureWeeks = await db
       .query("lectureWeeks")
-      .withIndex("by_course", (q) => q.eq("courseId", course._id))
+      .withIndex("by_course_and_start_date", (q) =>
+        q
+          .eq("courseId", course._id)
+          .lte(
+            "startDate",
+            registration.role === "admin" || registration.role === "ta"
+              ? Number.MAX_VALUE
+              : now,
+          ),
+      )
+      .order("desc")
       .collect();
 
     // FIXME: Only query the lectures from this course
@@ -118,14 +128,12 @@ export const list = queryWithAuth({
         });
       }
 
-      // Only add the week to result if it has lectures
-      if (lecturesResult.length > 0) {
-        result.push({
-          id: week._id,
-          name: week.name,
-          lectures: lecturesResult,
-        });
-      }
+      result.push({
+        id: week._id,
+        name: week.name,
+        startDate: week.startDate,
+        lectures: lecturesResult,
+      });
     }
     return result;
   },

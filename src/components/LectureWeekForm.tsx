@@ -4,6 +4,7 @@ import { PrimaryButton } from "./PrimaryButton";
 
 export type State = {
   name: string;
+  startDate: string;
 };
 
 export default function LectureWeekForm({
@@ -12,10 +13,11 @@ export default function LectureWeekForm({
   submitLabel,
 }: {
   initialState: State;
-  onSubmit: (state: { name: string }) => void;
+  onSubmit: (state: { name: string; startDate: number }) => void;
   submitLabel: string;
 }) {
   const [name, setName] = useState(initialState.name);
+  const [startDate, setStartDate] = useState(initialState.startDate);
 
   return (
     <form
@@ -23,6 +25,7 @@ export default function LectureWeekForm({
         e.preventDefault();
         onSubmit({
           name,
+          startDate: +new Date(startDate),
         });
       }}
     >
@@ -31,6 +34,14 @@ export default function LectureWeekForm({
         onChange={setName}
         label="Name"
         placeholder="Week 1"
+        required
+      />
+
+      <Input
+        value={startDate}
+        onChange={setStartDate}
+        label="Release"
+        type="datetime-local"
         required
       />
 

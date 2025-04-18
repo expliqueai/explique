@@ -54,7 +54,9 @@ export const list = queryWithAuth({
 
     const lectureWeeks = await db
       .query("lectureWeeks")
-      .withIndex("by_course", (q) => q.eq("courseId", course._id))
+      .withIndex("by_course_and_start_date", (q) =>
+        q.eq("courseId", course._id),
+      )
       .collect();
 
     // @TODO Only query the lectures from this course
@@ -68,6 +70,7 @@ export const list = queryWithAuth({
           resultLectures.push({
             id: lecture._id,
             name: lecture.name,
+            status: lecture.status,
             url: lecture.url,
             image: await getImageForLecture(db, storage, lecture),
           });

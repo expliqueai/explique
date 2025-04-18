@@ -118,7 +118,8 @@ export default defineSchema(
     lectureWeeks: defineTable({
       courseId: v.id("courses"),
       name: v.string(),
-    }).index("by_course", ["courseId"]),
+      startDate: v.number(),
+    }).index("by_course_and_start_date", ["courseId", "startDate"]),
 
     exercises: defineTable({
       ...exerciseAdminSchema,
