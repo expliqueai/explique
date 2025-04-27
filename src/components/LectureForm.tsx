@@ -227,7 +227,7 @@ function ThumbnailPicker({
             const answer = prompt(
               "Which prompt to use to generate the image?",
               (images ?? []).find((i) => i._id === image)?.prompt ??
-                `Generate a thumbnail for a lecture video about "${name}"`,
+                `Generate a cartoon-style thumbnail for a lecture video about "${name}"`,
             );
             if (!answer) {
               return;
