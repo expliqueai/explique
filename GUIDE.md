@@ -49,7 +49,7 @@ Make sure you have the following installed:
 
 ```bash
 # Clone the repository
-git clone [repository-url]
+git clone https://github.com/expliqueai/explique.git
 cd explique
 
 # Install dependencies
