@@ -40,7 +40,9 @@ export const getLoginUrl = action({
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
 
-    const url = google.createAuthorizationURL(state, codeVerifier, scopes);
+    const url = await google.createAuthorizationURL(state, codeVerifier, {
+      scopes,
+    });
 
     if (hostedDomain !== null && !external) {
       url.searchParams.set("hd", hostedDomain);

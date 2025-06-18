@@ -28,7 +28,6 @@ export const exerciseAdminSchema = {
   weekId: v.union(v.id("weeks"), v.null()), // null = soft-deleted exercise
 
   instructions: v.string(), // instructions for the chatbot in the explanation part
-  chatCompletionsApi: v.optional(v.literal(true)), // whether to use the chat completions API instead of the assistants API
   model: v.string(), // OpenAI model used for the chatbot
   feedback: v.optional(
     // whether to provide some feedback after the explanation
@@ -123,7 +122,6 @@ export default defineSchema(
 
     exercises: defineTable({
       ...exerciseAdminSchema,
-      assistantId: v.string(),
     }).index("by_week_id", ["weekId"]),
 
     lectures: defineTable(lectureSchema).index("by_week_id", ["weekId"]),
