@@ -48,7 +48,10 @@ export default actionWithAuth({
       size,
       quality,
     });
-    const imageUrl = opanaiResponse.data[0].url!;
+    const imageUrl = opanaiResponse.data?.[0]?.url;
+    if (!imageUrl) {
+      throw new Error("No image URL received from OpenAI");
+    }
 
     const blob = await (await fetch(imageUrl)).blob();
     const storageId = await ctx.storage.store(blob);
