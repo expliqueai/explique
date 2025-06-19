@@ -89,6 +89,8 @@ export const list = queryWithAuth({
     const { user } = session;
 
     const now = +new Date();
+
+    // Get lecture weeks first
     const lectureWeeks = await db
       .query("lectureWeeks")
       .withIndex("by_course_and_start_date", (q) =>
@@ -104,13 +106,23 @@ export const list = queryWithAuth({
       .order("desc")
       .collect();
 
-    // FIXME: Only query the lectures from this course
-    const lectures = await db
-      .query("lectures")
-      .filter((q) => q.eq(q.field("status"), "READY"))
-      .collect();
+    // Get week IDs to filter lectures
+    const weekIds = lectureWeeks.map((week) => week._id);
 
-    const lecturesWithChunks = lectures.filter(
+    // Only query lectures for the current course weeks and with READY status
+    // Use a more efficient query by filtering on the weekId index
+    const lecturesForCourse = [];
+    for (const weekId of weekIds) {
+      const weekLectures = await db
+        .query("lectures")
+        .withIndex("by_week_id", (q) => q.eq("weekId", weekId))
+        .filter((q) => q.eq(q.field("status"), "READY"))
+        .collect();
+      lecturesForCourse.push(...weekLectures);
+    }
+
+    // Filter lectures that have chunks
+    const lecturesWithChunks = lecturesForCourse.filter(
       (lecture) => lecture.chunks.length > 0,
     );
 
