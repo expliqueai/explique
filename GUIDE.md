@@ -279,18 +279,174 @@ npx convex logs
 
 ## 📚 Learning Resources
 
-### Essential Reading
+This section provides a structured learning path for new contributors. Follow this order for the most effective learning experience:
+
+### 🎯 Phase 1: Foundation (Start Here!)
+
+**1. TypeScript Fundamentals** ⭐ _Start with this_
+
+- **[TypeScript Handbook](https://www.typescriptlang.org/docs/)** - Essential for understanding our codebase
+- **[TypeScript for JavaScript Programmers](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html)** - Quick intro if you know JS
+- **[TypeScript Playground](https://www.typescriptlang.org/play)** - Practice TypeScript interactively
+
+**2. React Basics** (if needed)
+
+- **[React Official Tutorial](https://react.dev/learn)** - Modern React with hooks
+- **[React TypeScript Cheatsheet](https://react-typescript-cheatsheet.netlify.app/)** - React + TypeScript patterns
+
+**3. Modern JavaScript/ES6+** (if needed)
+
+- **[MDN JavaScript Guide](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide)** - Comprehensive reference
+- Focus on: Arrow functions, async/await, destructuring, modules, promises
+
+### 🚀 Phase 2: Core Technologies
+
+**4. Next.js Framework**
 
 - **[Next.js Documentation](https://nextjs.org/docs)** - Start with "Getting Started"
-- **[Convex Documentation](https://docs.convex.dev/)** - Read "Quickstart" and "Database" sections
-- **[TypeScript Handbook](https://www.typescriptlang.org/docs/)** - If you're new to TypeScript
-- **[Tailwind CSS Docs](https://tailwindcss.com/docs)** - For styling components
+- **[Next.js Learn Course](https://nextjs.org/learn)** - Interactive tutorial
+- **[App Router vs Pages Router](https://nextjs.org/docs/app)** - We use App Router (Next.js 13+)
 
-### Advanced Topics
+**5. Tailwind CSS**
+
+- **[Tailwind CSS Docs](https://tailwindcss.com/docs)** - For styling components
+- **[Tailwind Play](https://play.tailwindcss.com/)** - Practice utility classes
+
+### 🛠️ Phase 3: Backend & Database
+
+**6. Convex Backend**
+
+- **[Convex Documentation](https://docs.convex.dev/)** - Read "Quickstart" and "Database" sections
+- **[Convex + Next.js Guide](https://docs.convex.dev/quickstart/nextjs)** - Our exact setup
+- **[Convex Functions](https://docs.convex.dev/functions)** - Understanding queries, mutations, and actions
+
+### 🤖 Phase 4: AI Integration
+
+**7. OpenAI API**
+
+- **[OpenAI API Reference](https://platform.openai.com/docs/api-reference)** - For AI integrations
+- **[OpenAI Cookbook](https://cookbook.openai.com/)** - Practical examples
+
+**8. Google AI (Gemini)**
+
+- **[Google AI Studio](https://ai.google.dev/docs)** - For video processing features
+
+### 🎨 Phase 5: Advanced Topics
+
+**9. Component Development**
+
+- **[Storybook Documentation](https://storybook.js.org/docs)** - For component development
+- **[React Design Patterns](https://react-patterns.com/)** - Best practices
+
+**10. Advanced Next.js**
 
 - **[React Server Components](https://nextjs.org/docs/app/building-your-application/rendering/server-components)** - Next.js 13+ pattern we use
-- **[Drizzle ORM Guide](https://orm.drizzle.team/docs/overview)** - For database operations
-- **[OpenAI API Reference](https://platform.openai.com/docs/api-reference)** - For AI integrations
+- **[Next.js Performance](https://nextjs.org/docs/app/building-your-application/optimizing)** - Optimization techniques
+
+### 🔐 Phase 6: Authentication & Security
+
+**11. Authentication Systems**
+
+- **[Lucia v3 Documentation](https://lucia-auth.com/)** - Our auth library
+- **[OAuth 2.0 Simplified](https://oauth.net/2/)** - Understanding OAuth flow
+
+### ⏱️ Estimated Time Investment
+
+- **Phase 1 (Foundation)**: 1-2 weeks for beginners, 2-3 days for experienced developers
+- **Phase 2 (Core Tech)**: 1 week
+- **Phase 3 (Backend)**: 3-5 days
+- **Phase 4 (AI)**: 2-3 days
+- **Phase 5-6 (Advanced)**: Ongoing as needed
+
+### 💡 Learning Tips
+
+1. **Don't try to learn everything at once** - Follow the phases in order
+2. **Build small examples** - Try concepts in isolation before diving into our codebase
+3. **Use our codebase as reference** - After learning basics, see how we implement patterns
+4. **Ask questions early** - Team members are here to help!
+
+### 🎯 Quick Reference Cards
+
+Once you're comfortable with the basics, these are great for quick lookups:
+
+- **[TypeScript Cheat Sheet](https://www.typescriptlang.org/cheatsheets)**
+- **[React + TypeScript Cheatsheet](https://react-typescript-cheatsheet.netlify.app/)**
+- **[Tailwind CSS Cheat Sheet](https://tailwindcomponents.com/cheatsheet/)**
+- **[Next.js Cheat Sheet](https://nextjs.org/docs)**
+
+## 🌿 Git Workflow & Conventions
+
+We follow strict Git conventions to maintain a clean, readable project history. Please follow these guidelines for all contributions.
+
+### 🚀 Branch Naming Convention
+
+Always create a new branch for your work. Use one of these prefixes:
+
+```bash
+# New features
+feat/add-user-dashboard
+feat/implement-video-chat
+
+# Bug fixes
+fix/authentication-redirect
+fix/mobile-responsive-layout
+
+# Maintenance and refactoring
+chore/update-dependencies
+chore/cleanup-unused-imports
+
+# Documentation updates
+docs/update-api-documentation
+docs/add-setup-instructions
+
+# Performance improvements
+perf/optimize-database-queries
+perf/reduce-bundle-size
+
+# Styling and UI changes
+style/update-button-colors
+style/fix-mobile-layout
+```
+
+### 📝 Commit Message Convention
+
+We use **[Conventional Commits](https://www.conventionalcommits.org/)** format:
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+#### Types:
+
+- `feat`: New feature for the user
+- `fix`: Bug fix for the user
+- `docs`: Changes to documentation
+- `style`: Formatting, missing semicolons, etc; no production code change
+- `refactor`: Refactoring production code, eg. renaming a variable
+- `test`: Adding missing tests, refactoring tests; no production code change
+- `chore`: Updating grunt tasks etc; no production code change
+- `perf`: Performance improvements
+- `ci`: Changes to CI configuration files and scripts
+
+#### Examples:
+
+```bash
+# Good commit messages
+git commit -m "feat(auth): add Google OAuth integration"
+git commit -m "fix(chat): resolve message ordering issue"
+git commit -m "docs: update API documentation for video endpoints"
+git commit -m "chore(deps): update Next.js to v14.2.0"
+git commit -m "refactor(components): extract reusable Button component"
+
+# Bad commit messages (avoid these)
+git commit -m "fixed stuff"
+git commit -m "updates"
+git commit -m "WIP"
+```
 
 ## 🚀 Ready to Contribute?
 
