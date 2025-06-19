@@ -9,23 +9,15 @@
     "strict": true,
     /* These compiler options are required by Convex */
     "target": "ESNext",
-    "lib": [
-      "ES2021",
-      "dom"
-    ],
+    "lib": ["ES2021", "dom"],
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
-    "module": "ESNext",
-    "moduleResolution": "Node",
+    "module": "nodenext",
+    "moduleResolution": "node16",
     "isolatedModules": true,
     "skipLibCheck": true,
-    "noEmit": true,
+    "noEmit": true
   },
-  "include": [
-    "./**/*",
-    "auth/lucia.ts"
-  ],
-  "exclude": [
-    "./_generated"
-  ],
+  "include": ["./**/*", "auth/lucia.ts"],
+  "exclude": ["./_generated"]
 }

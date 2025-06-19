@@ -28,3 +28,6 @@ Sentry.init({
     }),
   ],
 });
+
+// Hook to instrument router transitions
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

@@ -59,7 +59,7 @@ function shownEmail(
 ) {
   return user.identifier !== undefined && user.identifier in identities
     ? identities[user.identifier].email
-    : user.email ?? "Unknown";
+    : (user.email ?? "Unknown");
 }
 
 function DownloadAllButton() {
@@ -320,69 +320,62 @@ function RoleSelector({ value, userId }: { value: Role; userId: Id<"users"> }) {
         }}
       >
         {({ open }) => (
-          <>
-            <div className="relative">
-              <ListboxButton className="relative w-full cursor-default rounded-md p-1 pr-6 text-left text-gray-900 ring-inset focus:outline-none focus:ring-2 sm:text-sm sm:leading-6 h-10">
-                <span className="block">
-                  <RoleBadge value={value} />
-                </span>
-                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                  <ChevronUpDownIcon
-                    className="h-5 w-5 text-gray-400"
-                    aria-hidden="true"
-                  />
-                </span>
-              </ListboxButton>
+          <div className="relative">
+            <ListboxButton className="relative w-full cursor-default rounded-md p-1 pr-6 text-left text-gray-900 ring-inset focus:outline-none focus:ring-2 sm:text-sm sm:leading-6 h-10">
+              <span className="block">
+                <RoleBadge value={value} />
+              </span>
+              <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                <ChevronUpDownIcon
+                  className="h-5 w-5 text-gray-400"
+                  aria-hidden="true"
+                />
+              </span>
+            </ListboxButton>
 
-              <Transition
-                show={open}
-                leave="transition ease-in duration-100"
-                leaveFrom="opacity-100"
-                leaveTo="opacity-0"
-              >
-                <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-30 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                  {roles.map((role) => (
-                    <ListboxOption
-                      key={role}
-                      className={({ focus }) =>
-                        clsx(
-                          focus && "bg-gray-100",
-                          "relative cursor-default select-none py-2 pl-8 pr-4 text-gray-900 h-10",
-                        )
-                      }
-                      value={role}
-                    >
-                      {({ selected }) => (
-                        <>
-                          <span
-                            className={clsx(
-                              selected ? "font-semibold" : "font-normal",
-                              "truncate flex items-center h-full",
-                            )}
-                          >
-                            <RoleBadge value={role} />
+            <Transition
+              show={open}
+              leave="transition ease-in duration-100"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-30 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                {roles.map((role) => (
+                  <ListboxOption
+                    key={role}
+                    className={({ focus }) =>
+                      clsx(
+                        focus && "bg-gray-100",
+                        "relative cursor-default select-none py-2 pr-4 text-gray-900 h-10",
+                      )
+                    }
+                    value={role}
+                  >
+                    {({ selected }) => (
+                      <div className="flex">
+                        <span
+                          className={clsx(
+                            selected ? "font-semibold" : "font-normal",
+                            "truncate flex items-center h-full pl-8",
+                          )}
+                        >
+                          <RoleBadge value={role} />
+                        </span>
+                        {selected && (
+                          <span className="text-purple-600 flex items-center">
+                            <CheckIcon20
+                              className="h-5 w-5"
+                              aria-hidden="true"
+                            />
                           </span>
-
-                          {selected ? (
-                            <span
-                              className={clsx(
-                                "text-purple-600 absolute inset-y-0 left-0 flex items-center pl-1.5",
-                              )}
-                            >
-                              <CheckIcon20
-                                className="h-5 w-5"
-                                aria-hidden="true"
-                              />
-                            </span>
-                          ) : null}
-                        </>
-                      )}
-                    </ListboxOption>
-                  ))}
-                </ListboxOptions>
-              </Transition>
-            </div>
-          </>
+                        )}
+                      </div>
+                    )}
+                  </ListboxOption>
+                ))}
+              </ListboxOptions>
+            </Transition>
+          </div>
         )}
       </Listbox>
     </div>
