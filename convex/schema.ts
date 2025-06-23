@@ -232,13 +232,11 @@ export default defineSchema(
       name: v.union(v.string(), v.null()),
       googleId: v.optional(v.string()),
       googleMetadata: v.optional(v.any()),
-      identifier: v.optional(v.string()), // see /docs/identifiers.md
       extraTime: v.optional(v.literal(true)),
       superadmin: v.optional(v.literal(true)),
     })
       .index("by_lucia_id", ["id"])
       .index("by_email", ["email"])
-      .index("byIdentifier", ["identifier"])
       .index("by_google_id", ["googleId"]),
 
     sessions: defineTable({

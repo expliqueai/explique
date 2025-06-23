@@ -13,11 +13,6 @@ import {
 import { toast } from "sonner";
 import { useConvex, usePaginatedQuery } from "convex/react";
 import { useSessionId } from "@/components/SessionProvider";
-import {
-  Identities,
-  useIdentities,
-  useIsUsingIdentities,
-} from "@/hooks/useIdentities";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { Textarea } from "@/components/Input";
 import { useMutation, useQuery } from "@/usingSession";
@@ -53,26 +48,16 @@ export default function ScoresPage() {
   );
 }
 
-function shownEmail(
-  identities: Identities,
-  user: { identifier?: string; email: string | null },
-) {
-  return user.identifier !== undefined && user.identifier in identities
-    ? identities[user.identifier].email
-    : (user.email ?? "Unknown");
-}
-
 function DownloadAllButton() {
   const convex = useConvex();
   const sessionId = useSessionId();
-  const identites = useIdentities();
   const courseSlug = useCourseSlug();
   const weeks = useQuery(api.admin.users.listExercisesForTable, { courseSlug });
 
   const [spreadsheet, setSpreadsheet] = useState<string | null>(null);
 
   async function copyAllResults() {
-    if (identites === undefined || weeks === undefined) return;
+    if (weeks === undefined) return;
 
     async function getAllRegistrations() {
       let continueCursor = null;
@@ -107,7 +92,7 @@ function DownloadAllButton() {
         "Completed exercises",
       ],
       ...users.map((user) => [
-        shownEmail(identites, user),
+        user.email ?? "Unknown",
         user.role === "admin" ? "Admin" : user.role === "ta" ? "TA" : "",
         ...weeks.flatMap((week) =>
           week.exercises.map((exercise) =>
@@ -121,7 +106,7 @@ function DownloadAllButton() {
     setSpreadsheet(rows.map((cols) => cols.join("\t")).join("\n"));
   }
 
-  if (!identites || weeks === undefined) return null;
+  if (weeks === undefined) return null;
 
   return (
     <>
@@ -169,7 +154,6 @@ function DownloadAllButton() {
 }
 
 function ScoresTable() {
-  const identities = useIdentities();
   const courseSlug = useCourseSlug();
   const sessionId = useSessionId();
 
@@ -184,7 +168,7 @@ function ScoresTable() {
     { initialNumItems: 15 },
   );
 
-  if (!identities || weeks === undefined || users === undefined) {
+  if (weeks === undefined || users === undefined) {
     return <div className="h-96 bg-slate-200 rounded-xl animate-pulse" />;
   }
 
@@ -202,7 +186,7 @@ function ScoresTable() {
               key={user.id}
             >
               <div className="px-2 py-3 flex-1 truncate">
-                {shownEmail(identities, user).replace("@epfl.ch", "")}
+                {user.email?.replace("@epfl.ch", "") ?? "Unknown"}
               </div>
               <div className="pl-2 flex items-center">
                 <RoleSelector value={user.role} userId={user.id} />
@@ -387,7 +371,6 @@ function AddUsers() {
   const courseSlug = useCourseSlug();
   const convex = useConvex();
   const sessionId = useSessionId();
-  const isUsingIdentities = useIsUsingIdentities();
   const addUser = useMutation(api.admin.users.register);
 
   return (
@@ -414,35 +397,12 @@ function AddUsers() {
 
         setEmails("");
 
-        let users;
-        if (isUsingIdentities) {
-          const jwt = await convex.query(api.admin.identitiesJwt.default, {
-            sessionId,
-            courseSlug,
-          });
-
-          const resConvert = await fetch(
-            "/api/admin/computeIdentifiers?for=" + validatedEmails.join(","),
-            {
-              headers: {
-                Authorization: `Bearer ${jwt}`,
-              },
-            },
-          );
-          if (resConvert.status !== 200) {
-            toast.error("Failed to retrieve the email addresses.");
-            return;
-          }
-          const identifiers = (await resConvert.json()) as string[];
-          users = { identifiers };
-        } else {
-          users = { emails: validatedEmails };
-        }
-
+        let users = { emails: validatedEmails };
         const { added, ignored } = await addUser({
           courseSlug,
           users,
         });
+
         toast.success(
           (added === 1
             ? `1 user has been added.`
@@ -470,16 +430,6 @@ function AddUsers() {
           </>
         }
         onChange={setEmails}
-        hint={
-          <>
-            {isUsingIdentities && (
-              <span className="flex gap-1 items-center">
-                <LockClosedIcon className="w-4 h-4" aria-hidden />
-                The personal data of the users never leave the EPFL servers.
-              </span>
-            )}
-          </>
-        }
         required
       />
 

@@ -51,7 +51,6 @@ async function formatListElement(
   return {
     id: registration.userId,
     email: user.email,
-    identifier: user.identifier,
     completedExercises: registration.completedExercises,
     role: registration.role,
   };
@@ -100,24 +99,6 @@ async function findOrCreateUserByEmail(
     : await db.insert("users", { id: generateUserId(), email, name: null });
 }
 
-async function findOrCreateUserByIdentifier(
-  db: DatabaseWriter,
-  identifier: string,
-): Promise<Id<"users">> {
-  const user = await db
-    .query("users")
-    .withIndex("byIdentifier", (q) => q.eq("identifier", identifier))
-    .first();
-  return user
-    ? user._id
-    : await db.insert("users", {
-        id: generateUserId(),
-        identifier,
-        email: null,
-        name: null,
-      });
-}
-
 export const register = mutationWithAuth({
   args: {
     courseSlug: v.string(),
@@ -143,11 +124,6 @@ export const register = mutationWithAuth({
     if ("emails" in users) {
       for (const email of users.emails) {
         userIds.push(await findOrCreateUserByEmail(db, email));
-      }
-    }
-    if ("identifiers" in users) {
-      for (const identifier of users.identifiers) {
-        userIds.push(await findOrCreateUserByIdentifier(db, identifier));
       }
     }
 
