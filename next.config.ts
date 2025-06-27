@@ -1,9 +1,12 @@
-import { NextConfig } from "next";
-import { withSentryConfig } from "@sentry/nextjs";
+import { withSentryConfig } from "@sentry/nextjs"
+import { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   output: "standalone",
-};
+  eslint: {
+    dirs: ["src", "convex"],
+  },
+}
 
 export default withSentryConfig(nextConfig, {
   // For all available options, see:
@@ -31,4 +34,4 @@ export default withSentryConfig(nextConfig, {
   // https://docs.sentry.io/product/crons/
   // https://vercel.com/docs/cron-jobs
   automaticVercelMonitors: true,
-});
+})
