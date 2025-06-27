@@ -42,7 +42,7 @@ function ProjectGrid() {
               </h2>
 
               {isCompleted ? (
-                <p className="bg-gradient-to-b from-green-500 to-green-600 py-2 px-3 text-xs rounded-full font-semibold text-white tracking-wide inline-flex items-center gap-1">
+                <p className="bg-linear-to-b from-green-500 to-green-600 py-2 px-3 text-xs rounded-full font-semibold text-white tracking-wide inline-flex items-center gap-1">
                   <CheckIconSmall className="w-5 h-5" />
                   Completed
                 </p>
@@ -99,7 +99,7 @@ function ProjectGrid() {
                       className={clsx(
                         "w-24 h-24 tr-corner flex text-white rounded-tr-3xl",
                         exercise.completed &&
-                          "bg-gradient-to-b from-green-500 to-green-600",
+                          "bg-linear-to-b from-green-500 to-green-600",
                         !exercise.completed && "bg-gray-500",
                       )}
                     >

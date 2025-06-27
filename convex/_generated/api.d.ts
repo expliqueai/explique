@@ -29,7 +29,6 @@ import type * as auth_adapters_ConvexMutationAdapter from "../auth/adapters/Conv
 import type * as auth_cron from "../auth/cron.js";
 import type * as auth_google from "../auth/google.js";
 import type * as auth_lucia from "../auth/lucia.js";
-import type * as auth_tequila from "../auth/tequila.js";
 import type * as auth_withAuth from "../auth/withAuth.js";
 import type * as chat from "../chat.js";
 import type * as courses from "../courses.js";
@@ -69,7 +68,6 @@ declare const fullApi: ApiFromModules<{
   "auth/cron": typeof auth_cron;
   "auth/google": typeof auth_google;
   "auth/lucia": typeof auth_lucia;
-  "auth/tequila": typeof auth_tequila;
   "auth/withAuth": typeof auth_withAuth;
   chat: typeof chat;
   courses: typeof courses;

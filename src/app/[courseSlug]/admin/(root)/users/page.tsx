@@ -210,7 +210,7 @@ function ScoresTable() {
                 ))}
               </React.Fragment>
             ))}
-            <div className="px-2 py-3 flex items-end justify-end text-right w-20 shrink-0 border-b border-b-slate-300 flex-grow">
+            <div className="px-2 py-3 flex items-end justify-end text-right w-20 shrink-0 border-b border-b-slate-300 grow">
               #
             </div>
           </div>
@@ -238,7 +238,7 @@ function ScoresTable() {
                   ))}
                 </React.Fragment>
               ))}
-              <div className="px-2 py-3 w-20 items-center text-right tabular-nums font-semibold border-b-slate-200 border-b shrink-0 flex-grow">
+              <div className="px-2 py-3 w-20 items-center text-right tabular-nums font-semibold border-b-slate-200 border-b shrink-0 grow">
                 {user.completedExercises.length}
               </div>
             </div>
@@ -250,7 +250,7 @@ function ScoresTable() {
         <div className="flex justify-center">
           <button
             type="button"
-            className="rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:bg-gray-50"
+            className="rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:bg-gray-50"
             disabled={status !== "CanLoadMore"}
             onClick={() => {
               loadMore(200);
@@ -305,7 +305,7 @@ function RoleSelector({ value, userId }: { value: Role; userId: Id<"users"> }) {
       >
         {({ open }) => (
           <div className="relative">
-            <ListboxButton className="relative w-full cursor-default rounded-md p-1 pr-6 text-left text-gray-900 ring-inset focus:outline-none focus:ring-2 sm:text-sm sm:leading-6 h-10">
+            <ListboxButton className="relative w-full cursor-default rounded-md p-1 pr-6 text-left text-gray-900 ring-inset focus:outline-hidden focus:ring-2 sm:text-sm sm:leading-6 h-10">
               <span className="block">
                 <RoleBadge value={value} />
               </span>
@@ -323,7 +323,7 @@ function RoleSelector({ value, userId }: { value: Role; userId: Id<"users"> }) {
               leaveFrom="opacity-100"
               leaveTo="opacity-0"
             >
-              <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-30 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+              <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-30 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm">
                 {roles.map((role) => (
                   <ListboxOption
                     key={role}

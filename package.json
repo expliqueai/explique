@@ -65,6 +65,7 @@
     "@storybook/react": "^8.6.14",
     "@storybook/test": "^8.6.14",
     "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/postcss": "^4.1.11",
     "@tailwindcss/typography": "^0.5.10",
     "@types/better-sqlite3": "^7.6.9",
     "@types/chance": "^1.1.6",
@@ -73,7 +74,6 @@
     "@types/node": "^20.19.1",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "autoprefixer": "^10.0.1",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.3.4",
     "eslint-config-prettier": "^10.1.5",
@@ -81,7 +81,7 @@
     "postcss": "^8",
     "prettier": "3.5.3",
     "storybook": "^8.6.14",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^4.1.11",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5"
   }

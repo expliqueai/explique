@@ -1,42 +1,61 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@config '../../tailwind.config.ts';
 
 html,
 body {
   height: 100%;
 }
 
-body {
-  @apply bg-slate-100 antialiased;
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility no-scrollbar {
+  /* https://stackoverflow.com/a/66436651/4652564 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@utility tr-corner {
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+
+@utility animation-delay-1-3 {
+  animation-delay: calc(1s / 3);
+}
+
+@utility animation-delay-2-3 {
+  animation-delay: calc(2s / 3);
 }
 
 @layer utilities {
-
-  /* https://stackoverflow.com/a/66436651/4652564 */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  html,
+  body {
+    height: 100%;
   }
 
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  .tr-corner {
-    clip-path: polygon(0 0, 100% 0, 100% 100%);
-  }
-
-  .animation-delay-1-3 {
-    animation-delay: calc(1s / 3);
-  }
-
-  .animation-delay-2-3 {
-    animation-delay: calc(2s / 3);
+  body {
+    @apply bg-slate-100 antialiased;
   }
 }
-
-
 
 @layer base {
   :root {
@@ -93,8 +112,6 @@ body {
     --chart-5: 340 75% 55%;
   }
 }
-
-
 
 @layer base {
   * {

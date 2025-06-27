@@ -36,7 +36,7 @@ export default function CourseSelector() {
         <div className="relative">
           <ListboxButton
             className={clsx(
-              "w-full cursor-default rounded-2xl py-1.5 px-6 sm:px-10 text-left text-gray-900 ring-inset focus:outline-none focus:ring-4 sm:text-sm sm:leading-6 h-28 sm:h-32",
+              "w-full cursor-default rounded-2xl py-1.5 px-6 sm:px-10 text-left text-gray-900 ring-inset focus:outline-hidden focus:ring-4 sm:text-sm sm:leading-6 h-28 sm:h-32",
               open && "ring-4",
             )}
           >
@@ -62,7 +62,7 @@ export default function CourseSelector() {
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <ListboxOptions className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+            <ListboxOptions className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm">
               {courses.map((course) => (
                 <ListboxOption
                   key={course.slug}
