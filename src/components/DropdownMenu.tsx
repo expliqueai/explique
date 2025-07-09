@@ -6,6 +6,7 @@ import {
   Transition,
 } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
+import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
 import React from "react";
@@ -13,8 +14,10 @@ import React from "react";
 export function DropdownMenu({
   children,
   variant = "ghost",
+  horizontal,
 }: React.PropsWithChildren<{
   variant?: "ghost" | "overlay";
+  horizontal?: boolean;
 }>) {
   return (
     <Menu as="div" className="relative inline-block text-left">
@@ -29,7 +32,7 @@ export function DropdownMenu({
           )}
         >
           <span className="sr-only">Open options</span>
-          <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
+          {horizontal === true ? <EllipsisHorizontalIcon className="h-7 w-7" /> : <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />}
         </MenuButton>
       </div>
 

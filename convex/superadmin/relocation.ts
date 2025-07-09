@@ -84,56 +84,49 @@ const exportSchema = v.array(
   }),
 );
 
-export const exportCourse = internalQuery({
-  args: {
-    courseId: v.optional(v.id("courses")),
-  },
-  returns: exportSchema,
-  handler: async ({ db, storage }) => {
-    const weeks = await db.query("weeks").collect(); // assumes there is only one course
+export const exportCourse = internalQuery(
+  async (
+    { db, storage },
+    { courseId }: { courseId?: Id<"courses"> }
+  ) => {
+    // fetch all weeks/exercises/images (assuming single course)
+    const weeks = await db.query("weeks").collect();
     const exercises = await db.query("exercises").collect();
     const images = await db.query("images").collect();
 
     return await Promise.all(
-      weeks.map(async (week) => ({
-        name: week.name,
-        startDate: week.startDate,
-        endDate: week.endDate,
-        endDateExtraTime: week.endDateExtraTime,
-        exercises: await Promise.all(
+      weeks.map(async (week) => {
+        // build each week object
+        const exercisesForWeek = await Promise.all(
           exercises
-            .filter((exercise) => exercise.weekId === week._id)
+            .filter((ex) => ex.weekId === week._id)
             .map(async (exercise) => {
-              const imageSrc =
-                exercise.image === undefined
-                  ? undefined
-                  : images.find((image) => image._id === exercise.image);
+              // bundle image data if present
               let image;
-              if (imageSrc) {
-                const sourceUrl = await storage.getUrl(imageSrc.storageId);
+              if (exercise.image) {
+                const imgMeta = images.find((i) => i._id === exercise.image)!;
+                const sourceUrl = await storage.getUrl(imgMeta.storageId);
                 if (!sourceUrl) throw new Error("Can’t find full image");
+
+                const thumbnails = await Promise.all(
+                  imgMeta.thumbnails.map(async (thumb) => {
+                    const thumbUrl = await storage.getUrl(imgMeta.storageId);
+                    if (!thumbUrl) throw new Error("Can’t find thumbnail");
+                    return {
+                      type: thumb.type,
+                      sizes: thumb.sizes,
+                      sourceUrl: thumbUrl,
+                    };
+                  })
+                );
 
                 image = {
                   sourceUrl,
-                  thumbnails: await Promise.all(
-                    imageSrc.thumbnails.map(async (thumbnail) => {
-                      const sourceUrlThumbnail = await storage.getUrl(
-                        imageSrc.storageId,
-                      );
-                      if (!sourceUrlThumbnail) {
-                        throw new Error("Can’t find thumbnail");
-                      }
-                      return {
-                        type: thumbnail.type,
-                        sizes: thumbnail.sizes,
-                        sourceUrl: sourceUrlThumbnail,
-                      };
-                    }),
-                  ),
-                  model: imageSrc.model,
-                  size: imageSrc.size,
-                  prompt: imageSrc.prompt,
-                  quality: imageSrc.quality,
+                  thumbnails,
+                  model: imgMeta.model,
+                  size: imgMeta.size,
+                  prompt: imgMeta.prompt,
+                  quality: imgMeta.quality,
                 };
               }
 
@@ -152,12 +145,20 @@ export const exportCourse = internalQuery({
                 imagePrompt: exercise.imagePrompt,
                 image,
               };
-            }),
-        ),
-      })),
+            })
+        );
+
+        return {
+          name: week.name,
+          startDate: week.startDate,
+          endDate: week.endDate,
+          endDateExtraTime: week.endDateExtraTime,
+          exercises: exercisesForWeek,
+        };
+      })
     );
-  },
-});
+  }
+);
 
 async function downloadContents(
   url: string,

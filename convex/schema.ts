@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import OpenAI from "openai";
 
 export const LECTURE_STATUS = v.union(
   v.literal("NOT_STARTED"),
@@ -173,6 +174,82 @@ export default defineSchema(
         ),
       ),
     }).index("by_attempt", ["attemptId"]),
+    feedbacks: defineTable({
+      status: v.union(
+        v.literal("feedback"),
+        v.literal("chat"),
+      ),
+      courseId: v.id("courses"),
+      userId: v.id("users"),
+      images: v.array(v.id("_storage")),
+      name: v.optional(v.string()),
+      lastModified: v.number(),
+      weekNumber: v.number(),
+    }).index("by_key", ["userId", "courseId"]),
+    feedbackMessages: defineTable({
+      feedbackId: v.id("feedbacks"),
+      role: v.union(v.literal("user"), v.literal("system"), v.literal("assistant")),
+      content: v.union(v.string(), v.array(v.union(
+        v.object({ 
+          type:v.literal("text"), 
+          text:v.string(),
+        }), v.object({
+          type:v.literal("image_url"),
+          image_url:v.object({ url:v.string() }),
+        })
+      ))),
+      appearance: v.optional(
+        v.union(
+          v.literal("finished"),
+          v.literal("feedback"),
+          v.literal("typing"),
+          v.literal("error"),
+        ),
+      ),
+      streaming: v.optional(v.boolean()),
+    }).index("by_feedback", ["feedbackId"]),
+    chats: defineTable({
+      courseId: v.id("courses"),
+      userId: v.id("users"),
+      name: v.optional(v.string()),
+      lastModified: v.number(),
+      weekNumber: v.number(),
+    }).index("by_key", ["userId", "courseId"]),
+    chatMessages: defineTable({
+      chatId: v.id("chats"),
+      assistant: v.boolean(),
+      content: v.union(v.string(), v.array(v.union(
+        v.object({ 
+          type:v.literal("text"), 
+          text:v.string(),
+        }), v.object({
+          type:v.literal("image_url"),
+          image_url:v.object({ url:v.string() }),
+        })
+      ))),
+      appearance: v.optional(
+        v.union(
+          v.literal("finished"),
+          v.literal("feedback"),
+          v.literal("typing"),
+          v.literal("error"),
+        ),
+      ),
+    }).index("by_chat", ["chatId"]),
+    saDatabase: defineTable({
+      storageIds: v.array(
+        v.object({
+          pageNumber: v.number(),
+          storageId: v.id("_storage"),
+        }),
+      ),
+      courseId: v.id("courses"),
+      name: v.string(),
+      week: v.number(),
+    })
+      .index("by_course", ["courseId"])
+      .index("by_week", ["week"])
+      .index("by_name", ["name"]),
 
     reports: defineTable({
       attemptId: v.id("attempts"),
@@ -183,6 +260,24 @@ export default defineSchema(
       .index("by_attempt", ["attemptId"])
       .index("by_message", ["messageId"])
       .index("by_course", ["courseId"]),
+    chatReports: defineTable({
+      chatId: v.id("chats"),
+      messageId: v.id("chatMessages"),
+      courseId: v.id("courses"),
+      reason: v.string(),
+    })
+      .index("by_chat", ["chatId"])
+      .index("by_message", ["messageId"])
+      .index("by_course", ["courseId"]),
+    feedbackReports: defineTable({
+        feedbackId: v.id("feedbacks"),
+        messageId: v.id("feedbackMessages"),
+        courseId: v.id("courses"),
+        reason: v.string(),
+      })
+        .index("by_feedback", ["feedbackId"])
+        .index("by_message", ["messageId"])
+        .index("by_course", ["courseId"]),
 
     logs: defineTable({
       type: v.union(

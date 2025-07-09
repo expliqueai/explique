@@ -37,6 +37,7 @@ export default function CourseLayout({
         <div className="max-w-6xl flex-1">
           <TabBar
             items={[
+              { label: "Super-Assistant", href: `/${courseSlug}/super-assistant` },
               { label: "Exercises", href: `/${courseSlug}/exercises` },
               { label: "Lectures", href: `/${courseSlug}/lectures` },
               user?.isAdmin && {
