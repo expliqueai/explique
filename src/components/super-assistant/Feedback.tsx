@@ -226,7 +226,7 @@ function NewMessage({ feedbackId, courseSlug }: { feedbackId: Id<"feedbacks">, c
   const [isNewAttemptModalOpen, setIsNewAttemptModalOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
-  const { startUpload } = useUploadFiles(generateUploadUrl);
+  const { startUpload } = useUploadFiles(() => generateUploadUrl({}));
   const updateFeedback = useMutation(api.feedback.updateFeedbackInChat);
 
 
