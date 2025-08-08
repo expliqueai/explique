@@ -106,7 +106,7 @@ export const generateFirstMessages = internalAction({
         {
           chatId:chatId,
           assistant:false,
-          content:message1,
+          content:message1 as Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>,
         }
       );
       messages.push({

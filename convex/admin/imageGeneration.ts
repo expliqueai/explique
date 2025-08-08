@@ -25,12 +25,14 @@ export default actionWithAuth({
     }
 
     await getCourseRegistration(ctx, ctx.session, courseSlug, "admin");
-    
+
     // Validate the entity exists
     if (exerciseId) {
       await validateExerciseInCourse(ctx, courseSlug, exerciseId);
     } else if (lectureId) {
-      const lecture = await ctx.runQuery(internal.lectures.get, { id: lectureId });
+      const lecture = await ctx.runQuery(internal.lectures.get, {
+        id: lectureId,
+      });
       if (!lecture) {
         throw new ConvexError("Lecture not found");
       }
@@ -48,6 +50,11 @@ export default actionWithAuth({
       size,
       quality,
     });
+
+    if (!opanaiResponse.data || opanaiResponse.data.length === 0) {
+      throw new ConvexError("No image generated");
+    }
+
     const imageUrl = opanaiResponse.data[0].url!;
 
     const blob = await (await fetch(imageUrl)).blob();
@@ -91,7 +98,9 @@ async function generateThumbnail(
     .toFormat(format)
     .toBuffer();
 
-  const storageId = await storage.store(new Blob([newBuffer], { type }));
+  const storageId = await storage.store(
+    new Blob([new Uint8Array(newBuffer)], { type }),
+  );
 
   return {
     type,

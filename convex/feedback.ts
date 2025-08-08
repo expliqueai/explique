@@ -128,7 +128,7 @@ export const generateFirstMessages = internalAction({
       {
         feedbackId:feedbackId,
         role:"user",
-        content:message1,
+        content:message1 as Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>,
       }
     );
     messages.push({
@@ -153,7 +153,7 @@ export const generateFirstMessages = internalAction({
       {
         feedbackId:feedbackId,
         role:"user",
-        content:message2,
+        content:message2 as Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>,
       }
     );
     messages.push({
@@ -280,7 +280,7 @@ export const generateUpdateMessages = internalAction({
       {
         feedbackId:feedbackId,
         role:"user",
-        content:message,
+        content:message as Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>,
       }
     );
 
