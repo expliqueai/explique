@@ -4,13 +4,13 @@ stages:
 
 variables:
   HARBOR_REGISTRY: "ic-registry.epfl.ch"
-  APPLICATION_NAME: "explique" 
+  APPLICATION_NAME: "explique"
   REPO_NAME: "explique"
   IMAGE_NAME: "explique"
   TAG: "test"
-  REGISTRY_ROBOT: 'robot$$explique+cicd'
+  REGISTRY_ROBOT: "robot$$explique+cicd"
   DOCKERFILE_PATH: "prod.Dockerfile"
-  DOCKER_AUTH_CONFIG: "{\"auths\":{\"$HARBOR_REGISTRY\":{\"username\":\"$REGISTRY_ROBOT\",\"password\":\"$HARBOR_PASSWORD\"}}}"
+  DOCKER_AUTH_CONFIG: '{"auths":{"$HARBOR_REGISTRY":{"username":"$REGISTRY_ROBOT","password":"$HARBOR_PASSWORD"}}}'
   FQDN: explique.epfl.ch
   PVC_NAME: explique
   PVC_NSPACE: thl2
@@ -33,7 +33,6 @@ variables:
   - kubectl delete -f $CI_PROJECT_DIR/k8s/deployment.yaml --ignore-not-found -n thl2
   - kubectl apply -f $CI_PROJECT_DIR/k8s/deployment.yaml -n thl2
 
-
 build-a-docker:
   stage: build
   only:
@@ -47,7 +46,7 @@ build-a-docker:
     - mkdir -p /kaniko/.docker
     - echo $DOCKER_AUTH_CONFIG > /kaniko/.docker/config.json
     - cat /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE_PATH --destination $HARBOR_REGISTRY/$REPO_NAME/$APPLICATION_NAME:$TAG --build-arg CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg BASE_URL=$BASE_URL --build-arg "JWT_KEY='$JWT_KEY'" --build-arg "ADMIN_API_PUBLIC_KEY='$ADMIN_API_PUBLIC_KEY'" --build-arg IDENTIFIER_SALT=$IDENTIFIER_SALT 
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE_PATH --destination $HARBOR_REGISTRY/$REPO_NAME/$APPLICATION_NAME:$TAG --build-arg CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg BASE_URL=$BASE_URL --build-arg "JWT_KEY='$JWT_KEY'" --build-arg "ADMIN_API_PUBLIC_KEY='$ADMIN_API_PUBLIC_KEY'" --build-arg IDENTIFIER_SALT=$IDENTIFIER_SALT
 
 deploy-to-prod:
   stage: deploy

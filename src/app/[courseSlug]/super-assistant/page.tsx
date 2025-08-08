@@ -2,23 +2,29 @@
 
 import { api } from "../../../../convex/_generated/api";
 import { useState, useEffect } from "react";
-import { 
-  CheckIcon, 
-  ChevronUpDownIcon, 
-  ChevronDownIcon, 
-  ChevronUpIcon, 
-  MagnifyingGlassIcon, 
-  ChevronLeftIcon, 
+import {
+  CheckIcon,
+  ChevronUpDownIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  MagnifyingGlassIcon,
+  ChevronLeftIcon,
   ChevronRightIcon,
   ChevronDoubleLeftIcon,
-  ChevronDoubleRightIcon 
+  ChevronDoubleRightIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useQuery } from "@/usingSession";
 import { useRouter } from "next/navigation";
 import { useIdentity } from "@/components/SessionProvider";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from "@headlessui/react";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+  Transition,
+} from "@headlessui/react";
 import { TabBar } from "@/components/TabBar";
 import UploadWithImage from "@/components/UploadWithImage";
 import { DropdownMenu, DropdownMenuItem } from "@/components/DropdownMenu";
@@ -31,22 +37,21 @@ import { PlusIcon } from "@heroicons/react/20/solid";
 import { useUploadFiles } from "@xixixao/uploadstuff/react";
 import { formatTimestampHumanFormat } from "@/util/date";
 import Input from "@/components/Input";
-import { 
-  createColumnHelper, 
-  flexRender, 
-  getCoreRowModel, 
-  useReactTable, 
-  Column, 
-  RowData, 
-  SortingFn, 
-  SortingState, 
-  getSortedRowModel, 
-  ColumnFiltersState, 
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  Column,
+  RowData,
+  SortingFn,
+  SortingState,
+  getSortedRowModel,
+  ColumnFiltersState,
   getFilteredRowModel,
-  getPaginationRowModel 
-} from '@tanstack/react-table';
-import * as React from 'react';
-
+  getPaginationRowModel,
+} from "@tanstack/react-table";
+import * as React from "react";
 
 function Login() {
   const router = useRouter();
@@ -226,9 +231,12 @@ export default function SuperAssistantPage() {
           {user && (
             <TabBar
               items={[
-                { label: "Super-Assistant", href: `/${courseSlug}/super-assistant`},
+                {
+                  label: "Super-Assistant",
+                  href: `/${courseSlug}/super-assistant`,
+                },
                 { label: "Exercises", href: `/${courseSlug}` },
-                { label: "Lectures",  href: `/${courseSlug}/lectures`},
+                { label: "Lectures", href: `/${courseSlug}/lectures` },
                 user.isAdmin && {
                   label: "Admin",
                   href: `/${courseSlug}/admin`,
@@ -241,7 +249,13 @@ export default function SuperAssistantPage() {
             />
           )}
 
-          {built === undefined ? <LoadingGrid /> : built ? <SuperAssistant /> : <NoSuperAssistant />}
+          {built === undefined ? (
+            <LoadingGrid />
+          ) : built ? (
+            <SuperAssistant />
+          ) : (
+            <NoSuperAssistant />
+          )}
           <div className="h-10" />
         </div>
       </div>
@@ -249,10 +263,9 @@ export default function SuperAssistantPage() {
   );
 }
 
-
 function NoSuperAssistant() {
   return (
-    <div className="flex h-full items-center justify-center" >
+    <div className="flex h-full items-center justify-center">
       <h2 className="font-medium text-3xl tracking-tight">
         There is no Super-Assistant available for this course.
       </h2>
@@ -260,8 +273,7 @@ function NoSuperAssistant() {
   );
 }
 
-
-function EditFeedback({ feedbackId }: { feedbackId:Id<"feedbacks"> }) {
+function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
   const [file, setFile] = useState<File | null>(null);
   const courseSlug = useCourseSlug();
   const deleteFeedback = useMutation(api.feedback.deleteFeedback);
@@ -285,7 +297,7 @@ function EditFeedback({ feedbackId }: { feedbackId:Id<"feedbacks"> }) {
       <div className="p-2 pr-4">
         <div className="pointer-events-auto">
           <DropdownMenu variant="ghost" horizontal={true}>
-          <DropdownMenuItem
+            <DropdownMenuItem
               onClick={() => {
                 setIsUpdateModalOpen(true);
               }}
@@ -320,7 +332,8 @@ function EditFeedback({ feedbackId }: { feedbackId:Id<"feedbacks"> }) {
       >
         <div className="mt-2">
           <p className="text-sm text-gray-500">
-            Are you sure that you want to delete this feedback? This action cannot be undone.
+            Are you sure that you want to delete this feedback? This action
+            cannot be undone.
           </p>
         </div>
         <div className="mt-4 flex gap-2 justify-end">
@@ -334,7 +347,7 @@ function EditFeedback({ feedbackId }: { feedbackId:Id<"feedbacks"> }) {
           <Button
             onClick={async () => {
               setIsDeleteModalOpen(false);
-              deleteFeedback({ id:feedbackId, courseSlug:courseSlug });
+              deleteFeedback({ id: feedbackId, courseSlug: courseSlug });
             }}
             variant="danger"
             size="sm"
@@ -371,7 +384,11 @@ function EditFeedback({ feedbackId }: { feedbackId:Id<"feedbacks"> }) {
             onClick={async () => {
               setIsEditNameModalOpen(false);
               if (newName !== name) {
-                await renameFeedback({ id:feedbackId, newName:newName, courseSlug:courseSlug });
+                await renameFeedback({
+                  id: feedbackId,
+                  newName: newName,
+                  courseSlug: courseSlug,
+                });
               } else {
                 setNewName(name || "");
               }
@@ -388,18 +405,28 @@ function EditFeedback({ feedbackId }: { feedbackId:Id<"feedbacks"> }) {
         onClose={() => setIsUpdateModalOpen(false)}
         title="Upload a new attempt to get feedback."
       >
-        <form onSubmit={
-          async (e) => {
+        <form
+          onSubmit={async (e) => {
             e.preventDefault();
             if (file === null) {
-              toast.error("You have to upload a tentative solution to get feedback.")
+              toast.error(
+                "You have to upload a tentative solution to get feedback.",
+              );
             } else {
               const uploaded = await startUpload([file]);
-              const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
-              await updateFeedback({ courseSlug, storageId:storageId, feedbackId:feedbackId });
+              const storageId = uploaded.map(
+                ({ response }) => (response as any).storageId,
+              )[0];
+              await updateFeedback({
+                courseSlug,
+                storageId: storageId,
+                feedbackId: feedbackId,
+              });
 
               if (feedbackId) {
-                router.push(`/${courseSlug}/super-assistant/feedback/${feedbackId}`);
+                router.push(
+                  `/${courseSlug}/super-assistant/feedback/${feedbackId}`,
+                );
               } else {
                 toast.error("Failed to generate feedback.");
               }
@@ -407,12 +434,9 @@ function EditFeedback({ feedbackId }: { feedbackId:Id<"feedbacks"> }) {
               setFile(null);
               setIsUpdateModalOpen(false);
             }
-          }
-        }>          
-          <UploadWithImage
-            value={file}
-            onChange={(value) => setFile(value)}
-          />
+          }}
+        >
+          <UploadWithImage value={file} onChange={(value) => setFile(value)} />
           <div className="flex justify-end gap-2">
             <Button
               type="button"
@@ -433,8 +457,7 @@ function EditFeedback({ feedbackId }: { feedbackId:Id<"feedbacks"> }) {
       </Modal>
     </>
   );
-};
-
+}
 
 function EditChat({ chatId }: { chatId: Id<"chats"> }) {
   const courseSlug = useCourseSlug();
@@ -454,7 +477,7 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
       <div className="p-2 pr-4">
         <div className="pointer-events-auto">
           <DropdownMenu variant="ghost" horizontal={true}>
-          <DropdownMenuItem
+            <DropdownMenuItem
               onClick={() => {
                 setIsEditNameModalOpen(true);
               }}
@@ -473,7 +496,7 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
           </DropdownMenu>
         </div>
       </div>
-    
+
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
@@ -481,7 +504,8 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
       >
         <div className="mt-2">
           <p className="text-sm text-gray-500">
-            Are you sure that you want to delete this chat? This action cannot be undone.
+            Are you sure that you want to delete this chat? This action cannot
+            be undone.
           </p>
         </div>
         <div className="mt-4 flex gap-2 justify-end">
@@ -495,7 +519,7 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
           <Button
             onClick={async () => {
               setIsDeleteModalOpen(false);
-              deleteChat({ id:chatId, courseSlug:courseSlug });
+              deleteChat({ id: chatId, courseSlug: courseSlug });
             }}
             variant="danger"
             size="sm"
@@ -532,7 +556,11 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
             onClick={async () => {
               setIsEditNameModalOpen(false);
               if (newName !== name) {
-                await renameChat({ id:chatId, newName:newName, courseSlug:courseSlug });
+                await renameChat({
+                  id: chatId,
+                  newName: newName,
+                  courseSlug: courseSlug,
+                });
               } else {
                 setNewName(name || "");
               }
@@ -546,40 +574,43 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
       </Modal>
     </>
   );
-};
-
+}
 
 type Row = {
-  id: string
-  creationTime: number
-  lastModified: number
-  name: string | undefined
-  type: string
-}
+  id: string;
+  creationTime: number;
+  lastModified: number;
+  name: string | undefined;
+  type: string;
+};
 
 type RowObject = {
-  type: string
-  id: string
-}
+  type: string;
+  id: string;
+};
 
 const sortCreationTimeFn: SortingFn<Row> = (rowA, rowB, _columnId) => {
   const dateA = new Date(rowA.original.creationTime);
   const dateB = new Date(rowB.original.creationTime);
   return dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
-}
+};
 
 const sortLastModifiedFn: SortingFn<Row> = (rowA, rowB, _columnId) => {
   const dateA = new Date(rowA.original.lastModified);
   const dateB = new Date(rowB.original.lastModified);
   return dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
-}
+};
 
 function Table() {
   const courseSlug = useCourseSlug();
-  const list : Row[] | undefined = useQuery(api.feedback.data, { courseSlug });
-  const [data, setData] = useState(() => list ? [...list] : []);
-  const [sorting, setSorting] = useState<SortingState>([{ id:"lastModified", desc:true }]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const list: Row[] | undefined = useQuery(api.feedback.data, { courseSlug });
+  const [data, setData] = useState(() => (list ? [...list] : []));
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "lastModified", desc: true },
+  ]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
   const router = useRouter();
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 5 });
 
@@ -591,44 +622,73 @@ function Table() {
   const columns = [
     columnHelper.accessor("type", {
       id: "type",
-      cell: info => <span className="px-3 text-slate-400">{info.getValue()}</span>,
+      cell: (info) => (
+        <span className="px-3 text-slate-400">{info.getValue()}</span>
+      ),
       header: "",
       meta: {
-        filterVariant: "select"
+        filterVariant: "select",
       },
       enableSorting: false,
     }),
-    columnHelper.accessor(row => row.name ? row.name : "", {
+    columnHelper.accessor((row) => (row.name ? row.name : ""), {
       id: "name",
-      cell: info => <span className="px-3">{info.getValue()}</span>,
+      cell: (info) => <span className="px-3">{info.getValue()}</span>,
       header: "Name",
       sortUndefined: "last",
       sortDescFirst: false,
       meta: {
-        filterVariant: "text"
+        filterVariant: "text",
       },
     }),
     columnHelper.accessor("creationTime", {
-      cell: info => <span className="px-3 text-slate-400">{formatTimestampHumanFormat(info.getValue())}</span>,
+      cell: (info) => (
+        <span className="px-3 text-slate-400">
+          {formatTimestampHumanFormat(info.getValue())}
+        </span>
+      ),
       header: "Creation time",
       sortingFn: sortCreationTimeFn,
       enableColumnFilter: false,
     }),
     columnHelper.accessor("lastModified", {
       id: "lastModified",
-      cell: info => <span className="px-3 text-slate-400">{formatTimestampHumanFormat(info.getValue())}</span>,
+      cell: (info) => (
+        <span className="px-3 text-slate-400">
+          {formatTimestampHumanFormat(info.getValue())}
+        </span>
+      ),
       header: "Last modified",
       sortingFn: sortLastModifiedFn,
       enableColumnFilter: false,
     }),
-    columnHelper.accessor(row => {const res : RowObject = {type:row.type, id:row.id}; return res;}, {
-      id: "modify",
-      cell: info => <span className="text-right pointer-events-auto" onClick={(e) => e.stopPropagation()}>{info.getValue().type === "feedback" ? <EditFeedback feedbackId={info.getValue().id as Id<"feedbacks">} /> : <EditChat chatId={info.getValue().id as Id<"chats">}/>}</span>,
-      header: "",
-      size: 2,
-      enableSorting: false,
-      enableColumnFilter: false,
-    })
+    columnHelper.accessor(
+      (row) => {
+        const res: RowObject = { type: row.type, id: row.id };
+        return res;
+      },
+      {
+        id: "modify",
+        cell: (info) => (
+          <span
+            className="text-right pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {info.getValue().type === "feedback" ? (
+              <EditFeedback
+                feedbackId={info.getValue().id as Id<"feedbacks">}
+              />
+            ) : (
+              <EditChat chatId={info.getValue().id as Id<"chats">} />
+            )}
+          </span>
+        ),
+        header: "",
+        size: 2,
+        enableSorting: false,
+        enableColumnFilter: false,
+      },
+    ),
   ];
 
   const table = useReactTable({
@@ -643,7 +703,7 @@ function Table() {
     onColumnFiltersChange: setColumnFilters,
     filterFns: {},
     state: { sorting, columnFilters, pagination },
-    getRowId: originalRow => originalRow.id,
+    getRowId: (originalRow) => originalRow.id,
   });
   var nameRow: Column<Row, unknown> | undefined;
 
@@ -652,21 +712,21 @@ function Table() {
       {data.length !== 0 && (
         <div className="p-2">
           <div className="flex flex-row w-full mb-6">
-            {(nameRow = table.getColumn("name")) !== undefined &&
+            {(nameRow = table.getColumn("name")) !== undefined && (
               <div className="w-full mr-4">
                 <Filter column={nameRow} />
               </div>
-            }
+            )}
             <div className="flex flex-row p-2 content-center">
               <p className="mr-3 content-center">Show</p>
               <select
                 value={table.getState().pagination.pageSize}
-                onChange={e => {
-                  table.setPageSize(Number(e.target.value))
+                onChange={(e) => {
+                  table.setPageSize(Number(e.target.value));
                 }}
                 className="bg-slate-200 border rounded-md"
               >
-                {[5, 10, 20, 30, 40, 50].map(pageSize => (
+                {[5, 10, 20, 30, 40, 50].map((pageSize) => (
                   <option key={pageSize} value={pageSize}>
                     {pageSize}
                   </option>
@@ -677,64 +737,87 @@ function Table() {
           </div>
           <table className="w-full">
             <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id} className="border-b border-solid border-gray-400">
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id} className="p-2 pl-3 text-gray-500 text-left">
-                      {header.isPlaceholder
-                        ? null
-                        : (
-                          <>
-                            <div
-                              className={
-                                header.column.getCanSort()
-                                  ? "cursor-pointer select-none"
-                                  : ""
-                              }
-                              onClick={header.column.getToggleSortingHandler()}
-                              title={
-                                header.column.getCanSort()
-                                  ? header.column.getNextSortingOrder() === "asc"
-                                    ? "Sort ascending"
-                                    : header.column.getNextSortingOrder() === "desc"
-                                      ? "Sort descending"
-                                      : "Clear sort"
-                                  : undefined
-                              }
-                            >
-                              <div className="flex items-center justify-items-center">
-                                {{
-                                  asc: <div className="pr-3"><ChevronUpIcon className="border rounded-md bg-gray-500 text-white font-bold w-6 h-6 p-px" /></div>,
-                                  desc: <div className="pr-3"><ChevronDownIcon className="border rounded-md bg-gray-500 text-white font-bold w-6 h-6 p-px" /></div>,
-                                }[header.column.getIsSorted() as string] ?? null}
-                                {flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
-                                {header.column.getCanFilter() && header.id === "type" ? (
-                                  <div>
-                                    <Filter column={header.column} />
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr
+                  key={headerGroup.id}
+                  className="border-b border-solid border-gray-400"
+                >
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="p-2 pl-3 text-gray-500 text-left"
+                    >
+                      {header.isPlaceholder ? null : (
+                        <>
+                          <div
+                            className={
+                              header.column.getCanSort()
+                                ? "cursor-pointer select-none"
+                                : ""
+                            }
+                            onClick={header.column.getToggleSortingHandler()}
+                            title={
+                              header.column.getCanSort()
+                                ? header.column.getNextSortingOrder() === "asc"
+                                  ? "Sort ascending"
+                                  : header.column.getNextSortingOrder() ===
+                                      "desc"
+                                    ? "Sort descending"
+                                    : "Clear sort"
+                                : undefined
+                            }
+                          >
+                            <div className="flex items-center justify-items-center">
+                              {{
+                                asc: (
+                                  <div className="pr-3">
+                                    <ChevronUpIcon className="border rounded-md bg-gray-500 text-white font-bold w-6 h-6 p-px" />
                                   </div>
-                                ) : null}
-                              </div>
+                                ),
+                                desc: (
+                                  <div className="pr-3">
+                                    <ChevronDownIcon className="border rounded-md bg-gray-500 text-white font-bold w-6 h-6 p-px" />
+                                  </div>
+                                ),
+                              }[header.column.getIsSorted() as string] ?? null}
+                              {flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                              {header.column.getCanFilter() &&
+                              header.id === "type" ? (
+                                <div>
+                                  <Filter column={header.column} />
+                                </div>
+                              ) : null}
                             </div>
-                          </>
-                        )}
+                          </div>
+                        </>
+                      )}
                     </th>
                   ))}
                 </tr>
               ))}
             </thead>
             <tbody>
-              {table.getRowModel().rows.map(row => (
-                <tr 
-                  className="hover:bg-sky-300 hover:cursor-pointer border-b border-solid border-gray-200" 
-                  key={row.id} 
-                  onClick={() => {router.push(row.original.type === "feedback" ? `/${courseSlug}/super-assistant/feedback/${row.id}` : `/${courseSlug}/super-assistant/chat/${row.id}`)}}
+              {table.getRowModel().rows.map((row) => (
+                <tr
+                  className="hover:bg-sky-300 hover:cursor-pointer border-b border-solid border-gray-200"
+                  key={row.id}
+                  onClick={() => {
+                    router.push(
+                      row.original.type === "feedback"
+                        ? `/${courseSlug}/super-assistant/feedback/${row.id}`
+                        : `/${courseSlug}/super-assistant/chat/${row.id}`,
+                    );
+                  }}
                 >
-                  {row.getVisibleCells().map(cell => (
+                  {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -761,7 +844,10 @@ function Table() {
               <ChevronLeftIcon className="w-5 h-5" />
             </button>
             <div className="text-center p-4 content-center justify-center">
-              <p>Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}</p>
+              <p>
+                Page {table.getState().pagination.pageIndex + 1} of{" "}
+                {table.getPageCount()}
+              </p>
             </div>
             <button
               onClick={() => table.nextPage()}
@@ -786,25 +872,24 @@ function Table() {
       )}
     </>
   );
-};
+}
 
-
-declare module '@tanstack/react-table' {
+declare module "@tanstack/react-table" {
   interface ColumnMeta<TData extends RowData, TValue> {
-    filterVariant?: 'text' | 'select'
+    filterVariant?: "text" | "select";
   }
-};
+}
 
 function Filter({ column }: { column: Column<any, unknown> }) {
-  const columnFilterValue = column.getFilterValue()
-  const { filterVariant } = column.columnDef.meta ?? {}
+  const columnFilterValue = column.getFilterValue();
+  const { filterVariant } = column.columnDef.meta ?? {};
 
-  return filterVariant === 'select' ? (
+  return filterVariant === "select" ? (
     <select
-      onChange={e => column.setFilterValue(e.target.value)}
+      onChange={(e) => column.setFilterValue(e.target.value)}
       value={columnFilterValue?.toString()}
       className="bg-slate-200 border rounded-md"
-    >   
+    >
       <option value="">both</option>
       <option value="feedback">feedback</option>
       <option value="chat">chat</option>
@@ -812,14 +897,13 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   ) : (
     <DebouncedInput
       className="w-full p-3 bg-transparent focus:outline-0"
-      onChange={value => column.setFilterValue(value)}
+      onChange={(value) => column.setFilterValue(value)}
       placeholder={"Search..."}
       type="text"
-      value={(columnFilterValue ?? '') as string}
+      value={(columnFilterValue ?? "") as string}
     />
-  )
+  );
 }
-
 
 function DebouncedInput({
   value: firstVal,
@@ -827,31 +911,34 @@ function DebouncedInput({
   debounce = 500,
   ...props
 }: {
-  value: string | number
-  onChange: (value: string | number) => void
-  debounce?: number
-} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'>) {
+  value: string | number;
+  onChange: (value: string | number) => void;
+  debounce?: number;
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange">) {
   const [value, setValue] = useState(firstVal);
 
   useEffect(() => {
-    setValue(firstVal)
+    setValue(firstVal);
   }, [firstVal]);
   useEffect(() => {
     const timeout = setTimeout(() => {
-      onChange(value)
+      onChange(value);
     }, debounce);
-    return () => clearTimeout(timeout)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   return (
     <form className="flex flex-row w-full border border-slate-200 rounded-md text-gray-500 bg-slate-100 items-center">
-      <MagnifyingGlassIcon className="h-10 w-10 p-2 pl-3"/>
-      <input {...props} value={value} onChange={e => setValue(e.target.value)} />
+      <MagnifyingGlassIcon className="h-10 w-10 p-2 pl-3" />
+      <input
+        {...props}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+      />
     </form>
   );
 }
-
 
 function SuperAssistant() {
   const [file, setFile] = useState<File | null>(null);
@@ -863,14 +950,17 @@ function SuperAssistant() {
   const router = useRouter();
   const generateFeedback = useMutation(api.feedback.generateFeedback);
   const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
-  const { startUpload } = useUploadFiles(() =>
-  generateUploadUrl({}));
+  const { startUpload } = useUploadFiles(() => generateUploadUrl({}));
   const generateChat = useMutation(api.sachat.generateChat);
   const [feedbackName, setFeedbackName] = useState("");
   const weeks = useQuery(api.admin.sadatabase.getWeeks, { courseSlug });
-  const [selectedFeedbackWeek, setSelectedFeedbackWeek] = useState<number>(weeks === undefined ? NaN : weeks[0]);
-  const [selectedChatWeek, setSelectedChatWeek] = useState<number>(weeks === undefined ? NaN : weeks[0]);
-  
+  const [selectedFeedbackWeek, setSelectedFeedbackWeek] = useState<number>(
+    weeks === undefined ? NaN : weeks[0],
+  );
+  const [selectedChatWeek, setSelectedChatWeek] = useState<number>(
+    weeks === undefined ? NaN : weeks[0],
+  );
+
   return (
     <>
       <div className="flex flex-row text-3xl font-medium mb-16 gap-3 mt-16">
@@ -880,7 +970,9 @@ function SuperAssistant() {
             <button
               className="block rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
               type="button"
-              onClick={() => { setIsModal1Open(true); }}
+              onClick={() => {
+                setIsModal1Open(true);
+              }}
             >
               <div className="p-8 pr-10 pl-10">
                 <div className="flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
@@ -895,12 +987,16 @@ function SuperAssistant() {
         <div className="w-1 bg-gray-400 h-auto self-stretch"></div>
 
         <div className="basis-1/2 justify-items-center">
-          <p className="text-xl text-center">Still stuck? Chat with the Super-Assistant</p>
+          <p className="text-xl text-center">
+            Still stuck? Chat with the Super-Assistant
+          </p>
           <div className="grid mt-4 justify-items-center">
             <button
               className="rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
               type="button"
-              onClick={() => { setIsModal2Open(true); }}
+              onClick={() => {
+                setIsModal2Open(true);
+              }}
             >
               <div className="p-8 pr-16 pl-16">
                 <div className="flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
@@ -918,41 +1014,56 @@ function SuperAssistant() {
         onClose={() => setIsModal1Open(false)}
         title="Upload your tentative solution to get feedback."
       >
-        <form onSubmit={
-          async (e) => {
+        <form
+          onSubmit={async (e) => {
             e.preventDefault();
             if (file === null) {
-              toast.error("You have to upload your tentative solution to get feedback.");
+              toast.error(
+                "You have to upload your tentative solution to get feedback.",
+              );
             } else {
               const uploaded = await startUpload([file]);
-              const storageId = uploaded.map(({response}) => ((response as any).storageId))[0];
-              const feedbackId = await generateFeedback({ courseSlug, storageId:storageId, name:feedbackName, weekNumber:selectedFeedbackWeek });
+              const storageId = uploaded.map(
+                ({ response }) => (response as any).storageId,
+              )[0];
+              const feedbackId = await generateFeedback({
+                courseSlug,
+                storageId: storageId,
+                name: feedbackName,
+                weekNumber: selectedFeedbackWeek,
+              });
 
               if (feedbackId) {
-                router.push(`/${courseSlug}/super-assistant/feedback/${feedbackId}`);
+                router.push(
+                  `/${courseSlug}/super-assistant/feedback/${feedbackId}`,
+                );
               } else {
                 toast.error("Failed to generate feedback.");
               }
               setFile(null);
               setIsModal1Open(false);
             }
-          }
-        }>          
-          <UploadWithImage
-            value={file}
-            onChange={(value) => setFile(value)}
-          />
+          }}
+        >
+          <UploadWithImage value={file} onChange={(value) => setFile(value)} />
           {weeks !== undefined && (
             <>
-              <label htmlFor="week-number" className="block text-sm font-medium text-slate-800">Please select the week you are working on:</label>
+              <label
+                htmlFor="week-number"
+                className="block text-sm font-medium text-slate-800"
+              >
+                Please select the week you are working on:
+              </label>
               <select
                 name="week"
                 id="week-number"
                 value={selectedFeedbackWeek}
-                onChange={e => setSelectedFeedbackWeek(Number(e.target.value))}
+                onChange={(e) =>
+                  setSelectedFeedbackWeek(Number(e.target.value))
+                }
                 className="mt-1 mb-6 p-2 w-full border border-slate-300 rounded-md font-sans h-10 form-select focus:ring-2 focus:ring-inherit focus:border-inherit focus:outline-none"
               >
-                {weeks.map(week => (
+                {weeks.map((week) => (
                   <option key={week} value={week}>
                     Week {week}
                   </option>
@@ -991,10 +1102,15 @@ function SuperAssistant() {
         onClose={() => setIsModal2Open(false)}
         title="Start a chat with the Super-Assistant."
       >
-        <form onSubmit={
-          async (e) => {
+        <form
+          onSubmit={async (e) => {
             e.preventDefault();
-            const chatId = await generateChat({ courseSlug, reason:statement, name:chatName, weekNumber:selectedChatWeek });
+            const chatId = await generateChat({
+              courseSlug,
+              reason: statement,
+              name: chatName,
+              weekNumber: selectedChatWeek,
+            });
 
             if (chatId) {
               router.push(`/${courseSlug}/super-assistant/chat/${chatId}`);
@@ -1003,20 +1119,25 @@ function SuperAssistant() {
             }
 
             setIsModal2Open(false);
-          }
-        }>
+          }}
+        >
           <div className="h-6"></div>
           {weeks !== undefined && (
             <>
-              <label htmlFor="week-number" className="block text-sm font-medium text-slate-800">Please select the week you are working on:</label>
+              <label
+                htmlFor="week-number"
+                className="block text-sm font-medium text-slate-800"
+              >
+                Please select the week you are working on:
+              </label>
               <select
                 name="week"
                 id="week-number"
                 value={selectedChatWeek}
-                onChange={e => setSelectedChatWeek(Number(e.target.value))}
+                onChange={(e) => setSelectedChatWeek(Number(e.target.value))}
                 className="mt-1 mb-6 p-2 w-full border border-slate-300 rounded-md font-sans h-10 form-select focus:ring-2 focus:ring-inherit focus:border-inherit focus:outline-none"
               >
-                {weeks.map(week => (
+                {weeks.map((week) => (
                   <option key={week} value={week}>
                     Week {week}
                   </option>

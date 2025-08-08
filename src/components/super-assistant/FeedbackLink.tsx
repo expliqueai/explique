@@ -22,7 +22,7 @@ export function FeedbackLink({
             !image && "bg-slate-600",
           )}
         >
-          { image !== null && image !== undefined && (
+          {image !== null && image !== undefined && (
             <picture>
               <img
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform object-center"

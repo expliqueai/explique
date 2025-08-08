@@ -2,9 +2,7 @@
   "compilerOptions": {
     "strict": true,
     "target": "ESNext",
-    "lib": [
-      "ES2021",
-    ],
+    "lib": ["ES2021"],
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "module": "ESNext",

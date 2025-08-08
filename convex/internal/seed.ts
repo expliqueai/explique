@@ -114,7 +114,7 @@ export default internalMutation(async (ctx) => {
         email,
         id: generateUserId(),
         name: null,
-        superadmin: true
+        superadmin: true,
       }),
     );
   }

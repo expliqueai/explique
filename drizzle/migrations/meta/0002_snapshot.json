@@ -32,9 +32,7 @@
       "indexes": {
         "identifier": {
           "name": "identifier",
-          "columns": [
-            "identifier"
-          ],
+          "columns": ["identifier"],
           "isUnique": true
         }
       },
@@ -175,9 +173,7 @@
       "indexes": {
         "uniqueid": {
           "name": "uniqueid",
-          "columns": [
-            "uniqueid"
-          ],
+          "columns": ["uniqueid"],
           "isUnique": true
         }
       },

@@ -5,16 +5,16 @@ metadata:
 spec:
   tls:
     - hosts:
-      - APPLICATION-HOSTS-FQDN
+        - APPLICATION-HOSTS-FQDN
       secretName: APPLICATION-HOSTS-FQDN-tls
   rules:
-  - host: APPLICATION-HOSTS-FQDN
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: APPLICATION-NAME-app
-            port: 
-              number: 8000
+    - host: APPLICATION-HOSTS-FQDN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: APPLICATION-NAME-app
+                port:
+                  number: 8000

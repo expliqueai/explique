@@ -15,18 +15,18 @@ spec:
         name: APPLICATION-NAME-app
     spec:
       imagePullSecrets:
-      - name: APPLICATION-NAME-regcred
+        - name: APPLICATION-NAME-regcred
       containers:
-      - name: APPLICATION-NAME-app
-        imagePullPolicy: Always
-        image: APPLICATION-IMAGE
-        ports:
-        - containerPort: 8000
-        env:
-        - name: EXAMPLE
-          value: "Your example value"
-        resources:
-          requests:
-            cpu: "2"
-            memory: "256Mi"
+        - name: APPLICATION-NAME-app
+          imagePullPolicy: Always
+          image: APPLICATION-IMAGE
+          ports:
+            - containerPort: 8000
+          env:
+            - name: EXAMPLE
+              value: "Your example value"
+          resources:
+            requests:
+              cpu: "2"
+              memory: "256Mi"
       restartPolicy: Always

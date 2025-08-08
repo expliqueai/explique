@@ -137,9 +137,7 @@
       "indexes": {
         "uniqueid": {
           "name": "uniqueid",
-          "columns": [
-            "uniqueid"
-          ],
+          "columns": ["uniqueid"],
           "isUnique": true
         }
       },

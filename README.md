@@ -22,6 +22,7 @@ You can then stop the server with <kbd>Ctrl+C</kbd>.
 > You don’t need to run `npm run dev:server` during regular development. Instead, you can use `npm run dev` which starts both the Convex development tool and the Next.js server.
 
 ### Seed your development database <small>(only the first time)</small>
+
 To have some sample data you can use for development, you can run the following command:
 
 ```bash

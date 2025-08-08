@@ -175,10 +175,7 @@ export default defineSchema(
       ),
     }).index("by_attempt", ["attemptId"]),
     feedbacks: defineTable({
-      status: v.union(
-        v.literal("feedback"),
-        v.literal("chat"),
-      ),
+      status: v.union(v.literal("feedback"), v.literal("chat")),
       courseId: v.id("courses"),
       userId: v.id("users"),
       images: v.array(v.id("_storage")),
@@ -188,16 +185,26 @@ export default defineSchema(
     }).index("by_key", ["userId", "courseId"]),
     feedbackMessages: defineTable({
       feedbackId: v.id("feedbacks"),
-      role: v.union(v.literal("user"), v.literal("system"), v.literal("assistant")),
-      content: v.union(v.string(), v.array(v.union(
-        v.object({ 
-          type:v.literal("text"), 
-          text:v.string(),
-        }), v.object({
-          type:v.literal("image_url"),
-          image_url:v.object({ url:v.string() }),
-        })
-      ))),
+      role: v.union(
+        v.literal("user"),
+        v.literal("system"),
+        v.literal("assistant"),
+      ),
+      content: v.union(
+        v.string(),
+        v.array(
+          v.union(
+            v.object({
+              type: v.literal("text"),
+              text: v.string(),
+            }),
+            v.object({
+              type: v.literal("image_url"),
+              image_url: v.object({ url: v.string() }),
+            }),
+          ),
+        ),
+      ),
       appearance: v.optional(
         v.union(
           v.literal("finished"),
@@ -218,15 +225,21 @@ export default defineSchema(
     chatMessages: defineTable({
       chatId: v.id("chats"),
       assistant: v.boolean(),
-      content: v.union(v.string(), v.array(v.union(
-        v.object({ 
-          type:v.literal("text"), 
-          text:v.string(),
-        }), v.object({
-          type:v.literal("image_url"),
-          image_url:v.object({ url:v.string() }),
-        })
-      ))),
+      content: v.union(
+        v.string(),
+        v.array(
+          v.union(
+            v.object({
+              type: v.literal("text"),
+              text: v.string(),
+            }),
+            v.object({
+              type: v.literal("image_url"),
+              image_url: v.object({ url: v.string() }),
+            }),
+          ),
+        ),
+      ),
       appearance: v.optional(
         v.union(
           v.literal("finished"),
@@ -270,14 +283,14 @@ export default defineSchema(
       .index("by_message", ["messageId"])
       .index("by_course", ["courseId"]),
     feedbackReports: defineTable({
-        feedbackId: v.id("feedbacks"),
-        messageId: v.id("feedbackMessages"),
-        courseId: v.id("courses"),
-        reason: v.string(),
-      })
-        .index("by_feedback", ["feedbackId"])
-        .index("by_message", ["messageId"])
-        .index("by_course", ["courseId"]),
+      feedbackId: v.id("feedbacks"),
+      messageId: v.id("feedbackMessages"),
+      courseId: v.id("courses"),
+      reason: v.string(),
+    })
+      .index("by_feedback", ["feedbackId"])
+      .index("by_message", ["messageId"])
+      .index("by_course", ["courseId"]),
 
     logs: defineTable({
       type: v.union(
