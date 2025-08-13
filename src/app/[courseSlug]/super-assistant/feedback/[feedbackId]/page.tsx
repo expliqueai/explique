@@ -1,50 +1,46 @@
-"use client";
+"use client"
 
-import { useMutation, useQuery } from "@/usingSession";
-import { api } from "../../../../../../convex/_generated/api";
-import { Id } from "../../../../../../convex/_generated/dataModel";
-import React, { use } from "react";
-import Link from "next/link";
-import Markdown from "@/components/Markdown";
-import {
-  ArrowLeftIcon,
-} from "@heroicons/react/24/outline";
-import { ArrowRightIcon } from "@heroicons/react/16/solid";
-import { PrimaryButton } from "@/components/PrimaryButton";
-import Feedback from "@/components/super-assistant/Feedback";
+import Markdown from "@/components/Markdown"
+import { PrimaryButton } from "@/components/PrimaryButton"
+import Feedback from "@/components/super-assistant/Feedback"
+import { useMutation, useQuery } from "@/usingSession"
+import { ArrowRightIcon } from "@heroicons/react/16/solid"
+import { ArrowLeftIcon } from "@heroicons/react/24/outline"
+import Link from "next/link"
+import React, { use } from "react"
+import { api } from "../../../../../../convex/_generated/api"
+import { Id } from "../../../../../../convex/_generated/dataModel"
 
 type FeedbackProps = {
   params: Promise<{
-    courseSlug: string;
-    feedbackId: Id<"feedbacks">;
-  }>;
-};
+    courseSlug: string
+    feedbackId: Id<"feedbacks">
+  }>
+}
 
-export default function FeedbackPage({
-  params,
-}: FeedbackProps) {
-  const { courseSlug, feedbackId } = use(params);
+export default function FeedbackPage({ params }: FeedbackProps) {
+  const { courseSlug, feedbackId } = use(params)
   const feedbackMessage = useQuery(api.feedbackmessages.getFeedback, {
     feedbackId,
-  });
-  const feedback = useQuery(api.feedback.get, { feedbackId });
-  const imageUrl = useQuery(api.feedback.getImage, { feedbackId });
-  const goToChat = useMutation(api.feedback.goToChat);
+  })
+  const feedback = useQuery(api.feedback.get, { feedbackId })
+  const imageUrl = useQuery(api.feedback.getImage, { feedbackId })
+  const goToChat = useMutation(api.feedback.goToChat)
 
   return (
     <>
       <div className="p-6">
-        <div className="max-w-xl mx-auto">
-          <header className="fixed h-14 sm:h-16 top-0 left-0 w-full bg-white bg-opacity-90 backdrop-blur-lg p-4 shadow-lg flex items-center justify-center z-10">
+        <div className="mx-auto max-w-xl">
+          <header className="bg-opacity-90 fixed top-0 left-0 z-10 flex h-14 w-full items-center justify-center bg-white p-4 shadow-lg backdrop-blur-lg sm:h-16">
             <Link
               href={`/${courseSlug}/super-assistant`}
               title="Back"
-              className="absolute top-0 left-0 sm:w-16 sm:h-16 w-14 h-14 flex items-center justify-center"
+              className="absolute top-0 left-0 flex h-14 w-14 items-center justify-center sm:h-16 sm:w-16"
             >
-              <ArrowLeftIcon className="w-6 h-6" />
+              <ArrowLeftIcon className="h-6 w-6" />
             </Link>
 
-            <h1 className="text-lg sm:text-xl font-medium text-center">
+            <h1 className="text-center text-lg font-medium sm:text-xl">
               {feedback === undefined
                 ? ""
                 : feedback?.name
@@ -72,15 +68,15 @@ export default function FeedbackPage({
                   <Markdown text={feedbackMessage.content} />
 
                   {!feedbackMessage.streaming && (
-                    <footer className="flex justify-center mt-8">
-                      <div className="flex flex-col gap-2 items-center">
+                    <footer className="mt-8 flex justify-center">
+                      <div className="flex flex-col items-center gap-2">
                         <PrimaryButton
                           onClick={async () => {
-                            await goToChat({ feedbackId });
+                            await goToChat({ feedbackId })
                           }}
                         >
                           Chat with the Super-Assistant
-                          <ArrowRightIcon className="w-5 h-5" />
+                          <ArrowRightIcon className="h-5 w-5" />
                         </PrimaryButton>
                       </div>
                     </footer>
@@ -94,5 +90,5 @@ export default function FeedbackPage({
         </div>
       </div>
     </>
-  );
+  )
 }
