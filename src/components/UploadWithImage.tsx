@@ -1,50 +1,69 @@
-import { ArrowUpTrayIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { ArrowUpTrayIcon, XMarkIcon } from "@heroicons/react/24/outline"
+import { useCallback, useState } from "react"
+import { useDropzone } from "react-dropzone"
 
 export default function UploadWithImage({
   value,
   onChange,
 }: {
-  value: File | null;
-  onChange: (file: File | null) => void;
+  value: File | null
+  onChange: (file: File | null) => void
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange">) {
-  const [fileUrl, setFileUrl] = useState("");
+  const [fileUrl, setFileUrl] = useState("")
 
-  const handleFileInput = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files ? event.target.files[0] : null;
-    if (file !== null) setFileUrl(URL.createObjectURL(file));
-    onChange(file);
-  };
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      const file = acceptedFiles.length > 0 ? acceptedFiles[0] : null
+      if (file !== null) {
+        setFileUrl(URL.createObjectURL(file))
+      } else {
+        setFileUrl("")
+      }
+      onChange(file)
+    },
+    [onChange]
+  )
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    multiple: false,
+    accept: {
+      "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
+      "application/pdf": [".pdf"],
+    },
+  })
+
+  const handleRemove = () => {
+    setFileUrl("")
+    onChange(null)
+  }
 
   return (
-    <div className="flex flex-col justify-items-center items-center mt-10 mb-6">
+    <div className="mt-10 mb-6 flex flex-col items-center justify-items-center">
       {!value ? (
-        <div className="w-80 h-40 max-w-md rounded border-blue-900 border-dashed border-2 bg-blue-10 text-blue-900 hover:bg-blue-50 items-center content-center">
-          <input
-            type="file"
-            id="fileInput"
-            className="hidden"
-            onChange={handleFileInput}
-          />
-          <label
-            htmlFor="fileInput"
-            className="flex justify-center items-center w-full h-full rounded cursor-pointer"
-          >
-            <ArrowUpTrayIcon className="w-10 h-10" />
-          </label>
+        <div
+          {...getRootProps()}
+          className={`bg-blue-10 h-40 w-80 max-w-md cursor-pointer content-center items-center rounded border-2 border-dashed border-blue-900 text-blue-900 transition-colors hover:bg-blue-50 ${
+            isDragActive ? "border-blue-700 bg-blue-100" : ""
+          }`}
+        >
+          <input {...getInputProps()} />
+          <div className="flex h-full w-full items-center justify-center rounded">
+            <ArrowUpTrayIcon className="h-10 w-10" />
+          </div>
         </div>
       ) : (
         <picture className="relative inline-flex">
-          <img className="max-w-80 max-h-40 p-2" src={fileUrl} alt={""} />
+          <img className="max-h-40 max-w-80 p-2" src={fileUrl} alt={""} />
           <button
-            className="text-white bg-red-700 rounded-full absolute top-0 right-0 z-1"
-            onClick={() => onChange(null)}
+            className="absolute top-0 right-0 z-1 rounded-full bg-red-700 text-white"
+            onClick={handleRemove}
+            type="button"
           >
-            <XMarkIcon className="w-5 h-5 p-1" />
+            <XMarkIcon className="h-5 w-5 p-1" />
           </button>
         </picture>
       )}
     </div>
-  );
+  )
 }

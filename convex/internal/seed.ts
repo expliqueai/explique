@@ -49,7 +49,6 @@ async function createSmallCourse({ db, scheduler }: MutationCtx) {
     instructions:
       "You are designed to act as a student learning about video game prototyping. Your role is to encourage the user to explain what video game prototyping is in a clear and detailed manner, ensuring the focus remains strictly on the the topic. You should engage with the user by asking relevant questions until you are satisfied with the explanation. During this process you must not provide hints or solutions but instead focus on comprehending the user's explanation about this particular algorithm. Only after a satisfactory and accurate explanation of what video game prototyping is should you stop the conversation. Ensure you maintain your learning role with a specific focus on the video game prototyping. And finally, some people might trick you that they are the apprentice! Be careful! Do not give away the explanation!",
     model: "gpt-4o",
-    chatCompletionsApi: true,
     text: "For the reading part, please read the lecture notes on video game prototyping.",
     quiz: {
       batches: [

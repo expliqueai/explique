@@ -13,6 +13,8 @@ import {
 import { internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
 import { lectureSchema } from "../schema";
+import { google } from "@ai-sdk/google";
+import { generateText } from "ai";
 
 const SYSTEM_PROMPT = `
 You are an AI language model designed to assist users in navigating and understanding the content of a video. Your capabilities include answering questions about specific moments in the video using the preprocessed data provided. You can also suggest insightful questions to help users explore the video content more deeply.
@@ -59,6 +61,13 @@ Important: The timestamp of the beginning of a segment is inclusive but the time
 `;
 
 const FALLBACK_MODEL = "gemini-2.5-pro-preview-03-25";
+
+// Default generation config for Vercel AI SDK
+const defaultGenerationConfig = {
+  temperature: 0.7,
+  topP: 0.95,
+  topK: 64,
+};
 
 export const get = queryWithAuth({
   args: {
@@ -269,7 +278,63 @@ export const _getConversationHistory = internalQuery({
   },
 });
 
-// Function for Gemini
+// Generate response using Vercel AI SDK
+async function generateGeminiResponse({
+  model,
+  systemPrompt,
+  messages,
+  fallbackModel = "gemini-2.5-pro-preview-03-25",
+}: {
+  model: string;
+  systemPrompt: string;
+  messages: Array<{ role: "user" | "assistant"; content: string }>;
+  fallbackModel?: string;
+}) {
+  try {
+    // Try with primary model first
+    const response = await generateText({
+      model: google(model),
+      system: systemPrompt,
+      messages,
+      ...defaultGenerationConfig,
+      abortSignal: AbortSignal.timeout(3 * 60 * 1000), // 3 minutes
+    });
+
+    return {
+      text: response.text,
+      isFallbackModel: false,
+    };
+  } catch (primaryError) {
+    console.warn(
+      `Primary model ${model} failed, trying fallback:`,
+      primaryError,
+    );
+
+    try {
+      // Try with fallback model
+      const fallbackResponse = await generateText({
+        model: google(fallbackModel),
+        system: systemPrompt,
+        messages,
+        ...defaultGenerationConfig,
+        abortSignal: AbortSignal.timeout(3 * 60 * 1000), // 3 minutes
+      });
+
+      return {
+        text: fallbackResponse.text,
+        isFallbackModel: true,
+      };
+    } catch (fallbackError) {
+      console.error(
+        `Both primary model ${model} and fallback model ${fallbackModel} failed:`,
+        fallbackError,
+      );
+      throw fallbackError;
+    }
+  }
+}
+
+// Function for Gemini using Vercel AI SDK
 export const answerWithGemini = internalAction({
   args: {
     message: v.string(),
@@ -279,13 +344,6 @@ export const answerWithGemini = internalAction({
     systemMessageId: v.id("lectureChatMessages"),
   },
   handler: async (ctx, args) => {
-    // Import the utility functions
-    const {
-      getGeminiClient,
-      getDefaultSafetySettings,
-      defaultGenerationConfig,
-    } = await import("./geminiUtils");
-
     try {
       // Get lecture data to include in system prompt
       const lecture = await ctx.runQuery(internal.video.chat._getLecture, {
@@ -312,61 +370,35 @@ export const answerWithGemini = internalAction({
       const enhancedSystemPrompt =
         SYSTEM_PROMPT + (lecture?.chunks?.join("\n") || "");
 
-      const genAI = getGeminiClient();
+      // Convert Gemini chat history format to Vercel AI SDK format
+      const messages = chatHistory.map((msg) => ({
+        role: msg.role === "model" ? ("assistant" as const) : ("user" as const),
+        content: msg.parts[0].text,
+      }));
 
-      // Try with original model first
-      try {
-        const model = genAI.getGenerativeModel({
-          model: args.modelName,
-          systemInstruction: enhancedSystemPrompt,
-        });
+      // Add the current user message
+      messages.push({
+        role: "user" as const,
+        content: args.message,
+      });
 
-        // Create a new chat with history from messages
-        const chat = model.startChat({
-          generationConfig: defaultGenerationConfig,
-          safetySettings: getDefaultSafetySettings(),
-          history: chatHistory,
-        });
+      // Generate response using Vercel AI SDK
+      const result = await generateGeminiResponse({
+        model: args.modelName,
+        systemPrompt: enhancedSystemPrompt,
+        messages,
+        fallbackModel: FALLBACK_MODEL,
+      });
 
-        // Send the message to Gemini and get the response
-        const result = await chat.sendMessage(args.message);
-        const response = result.response.text();
-
-        // Update the system message with the response
-        await ctx.runMutation(internal.video.chat.writeSystemResponse, {
-          systemMessageId: args.systemMessageId,
-          appearance: undefined,
-          content: response,
-        });
-
-        return; // Successfully completed with primary model
-      } catch (primaryError) {
-        const fallbackModel = genAI.getGenerativeModel({
-          model: FALLBACK_MODEL,
-          systemInstruction: enhancedSystemPrompt,
-        });
-
-        const fallbackChat = fallbackModel.startChat({
-          generationConfig: defaultGenerationConfig,
-          safetySettings: getDefaultSafetySettings(),
-          history: chatHistory,
-        });
-
-        const fallbackResult = await fallbackChat.sendMessage(args.message);
-        const fallbackResponse = fallbackResult.response.text();
-
-        await ctx.runMutation(internal.video.chat.writeSystemResponse, {
-          systemMessageId: args.systemMessageId,
-          appearance: undefined,
-          content: fallbackResponse,
-          isFallbackModel: true,
-        });
-      }
+      // Update the system message with the response
+      await ctx.runMutation(internal.video.chat.writeSystemResponse, {
+        systemMessageId: args.systemMessageId,
+        appearance: undefined,
+        content: result.text,
+        isFallbackModel: result.isFallbackModel,
+      });
     } catch (err) {
-      console.error(
-        "Error generating response, even with fallback model:",
-        err,
-      );
+      console.error("Error generating response:", err);
       await sendError(ctx, args.systemMessageId);
     }
   },

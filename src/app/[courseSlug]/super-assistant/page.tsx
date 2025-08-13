@@ -1,96 +1,95 @@
-"use client";
+"use client"
 
-import { api } from "../../../../convex/_generated/api";
-import { useState, useEffect } from "react";
-import {
-  CheckIcon,
-  ChevronUpDownIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  MagnifyingGlassIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ChevronDoubleLeftIcon,
-  ChevronDoubleRightIcon,
-} from "@heroicons/react/24/outline";
-import clsx from "clsx";
-import { useQuery } from "@/usingSession";
-import { useRouter } from "next/navigation";
-import { useIdentity } from "@/components/SessionProvider";
-import { useCourseSlug } from "@/hooks/useCourseSlug";
+import { Button } from "@/components/Button"
+import { DropdownMenu, DropdownMenuItem } from "@/components/DropdownMenu"
+import Input from "@/components/Input"
+import { Modal } from "@/components/Modal"
+import { useIdentity } from "@/components/SessionProvider"
+import { TabBar } from "@/components/TabBar"
+import UploadWithImage from "@/components/UploadWithImage"
+import { useCourseSlug } from "@/hooks/useCourseSlug"
+import { useFileUpload } from "@/hooks/useFileUpload"
+import { useMutation, useQuery } from "@/usingSession"
+import { formatTimestampHumanFormat } from "@/util/date"
 import {
   Listbox,
   ListboxButton,
   ListboxOption,
   ListboxOptions,
   Transition,
-} from "@headlessui/react";
-import { TabBar } from "@/components/TabBar";
-import UploadWithImage from "@/components/UploadWithImage";
-import { DropdownMenu, DropdownMenuItem } from "@/components/DropdownMenu";
-import { Button } from "@/components/Button";
-import { Modal } from "@/components/Modal";
-import { Id } from "../../../../convex/_generated/dataModel";
-import { useMutation } from "@/usingSession";
-import { toast } from "sonner";
-import { PlusIcon } from "@heroicons/react/20/solid";
-import { useUploadFiles } from "@xixixao/uploadstuff/react";
-import { formatTimestampHumanFormat } from "@/util/date";
-import Input from "@/components/Input";
+} from "@headlessui/react"
+import { PlusIcon } from "@heroicons/react/20/solid"
 import {
+  CheckIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronUpDownIcon,
+  ChevronUpIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline"
+import {
+  Column,
+  ColumnFiltersState,
   createColumnHelper,
   flexRender,
   getCoreRowModel,
-  useReactTable,
-  Column,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
   RowData,
   SortingFn,
   SortingState,
-  getSortedRowModel,
-  ColumnFiltersState,
-  getFilteredRowModel,
-  getPaginationRowModel,
-} from "@tanstack/react-table";
-import * as React from "react";
+  useReactTable,
+} from "@tanstack/react-table"
+import clsx from "clsx"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import * as React from "react"
+import { toast } from "sonner"
+import { api } from "../../../../convex/_generated/api"
+import { Id } from "../../../../convex/_generated/dataModel"
 
 function Login() {
-  const router = useRouter();
-  const courseSlug = useCourseSlug();
-  const user = useQuery(api.courses.getRegistration, { courseSlug });
-  const identity = useIdentity();
+  const router = useRouter()
+  const courseSlug = useCourseSlug()
+  const user = useQuery(api.courses.getRegistration, { courseSlug })
+  const identity = useIdentity()
 
   useEffect(() => {
     if (user === null) {
-      router.push("/login");
+      router.push("/login")
     }
-  }, [router, user]);
+  }, [router, user])
 
-  if (!user) return null;
+  if (!user) return null
 
   return (
     <div className="flex items-center gap-2">
       <div className="flex flex-col leading-snug text-gray-700">
-        <p className="text-gray-800 font-semibold">
+        <p className="font-semibold text-gray-800">
           {identity ? identity.name : user.name}
           {user.group && <span className="font-normal"> ({user.group})</span>}
         </p>
         <p>{identity ? identity.email : user.email}</p>
       </div>
     </div>
-  );
+  )
 }
 
 function CourseSelector() {
-  const router = useRouter();
+  const router = useRouter()
 
-  const courseSlug = useCourseSlug();
-  const user = useQuery(api.courses.getRegistration, { courseSlug });
-  const courses = useQuery(api.courses.getMyRegistrations, {});
+  const courseSlug = useCourseSlug()
+  const user = useQuery(api.courses.getRegistration, { courseSlug })
+  const courses = useQuery(api.courses.getMyRegistrations, {})
 
   if (!user || !courses) {
     return (
-      <div className="w-full mx-auto h-28 sm:h-32 rounded-xl bg-slate-200 animate-pulse"></div>
-    );
+      <div className="mx-auto h-28 w-full animate-pulse rounded-xl bg-slate-200 sm:h-32"></div>
+    )
   }
 
   return (
@@ -98,7 +97,7 @@ function CourseSelector() {
       <Listbox
         value={courseSlug}
         onChange={(selectedCourseSlug) => {
-          router.push(`/${selectedCourseSlug}`);
+          router.push(`/${selectedCourseSlug}`)
         }}
       >
         {({ open }) => (
@@ -106,15 +105,15 @@ function CourseSelector() {
             <div className="relative">
               <ListboxButton
                 className={clsx(
-                  "w-full cursor-default rounded-2xl py-1.5 px-6 sm:px-10 text-left text-gray-900 ring-inset focus:outline-none focus:ring-4 sm:text-sm sm:leading-6 h-28 sm:h-32",
-                  open && "ring-4",
+                  "h-28 w-full cursor-default rounded-2xl px-6 py-1.5 text-left text-gray-900 ring-inset focus:ring-4 focus:outline-none sm:h-32 sm:px-10 sm:text-sm sm:leading-6",
+                  open && "ring-4"
                 )}
               >
-                <h1 className="flex flex-col justify-center text-center items-center">
-                  <span className="block sm:text-xl font-bold tracking-wider text-gray-500 sm:mb-1">
+                <h1 className="flex flex-col items-center justify-center text-center">
+                  <span className="block font-bold tracking-wider text-gray-500 sm:mb-1 sm:text-xl">
                     {user.course.code}
                   </span>
-                  <span className="block [text-wrap:balance] text-xl sm:text-3xl md:text-4xl font-semibold tracking-tight leading-tight text-gray-800 text-balance">
+                  <span className="block text-xl leading-tight font-semibold tracking-tight [text-wrap:balance] text-balance text-gray-800 sm:text-3xl md:text-4xl">
                     {user.course.name}
                   </span>
                 </h1>
@@ -132,7 +131,7 @@ function CourseSelector() {
                 leaveFrom="opacity-100"
                 leaveTo="opacity-0"
               >
-                <ListboxOptions className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                <ListboxOptions className="ring-opacity-5 absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black focus:outline-none sm:text-sm">
                   {courses.map((course) => (
                     <ListboxOption
                       key={course.slug}
@@ -140,7 +139,7 @@ function CourseSelector() {
                         clsx(
                           focus ? "bg-purple-600 text-white" : "",
                           !focus ? "text-gray-900" : "",
-                          "relative cursor-default select-none py-2 pl-9 pr-4",
+                          "relative cursor-default py-2 pr-4 pl-9 select-none"
                         )
                       }
                       value={course.slug}
@@ -151,7 +150,7 @@ function CourseSelector() {
                             <span
                               className={clsx(
                                 focus ? "text-purple-200" : "text-gray-500",
-                                "ml-2 truncate tabular-nums",
+                                "ml-2 truncate tabular-nums"
                               )}
                             >
                               {course.code}
@@ -159,7 +158,7 @@ function CourseSelector() {
                             <span
                               className={clsx(
                                 selected ? "font-semibold" : "font-normal",
-                                "truncate",
+                                "truncate"
                               )}
                             >
                               {course.name}
@@ -170,7 +169,7 @@ function CourseSelector() {
                             <span
                               className={clsx(
                                 focus ? "text-white" : "text-indigo-600",
-                                "absolute inset-y-0 left-0 flex items-center pl-4",
+                                "absolute inset-y-0 left-0 flex items-center pl-4"
                               )}
                             >
                               <CheckIcon
@@ -185,7 +184,7 @@ function CourseSelector() {
                   ))}
 
                   <hr />
-                  <p className="py-2 px-5 text-gray-500">
+                  <p className="px-5 py-2 text-gray-500">
                     If there is a course missing, please contact your
                     instructor.
                   </p>
@@ -196,37 +195,37 @@ function CourseSelector() {
         )}
       </Listbox>
     </>
-  );
+  )
 }
 
 function isDefined<T>(argument: T | false): argument is T {
-  return argument !== false;
+  return argument !== false
 }
 
 export default function SuperAssistantPage() {
-  const courseSlug = useCourseSlug();
-  const user = useQuery(api.courses.getRegistration, { courseSlug });
-  const built = useQuery(api.admin.sadatabase.built, { courseSlug });
+  const courseSlug = useCourseSlug()
+  const user = useQuery(api.courses.getRegistration, { courseSlug })
+  const built = useQuery(api.admin.sadatabase.built, { courseSlug })
 
   return (
     <>
       <div className="bg-gradient-to-b from-purple-200 via-indigo-200 to-blue-200">
-        <div className="p-6 sm:p-10 pb-0 sm:pb-0 flex justify-center">
+        <div className="flex justify-center p-6 pb-0 sm:p-10 sm:pb-0">
           <div className="max-w-6xl flex-1">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
-              <div className="flex-1 text-3xl tracking-tight font-medium select-none cursor-default my-2">
+              <div className="my-2 flex-1 cursor-default text-3xl font-medium tracking-tight select-none">
                 explique.ai
               </div>
               <Login />
             </div>
 
-            <div className="bg-white shadow-[0_-20px_40px_-12px_rgb(0_0_0_/_0.1)] rounded-t-2xl p-2 sm:p-8 md:p-14 w-full max-w-2xl mx-auto mt-8">
+            <div className="mx-auto mt-8 w-full max-w-2xl rounded-t-2xl bg-white p-2 shadow-[0_-20px_40px_-12px_rgb(0_0_0_/_0.1)] sm:p-8 md:p-14">
               <CourseSelector />
             </div>
           </div>
         </div>
       </div>
-      <div className="relative p-6 sm:p-10 flex justify-center shadow-[0_-10px_10px_-3px_rgba(0_0_0_/_0.08)]">
+      <div className="relative flex justify-center p-6 shadow-[0_-10px_10px_-3px_rgba(0_0_0_/_0.08)] sm:p-10">
         <div className="max-w-6xl flex-1">
           {user && (
             <TabBar
@@ -260,37 +259,37 @@ export default function SuperAssistantPage() {
         </div>
       </div>
     </>
-  );
+  )
 }
 
 function NoSuperAssistant() {
   return (
     <div className="flex h-full items-center justify-center">
-      <h2 className="font-medium text-3xl tracking-tight">
+      <h2 className="text-3xl font-medium tracking-tight">
         There is no Super-Assistant available for this course.
       </h2>
     </div>
-  );
+  )
 }
 
 function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
-  const [file, setFile] = useState<File | null>(null);
-  const courseSlug = useCourseSlug();
-  const deleteFeedback = useMutation(api.feedback.deleteFeedback);
-  const renameFeedback = useMutation(api.feedback.rename);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const updateFeedback = useMutation(api.feedback.updateFeedback);
-  const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
-  const { startUpload } = useUploadFiles(() => generateUploadUrl({}));
-  const name = useQuery(api.feedback.getName, { feedbackId });
-  const [newName, setNewName] = useState(name || "");
-  const router = useRouter();
+  const [file, setFile] = useState<File | null>(null)
+  const courseSlug = useCourseSlug()
+  const deleteFeedback = useMutation(api.feedback.deleteFeedback)
+  const renameFeedback = useMutation(api.feedback.rename)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false)
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
+  const updateFeedback = useMutation(api.feedback.updateFeedback)
+  const generateUploadUrl = useMutation(api.feedback.generateUploadUrl)
+  const { startUpload } = useFileUpload(() => generateUploadUrl({}))
+  const name = useQuery(api.feedback.getName, { feedbackId })
+  const [newName, setNewName] = useState(name || "")
+  const router = useRouter()
 
   useEffect(() => {
-    name && setNewName(name);
-  }, [name]);
+    if (name) setNewName(name)
+  }, [name])
 
   return (
     <>
@@ -299,7 +298,7 @@ function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
           <DropdownMenu variant="ghost" horizontal={true}>
             <DropdownMenuItem
               onClick={() => {
-                setIsUpdateModalOpen(true);
+                setIsUpdateModalOpen(true)
               }}
               variant="default"
             >
@@ -307,7 +306,7 @@ function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
-                setIsEditNameModalOpen(true);
+                setIsEditNameModalOpen(true)
               }}
               variant="default"
             >
@@ -315,7 +314,7 @@ function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
-                setIsDeleteModalOpen(true);
+                setIsDeleteModalOpen(true)
               }}
               variant="danger"
             >
@@ -336,7 +335,7 @@ function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
             cannot be undone.
           </p>
         </div>
-        <div className="mt-4 flex gap-2 justify-end">
+        <div className="mt-4 flex justify-end gap-2">
           <Button
             onClick={() => setIsDeleteModalOpen(false)}
             variant="secondary"
@@ -346,8 +345,8 @@ function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
           </Button>
           <Button
             onClick={async () => {
-              setIsDeleteModalOpen(false);
-              deleteFeedback({ id: feedbackId, courseSlug: courseSlug });
+              setIsDeleteModalOpen(false)
+              deleteFeedback({ id: feedbackId, courseSlug: courseSlug })
             }}
             variant="danger"
             size="sm"
@@ -369,11 +368,11 @@ function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
             onChange={(value) => setNewName(value)}
           />
         </div>
-        <div className="mt-4 flex gap-2 justify-end">
+        <div className="mt-4 flex justify-end gap-2">
           <Button
             onClick={() => {
-              setIsEditNameModalOpen(false);
-              setNewName(name || "");
+              setIsEditNameModalOpen(false)
+              setNewName(name || "")
             }}
             variant="secondary"
             size="sm"
@@ -382,15 +381,15 @@ function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
           </Button>
           <Button
             onClick={async () => {
-              setIsEditNameModalOpen(false);
+              setIsEditNameModalOpen(false)
               if (newName !== name) {
                 await renameFeedback({
                   id: feedbackId,
                   newName: newName,
                   courseSlug: courseSlug,
-                });
+                })
               } else {
-                setNewName(name || "");
+                setNewName(name || "")
               }
             }}
             variant="primary"
@@ -407,32 +406,31 @@ function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
       >
         <form
           onSubmit={async (e) => {
-            e.preventDefault();
+            e.preventDefault()
             if (file === null) {
               toast.error(
-                "You have to upload a tentative solution to get feedback.",
-              );
+                "You have to upload a tentative solution to get feedback."
+              )
             } else {
-              const uploaded = await startUpload([file]);
-              const storageId = uploaded.map(
-                ({ response }) => (response as any).storageId,
-              )[0];
+              const uploaded = await startUpload([file])
+              const storageId = (uploaded[0].response as { storageId: string })
+                .storageId
               await updateFeedback({
                 courseSlug,
                 storageId: storageId,
                 feedbackId: feedbackId,
-              });
+              })
 
               if (feedbackId) {
                 router.push(
-                  `/${courseSlug}/super-assistant/feedback/${feedbackId}`,
-                );
+                  `/${courseSlug}/super-assistant/feedback/${feedbackId}`
+                )
               } else {
-                toast.error("Failed to generate feedback.");
+                toast.error("Failed to generate feedback.")
               }
 
-              setFile(null);
-              setIsUpdateModalOpen(false);
+              setFile(null)
+              setIsUpdateModalOpen(false)
             }
           }}
         >
@@ -441,8 +439,8 @@ function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
             <Button
               type="button"
               onClick={() => {
-                setIsUpdateModalOpen(false);
-                setFile(null);
+                setIsUpdateModalOpen(false)
+                setFile(null)
               }}
               variant="secondary"
               size="sm"
@@ -456,21 +454,21 @@ function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
         </form>
       </Modal>
     </>
-  );
+  )
 }
 
 function EditChat({ chatId }: { chatId: Id<"chats"> }) {
-  const courseSlug = useCourseSlug();
-  const deleteChat = useMutation(api.superassistant.chat.deleteChat);
-  const renameChat = useMutation(api.superassistant.chat.rename);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
-  const name = useQuery(api.superassistant.chat.getName, { chatId });
-  const [newName, setNewName] = useState(name || "");
+  const courseSlug = useCourseSlug()
+  const deleteChat = useMutation(api.superassistant.chat.deleteChat)
+  const renameChat = useMutation(api.superassistant.chat.rename)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false)
+  const name = useQuery(api.superassistant.chat.getName, { chatId })
+  const [newName, setNewName] = useState(name || "")
 
   useEffect(() => {
-    name && setNewName(name);
-  }, [name]);
+    if (name) setNewName(name)
+  }, [name])
 
   return (
     <>
@@ -479,7 +477,7 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
           <DropdownMenu variant="ghost" horizontal={true}>
             <DropdownMenuItem
               onClick={() => {
-                setIsEditNameModalOpen(true);
+                setIsEditNameModalOpen(true)
               }}
               variant="default"
             >
@@ -487,7 +485,7 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
-                setIsDeleteModalOpen(true);
+                setIsDeleteModalOpen(true)
               }}
               variant="danger"
             >
@@ -508,7 +506,7 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
             be undone.
           </p>
         </div>
-        <div className="mt-4 flex gap-2 justify-end">
+        <div className="mt-4 flex justify-end gap-2">
           <Button
             onClick={() => setIsDeleteModalOpen(false)}
             variant="secondary"
@@ -518,8 +516,8 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
           </Button>
           <Button
             onClick={async () => {
-              setIsDeleteModalOpen(false);
-              deleteChat({ id: chatId, courseSlug: courseSlug });
+              setIsDeleteModalOpen(false)
+              deleteChat({ id: chatId, courseSlug: courseSlug })
             }}
             variant="danger"
             size="sm"
@@ -541,11 +539,11 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
             onChange={(value) => setNewName(value)}
           />
         </div>
-        <div className="mt-4 flex gap-2 justify-end">
+        <div className="mt-4 flex justify-end gap-2">
           <Button
             onClick={() => {
-              setIsEditNameModalOpen(false);
-              setNewName(name || "");
+              setIsEditNameModalOpen(false)
+              setNewName(name || "")
             }}
             variant="secondary"
             size="sm"
@@ -554,15 +552,15 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
           </Button>
           <Button
             onClick={async () => {
-              setIsEditNameModalOpen(false);
+              setIsEditNameModalOpen(false)
               if (newName !== name) {
                 await renameChat({
                   id: chatId,
                   newName: newName,
                   courseSlug: courseSlug,
-                });
+                })
               } else {
-                setNewName(name || "");
+                setNewName(name || "")
               }
             }}
             variant="primary"
@@ -573,52 +571,56 @@ function EditChat({ chatId }: { chatId: Id<"chats"> }) {
         </div>
       </Modal>
     </>
-  );
+  )
 }
 
 type Row = {
-  id: string;
-  creationTime: number;
-  lastModified: number;
-  name: string | undefined;
-  type: string;
-};
+  id: string
+  creationTime: number
+  lastModified: number
+  name: string | undefined
+  type: string
+}
 
 type RowObject = {
-  type: string;
-  id: string;
-};
+  type: string
+  id: string
+}
 
-const sortCreationTimeFn: SortingFn<Row> = (rowA, rowB, _columnId) => {
-  const dateA = new Date(rowA.original.creationTime);
-  const dateB = new Date(rowB.original.creationTime);
-  return dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
-};
+const sortCreationTimeFn: SortingFn<Row> = (rowA, rowB) => {
+  const dateA = new Date(rowA.original.creationTime)
+  const dateB = new Date(rowB.original.creationTime)
+  return dateA < dateB ? -1 : dateA > dateB ? 1 : 0
+}
 
-const sortLastModifiedFn: SortingFn<Row> = (rowA, rowB, _columnId) => {
-  const dateA = new Date(rowA.original.lastModified);
-  const dateB = new Date(rowB.original.lastModified);
-  return dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
-};
+const sortLastModifiedFn: SortingFn<Row> = (rowA, rowB) => {
+  const dateA = new Date(rowA.original.lastModified)
+  const dateB = new Date(rowB.original.lastModified)
+  return dateA < dateB ? -1 : dateA > dateB ? 1 : 0
+}
 
 function Table() {
-  const courseSlug = useCourseSlug();
-  const list: Row[] | undefined = useQuery(api.feedback.data, { courseSlug });
-  const [data, setData] = useState(() => (list ? [...list] : []));
+  const courseSlug = useCourseSlug()
+  const list: Row[] | undefined = useQuery(api.feedback.data, { courseSlug })
+  const [data, setData] = useState(() => (list ? [...list] : []))
   const [sorting, setSorting] = useState<SortingState>([
     { id: "lastModified", desc: true },
-  ]);
+  ])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
-  const router = useRouter();
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 5 });
+    []
+  )
+  const router = useRouter()
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 5 })
 
   useEffect(() => {
-    list ? setData([...list]) : setData([]);
-  }, [list]);
+    if (list) {
+      setData([...list])
+    } else {
+      setData([])
+    }
+  }, [list])
 
-  const columnHelper = createColumnHelper<Row>();
+  const columnHelper = createColumnHelper<Row>()
   const columns = [
     columnHelper.accessor("type", {
       id: "type",
@@ -664,14 +666,14 @@ function Table() {
     }),
     columnHelper.accessor(
       (row) => {
-        const res: RowObject = { type: row.type, id: row.id };
-        return res;
+        const res: RowObject = { type: row.type, id: row.id }
+        return res
       },
       {
         id: "modify",
         cell: (info) => (
           <span
-            className="text-right pointer-events-auto"
+            className="pointer-events-auto text-right"
             onClick={(e) => e.stopPropagation()}
           >
             {info.getValue().type === "feedback" ? (
@@ -687,9 +689,9 @@ function Table() {
         size: 2,
         enableSorting: false,
         enableColumnFilter: false,
-      },
+      }
     ),
-  ];
+  ]
 
   const table = useReactTable({
     data,
@@ -704,27 +706,27 @@ function Table() {
     filterFns: {},
     state: { sorting, columnFilters, pagination },
     getRowId: (originalRow) => originalRow.id,
-  });
-  var nameRow: Column<Row, unknown> | undefined;
+  })
+  let nameRow: Column<Row, unknown> | undefined
 
   return (
     <>
       {data.length !== 0 && (
         <div className="p-2">
-          <div className="flex flex-row w-full mb-6">
+          <div className="mb-6 flex w-full flex-row">
             {(nameRow = table.getColumn("name")) !== undefined && (
-              <div className="w-full mr-4">
+              <div className="mr-4 w-full">
                 <Filter column={nameRow} />
               </div>
             )}
-            <div className="flex flex-row p-2 content-center">
+            <div className="flex flex-row content-center p-2">
               <p className="mr-3 content-center">Show</p>
               <select
                 value={table.getState().pagination.pageSize}
                 onChange={(e) => {
-                  table.setPageSize(Number(e.target.value));
+                  table.setPageSize(Number(e.target.value))
                 }}
-                className="bg-slate-200 border rounded-md"
+                className="rounded-md border bg-slate-200"
               >
                 {[5, 10, 20, 30, 40, 50].map((pageSize) => (
                   <option key={pageSize} value={pageSize}>
@@ -745,7 +747,7 @@ function Table() {
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="p-2 pl-3 text-gray-500 text-left"
+                      className="p-2 pl-3 text-left text-gray-500"
                     >
                       {header.isPlaceholder ? null : (
                         <>
@@ -771,18 +773,18 @@ function Table() {
                               {{
                                 asc: (
                                   <div className="pr-3">
-                                    <ChevronUpIcon className="border rounded-md bg-gray-500 text-white font-bold w-6 h-6 p-px" />
+                                    <ChevronUpIcon className="h-6 w-6 rounded-md border bg-gray-500 p-px font-bold text-white" />
                                   </div>
                                 ),
                                 desc: (
                                   <div className="pr-3">
-                                    <ChevronDownIcon className="border rounded-md bg-gray-500 text-white font-bold w-6 h-6 p-px" />
+                                    <ChevronDownIcon className="h-6 w-6 rounded-md border bg-gray-500 p-px font-bold text-white" />
                                   </div>
                                 ),
                               }[header.column.getIsSorted() as string] ?? null}
                               {flexRender(
                                 header.column.columnDef.header,
-                                header.getContext(),
+                                header.getContext()
                               )}
                               {header.column.getCanFilter() &&
                               header.id === "type" ? (
@@ -802,21 +804,21 @@ function Table() {
             <tbody>
               {table.getRowModel().rows.map((row) => (
                 <tr
-                  className="hover:bg-sky-300 hover:cursor-pointer border-b border-solid border-gray-200"
+                  className="border-b border-solid border-gray-200 hover:cursor-pointer hover:bg-sky-300"
                   key={row.id}
                   onClick={() => {
                     router.push(
                       row.original.type === "feedback"
                         ? `/${courseSlug}/super-assistant/feedback/${row.id}`
-                        : `/${courseSlug}/super-assistant/chat/${row.id}`,
-                    );
+                        : `/${courseSlug}/super-assistant/chat/${row.id}`
+                    )
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext(),
+                        cell.getContext()
                       )}
                     </td>
                   ))}
@@ -824,26 +826,26 @@ function Table() {
               ))}
             </tbody>
           </table>
-          <div className="flex flex-row flex-nowrap justify-center items-center p-4">
+          <div className="flex flex-row flex-nowrap items-center justify-center p-4">
             <button
               onClick={() => table.firstPage()}
               disabled={!table.getCanPreviousPage()}
-              className="flex items-center justify-center w-10 h-10 bg-sky-200 enabled:hover:bg-sky-300 disabled:bg-slate-200 text-sky-700 enabled:hover:text-sky-950 disabled:text-slate-600 enabled:hover:cursor-pointer disabled:hover:cursor-default rounded-lg mr-2"
+              className="mr-2 flex h-10 w-10 items-center justify-center rounded-lg bg-sky-200 text-sky-700 enabled:hover:cursor-pointer enabled:hover:bg-sky-300 enabled:hover:text-sky-950 disabled:bg-slate-200 disabled:text-slate-600 disabled:hover:cursor-default"
               type="button"
               title="Go to the first page"
             >
-              <ChevronDoubleLeftIcon className="w-5 h-5" />
+              <ChevronDoubleLeftIcon className="h-5 w-5" />
             </button>
             <button
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="flex items-center justify-center w-10 h-10 bg-sky-200 enabled:hover:bg-sky-300 disabled:bg-slate-200 text-sky-700 enabled:hover:text-sky-950 disabled:text-slate-600 enabled:hover:cursor-pointer disabled:hover:cursor-default rounded-lg"
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-200 text-sky-700 enabled:hover:cursor-pointer enabled:hover:bg-sky-300 enabled:hover:text-sky-950 disabled:bg-slate-200 disabled:text-slate-600 disabled:hover:cursor-default"
               type="button"
               title="Go to the previous page"
             >
-              <ChevronLeftIcon className="w-5 h-5" />
+              <ChevronLeftIcon className="h-5 w-5" />
             </button>
-            <div className="text-center p-4 content-center justify-center">
+            <div className="content-center justify-center p-4 text-center">
               <p>
                 Page {table.getState().pagination.pageIndex + 1} of{" "}
                 {table.getPageCount()}
@@ -852,43 +854,43 @@ function Table() {
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="flex items-center justify-center w-10 h-10 bg-sky-200 enabled:hover:bg-sky-300 disabled:bg-slate-200 text-sky-700 enabled:hover:text-sky-950 disabled:text-slate-600 enabled:hover:cursor-pointer disabled:hover:cursor-default rounded-lg mr-2"
+              className="mr-2 flex h-10 w-10 items-center justify-center rounded-lg bg-sky-200 text-sky-700 enabled:hover:cursor-pointer enabled:hover:bg-sky-300 enabled:hover:text-sky-950 disabled:bg-slate-200 disabled:text-slate-600 disabled:hover:cursor-default"
               type="button"
               title="Go to the next page"
             >
-              <ChevronRightIcon className="w-5 h-5" />
+              <ChevronRightIcon className="h-5 w-5" />
             </button>
             <button
               onClick={() => table.lastPage()}
               disabled={!table.getCanNextPage()}
-              className="flex items-center justify-center w-10 h-10 bg-sky-200 enabled:hover:bg-sky-300 disabled:bg-slate-200 text-sky-700 enabled:hover:text-sky-950 disabled:text-slate-600 enabled:hover:cursor-pointer disabled:hover:cursor-default rounded-lg"
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-200 text-sky-700 enabled:hover:cursor-pointer enabled:hover:bg-sky-300 enabled:hover:text-sky-950 disabled:bg-slate-200 disabled:text-slate-600 disabled:hover:cursor-default"
               type="button"
               title="Go to the last page"
             >
-              <ChevronDoubleRightIcon className="w-5 h-5" />
+              <ChevronDoubleRightIcon className="h-5 w-5" />
             </button>
           </div>
         </div>
       )}
     </>
-  );
+  )
 }
 
 declare module "@tanstack/react-table" {
   interface ColumnMeta<TData extends RowData, TValue> {
-    filterVariant?: "text" | "select";
+    filterVariant?: "text" | "select"
   }
 }
 
-function Filter({ column }: { column: Column<any, unknown> }) {
-  const columnFilterValue = column.getFilterValue();
-  const { filterVariant } = column.columnDef.meta ?? {};
+function Filter({ column }: { column: Column<Row, unknown> }) {
+  const columnFilterValue = column.getFilterValue()
+  const { filterVariant } = column.columnDef.meta ?? {}
 
   return filterVariant === "select" ? (
     <select
       onChange={(e) => column.setFilterValue(e.target.value)}
       value={columnFilterValue?.toString()}
-      className="bg-slate-200 border rounded-md"
+      className="rounded-md border bg-slate-200"
     >
       <option value="">both</option>
       <option value="feedback">feedback</option>
@@ -896,13 +898,13 @@ function Filter({ column }: { column: Column<any, unknown> }) {
     </select>
   ) : (
     <DebouncedInput
-      className="w-full p-3 bg-transparent focus:outline-0"
+      className="w-full bg-transparent p-3 focus:outline-0"
       onChange={(value) => column.setFilterValue(value)}
       placeholder={"Search..."}
       type="text"
       value={(columnFilterValue ?? "") as string}
     />
-  );
+  )
 }
 
 function DebouncedInput({
@@ -911,25 +913,25 @@ function DebouncedInput({
   debounce = 500,
   ...props
 }: {
-  value: string | number;
-  onChange: (value: string | number) => void;
-  debounce?: number;
+  value: string | number
+  onChange: (value: string | number) => void
+  debounce?: number
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange">) {
-  const [value, setValue] = useState(firstVal);
+  const [value, setValue] = useState(firstVal)
 
   useEffect(() => {
-    setValue(firstVal);
-  }, [firstVal]);
+    setValue(firstVal)
+  }, [firstVal])
   useEffect(() => {
     const timeout = setTimeout(() => {
-      onChange(value);
-    }, debounce);
-    return () => clearTimeout(timeout);
+      onChange(value)
+    }, debounce)
+    return () => clearTimeout(timeout)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+  }, [value])
 
   return (
-    <form className="flex flex-row w-full border border-slate-200 rounded-md text-gray-500 bg-slate-100 items-center">
+    <form className="flex w-full flex-row items-center rounded-md border border-slate-200 bg-slate-100 text-gray-500">
       <MagnifyingGlassIcon className="h-10 w-10 p-2 pl-3" />
       <input
         {...props}
@@ -937,46 +939,46 @@ function DebouncedInput({
         onChange={(e) => setValue(e.target.value)}
       />
     </form>
-  );
+  )
 }
 
 function SuperAssistant() {
-  const [file, setFile] = useState<File | null>(null);
-  const courseSlug = useCourseSlug();
-  const [isModal1Open, setIsModal1Open] = useState(false);
-  const [isModal2Open, setIsModal2Open] = useState(false);
-  const [chatName, setChatName] = useState("");
-  const [statement, setStatement] = useState("");
-  const router = useRouter();
-  const generateFeedback = useMutation(api.feedback.generateFeedback);
-  const generateUploadUrl = useMutation(api.feedback.generateUploadUrl);
-  const { startUpload } = useUploadFiles(() => generateUploadUrl({}));
-  const generateChat = useMutation(api.superassistant.chat.generateChat);
-  const [feedbackName, setFeedbackName] = useState("");
-  const weeks = useQuery(api.admin.sadatabase.getWeeks, { courseSlug });
+  const [file, setFile] = useState<File | null>(null)
+  const courseSlug = useCourseSlug()
+  const [isModal1Open, setIsModal1Open] = useState(false)
+  const [isModal2Open, setIsModal2Open] = useState(false)
+  const [chatName, setChatName] = useState("")
+  const [statement, setStatement] = useState("")
+  const router = useRouter()
+  const generateFeedback = useMutation(api.feedback.generateFeedback)
+  const generateUploadUrl = useMutation(api.feedback.generateUploadUrl)
+  const { startUpload } = useFileUpload(() => generateUploadUrl({}))
+  const generateChat = useMutation(api.superassistant.chat.generateChat)
+  const [feedbackName, setFeedbackName] = useState("")
+  const weeks = useQuery(api.admin.sadatabase.getWeeks, { courseSlug })
   const [selectedFeedbackWeek, setSelectedFeedbackWeek] = useState<number>(
-    weeks === undefined ? NaN : weeks[0],
-  );
+    weeks === undefined ? NaN : weeks[0]
+  )
   const [selectedChatWeek, setSelectedChatWeek] = useState<number>(
-    weeks === undefined ? NaN : weeks[0],
-  );
+    weeks === undefined ? NaN : weeks[0]
+  )
 
   return (
     <>
-      <div className="flex flex-row text-3xl font-medium mb-16 gap-3 mt-16">
+      <div className="mt-16 mb-16 flex flex-row gap-3 text-3xl font-medium">
         <div className="basis-1/2 justify-items-center">
-          <p className="text-xl text-center">Get feedback on an exercise</p>
-          <div className="grid mt-4 justify-items-center">
+          <p className="text-center text-xl">Get feedback on an exercise</p>
+          <div className="mt-4 grid justify-items-center">
             <button
               className="block rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
               type="button"
               onClick={() => {
-                setIsModal1Open(true);
+                setIsModal1Open(true)
               }}
             >
               <div className="p-8 pr-10 pl-10">
-                <div className="flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
-                  <PlusIcon className="w-6 h-6 mb-2" />
+                <div className="flex flex-col items-center justify-center gap-2 text-xl text-sky-700">
+                  <PlusIcon className="mb-2 h-6 w-6" />
                   <span>New feedback</span>
                 </div>
               </div>
@@ -984,23 +986,23 @@ function SuperAssistant() {
           </div>
         </div>
 
-        <div className="w-1 bg-gray-400 h-auto self-stretch"></div>
+        <div className="h-auto w-1 self-stretch bg-gray-400"></div>
 
         <div className="basis-1/2 justify-items-center">
-          <p className="text-xl text-center">
+          <p className="text-center text-xl">
             Still stuck? Chat with the Super-Assistant
           </p>
-          <div className="grid mt-4 justify-items-center">
+          <div className="mt-4 grid justify-items-center">
             <button
               className="rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
               type="button"
               onClick={() => {
-                setIsModal2Open(true);
+                setIsModal2Open(true)
               }}
             >
               <div className="p-8 pr-16 pl-16">
-                <div className="flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
-                  <PlusIcon className="w-6 h-6 mb-2" />
+                <div className="flex flex-col items-center justify-center gap-2 text-xl text-sky-700">
+                  <PlusIcon className="mb-2 h-6 w-6" />
                   <span>New chat</span>
                 </div>
               </div>
@@ -1016,32 +1018,31 @@ function SuperAssistant() {
       >
         <form
           onSubmit={async (e) => {
-            e.preventDefault();
+            e.preventDefault()
             if (file === null) {
               toast.error(
-                "You have to upload your tentative solution to get feedback.",
-              );
+                "You have to upload your tentative solution to get feedback."
+              )
             } else {
-              const uploaded = await startUpload([file]);
-              const storageId = uploaded.map(
-                ({ response }) => (response as any).storageId,
-              )[0];
+              const uploaded = await startUpload([file])
+              const storageId = (uploaded[0].response as { storageId: string })
+                .storageId
               const feedbackId = await generateFeedback({
                 courseSlug,
                 storageId: storageId,
                 name: feedbackName,
                 weekNumber: selectedFeedbackWeek,
-              });
+              })
 
               if (feedbackId) {
                 router.push(
-                  `/${courseSlug}/super-assistant/feedback/${feedbackId}`,
-                );
+                  `/${courseSlug}/super-assistant/feedback/${feedbackId}`
+                )
               } else {
-                toast.error("Failed to generate feedback.");
+                toast.error("Failed to generate feedback.")
               }
-              setFile(null);
-              setIsModal1Open(false);
+              setFile(null)
+              setIsModal1Open(false)
             }
           }}
         >
@@ -1061,7 +1062,7 @@ function SuperAssistant() {
                 onChange={(e) =>
                   setSelectedFeedbackWeek(Number(e.target.value))
                 }
-                className="mt-1 mb-6 p-2 w-full border border-slate-300 rounded-md font-sans h-10 form-select focus:ring-2 focus:ring-inherit focus:border-inherit focus:outline-none"
+                className="form-select mt-1 mb-6 h-10 w-full rounded-md border border-slate-300 p-2 font-sans focus:border-inherit focus:ring-2 focus:ring-inherit focus:outline-none"
               >
                 {weeks.map((week) => (
                   <option key={week} value={week}>
@@ -1081,9 +1082,9 @@ function SuperAssistant() {
             <Button
               type="button"
               onClick={() => {
-                setIsModal1Open(false);
-                setFile(null);
-                setFeedbackName("");
+                setIsModal1Open(false)
+                setFile(null)
+                setFeedbackName("")
               }}
               variant="secondary"
               size="sm"
@@ -1104,21 +1105,21 @@ function SuperAssistant() {
       >
         <form
           onSubmit={async (e) => {
-            e.preventDefault();
+            e.preventDefault()
             const chatId = await generateChat({
               courseSlug,
               reason: statement,
               name: chatName,
               weekNumber: selectedChatWeek,
-            });
+            })
 
             if (chatId) {
-              router.push(`/${courseSlug}/super-assistant/chat/${chatId}`);
+              router.push(`/${courseSlug}/super-assistant/chat/${chatId}`)
             } else {
-              toast.error("Failed to generate chat.");
+              toast.error("Failed to generate chat.")
             }
 
-            setIsModal2Open(false);
+            setIsModal2Open(false)
           }}
         >
           <div className="h-6"></div>
@@ -1135,7 +1136,7 @@ function SuperAssistant() {
                 id="week-number"
                 value={selectedChatWeek}
                 onChange={(e) => setSelectedChatWeek(Number(e.target.value))}
-                className="mt-1 mb-6 p-2 w-full border border-slate-300 rounded-md font-sans h-10 form-select focus:ring-2 focus:ring-inherit focus:border-inherit focus:outline-none"
+                className="form-select mt-1 mb-6 h-10 w-full rounded-md border border-slate-300 p-2 font-sans focus:border-inherit focus:ring-2 focus:ring-inherit focus:outline-none"
               >
                 {weeks.map((week) => (
                   <option key={week} value={week}>
@@ -1162,9 +1163,9 @@ function SuperAssistant() {
             <Button
               type="button"
               onClick={() => {
-                setIsModal2Open(false);
-                setChatName("");
-                setStatement("");
+                setIsModal2Open(false)
+                setChatName("")
+                setStatement("")
               }}
               variant="secondary"
               size="sm"
@@ -1180,7 +1181,7 @@ function SuperAssistant() {
 
       <Table />
     </>
-  );
+  )
 }
 
 function LoadingGrid() {
@@ -1188,20 +1189,20 @@ function LoadingGrid() {
     <div className="grid gap-12">
       {Array.from({ length: 3 }).map((_, i) => (
         <div className="animate-pulse" key={i}>
-          <div className="flex flex-wrap h-9">
-            <div className="bg-slate-200 rounded flex-1 mr-[20%]" />
-            <div className="bg-slate-200 rounded-full w-36" />
+          <div className="flex h-9 flex-wrap">
+            <div className="mr-[20%] flex-1 rounded bg-slate-200" />
+            <div className="w-36 rounded-full bg-slate-200" />
           </div>
 
-          <div className="h-6 my-4 bg-slate-200 rounded w-72" />
+          <div className="my-4 h-6 w-72 rounded bg-slate-200" />
 
           <div className="grid gap-6 md:grid-cols-2">
             {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="pb-[57.14%] bg-slate-200 rounded-3xl" />
+              <div key={i} className="rounded-3xl bg-slate-200 pb-[57.14%]" />
             ))}
           </div>
         </div>
       ))}
     </div>
-  );
+  )
 }

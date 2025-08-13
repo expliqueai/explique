@@ -48,11 +48,11 @@ export function ImageLink({
           <Link
             href={href}
             className={clsx(
-              "absolute inset-0 flex p-4 text-white items-end focus:outline-none",
-              image && "bg-gradient-to-t via-black/25 from-black/70",
+              "absolute inset-0 flex p-4 text-white items-end focus:outline-hidden",
+              image && "bg-linear-to-t via-black/25 from-black/70",
             )}
           >
-            <h2 className="font-semibold text-2xl text-shadow-lg [text-wrap:balance]">
+            <h2 className="font-semibold text-2xl text-shadow-lg text-balance">
               {name}
             </h2>
           </Link>

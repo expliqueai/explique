@@ -50,12 +50,10 @@ export default actionWithAuth({
       size,
       quality,
     });
-
-    if (!opanaiResponse.data || opanaiResponse.data.length === 0) {
-      throw new ConvexError("No image generated");
+    const imageUrl = opanaiResponse.data?.[0]?.url;
+    if (!imageUrl) {
+      throw new Error("No image URL received from OpenAI");
     }
-
-    const imageUrl = opanaiResponse.data[0].url!;
 
     const blob = await (await fetch(imageUrl)).blob();
     const storageId = await ctx.storage.store(blob);

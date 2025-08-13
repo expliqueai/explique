@@ -62,7 +62,7 @@ export default function MessageInput({
 
   return variant === "fixed" ? (
     // Original fixed positioning layout
-    <>
+    (<>
       <div className="box-content h-[60px] pt-4 shrink-0" ref={paddingRef} />
       <form
         className="fixed bottom-2 left-2 flex w-[calc(100%-1rem)] shadow-xl rounded-xl"
@@ -96,10 +96,10 @@ export default function MessageInput({
           </button>
         </div>
       </form>
-    </>
+    </>)
   ) : (
     // New solid/relative positioning layout
-    <div className="relative">
+    (<div className="relative">
       <form
         className="flex w-full rounded-xl"
         onSubmit={(e) => {
@@ -132,6 +132,6 @@ export default function MessageInput({
           </button>
         </div>
       </form>
-    </div>
+    </div>)
   );
 }

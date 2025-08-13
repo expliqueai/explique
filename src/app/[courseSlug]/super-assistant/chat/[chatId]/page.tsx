@@ -3,21 +3,22 @@
 import { useQuery } from "@/usingSession";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import React from "react";
+import React, { use } from "react";
 import Link from "next/link";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import Chat from "@/components/super-assistant/Chat";
 
 type ChatProps = {
-  params: {
+  params: Promise<{
     courseSlug: string;
     chatId: Id<"chats">;
-  };
+  }>;
 };
 
 export default function ChatPage({
-  params: { courseSlug, chatId },
+  params,
 }: ChatProps) {
+  const { courseSlug, chatId } = use(params);
   const chatName = useQuery(api.superassistant.chat.getName, { chatId });
 
   return (

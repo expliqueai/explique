@@ -37,9 +37,6 @@ export default function EditExercise() {
               image: exercise.image,
               imagePrompt: exercise.imagePrompt,
               instructions: exercise.instructions,
-              api: exercise.chatCompletionsApi
-                ? "chatCompletions"
-                : "assistants",
               model: exercise.model,
               text: exercise.text,
               feedback: exercise.feedback ?? null,

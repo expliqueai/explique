@@ -24,7 +24,7 @@ export function DropdownMenu({
       <div>
         <MenuButton
           className={clsx(
-            "w-10 h-10 flex items-center justify-center rounded-full focus:outline-none",
+            "w-10 h-10 flex items-center justify-center rounded-full focus:outline-hidden",
             variant == "ghost" &&
               "text-slate-400 hover:text-slate-600 focus:ring-2 focus:text-slate-600 transition-colors",
             variant == "overlay" &&
@@ -48,7 +48,7 @@ export function DropdownMenu({
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <MenuItems className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+        <MenuItems className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden">
           <div className="py-1">{children}</div>
         </MenuItems>
       </Transition>

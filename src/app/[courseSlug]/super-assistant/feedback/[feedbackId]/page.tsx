@@ -3,27 +3,27 @@
 import { useMutation, useQuery } from "@/usingSession";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import React from "react";
+import React, { use } from "react";
 import Link from "next/link";
 import Markdown from "@/components/Markdown";
 import {
   ArrowLeftIcon,
-  InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { ArrowRightIcon } from "@heroicons/react/16/solid";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import Feedback from "@/components/super-assistant/Feedback";
 
 type FeedbackProps = {
-  params: {
+  params: Promise<{
     courseSlug: string;
     feedbackId: Id<"feedbacks">;
-  };
+  }>;
 };
 
 export default function FeedbackPage({
-  params: { courseSlug, feedbackId },
+  params,
 }: FeedbackProps) {
+  const { courseSlug, feedbackId } = use(params);
   const feedbackMessage = useQuery(api.feedbackmessages.getFeedback, {
     feedbackId,
   });

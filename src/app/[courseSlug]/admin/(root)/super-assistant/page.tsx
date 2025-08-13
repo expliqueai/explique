@@ -1,31 +1,30 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useMutation, useQuery } from "@/usingSession";
-import { PlusIcon } from "@heroicons/react/20/solid";
-import { TrashIcon, PencilIcon } from "@heroicons/react/24/outline";
-import { api } from "../../../../../../convex/_generated/api";
-import { useCourseSlug } from "@/hooks/useCourseSlug";
-import Title from "@/components/typography";
-import Input from "@/components/Input";
-import { Button } from "@/components/Button";
-import { Modal } from "@/components/Modal";
-import { toast } from "sonner";
-import Upload from "@/components/Upload";
-import { pdfToImg as PdfToImg } from "pdftoimg-js/browser";
-import { useUploadFiles } from "@xixixao/uploadstuff/react";
-import { formatTimestampHumanFormat } from "@/util/date";
-import BeatLoader from "react-spinners/BeatLoader";
-import { Fragment } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { Id } from "../../../../../../convex/_generated/dataModel";
+import { Button } from "@/components/Button"
+import Input from "@/components/Input"
+import { Modal } from "@/components/Modal"
+import Title from "@/components/typography"
+import Upload from "@/components/Upload"
+import { useCourseSlug } from "@/hooks/useCourseSlug"
+import { useFileUpload } from "@/hooks/useFileUpload"
+import { useMutation, useQuery } from "@/usingSession"
+import { formatTimestampHumanFormat } from "@/util/date"
+import { Dialog, Transition } from "@headlessui/react"
+import { PlusIcon } from "@heroicons/react/20/solid"
+import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline"
+import { pdfToImg as PdfToImg } from "pdftoimg-js/browser"
+import { Fragment, useState } from "react"
+import BeatLoader from "react-spinners/BeatLoader"
+import { toast } from "sonner"
+import { api } from "../../../../../../convex/_generated/api"
+import { Id } from "../../../../../../convex/_generated/dataModel"
 
 export default function AdminSuperAssistantPage() {
-  const courseSlug = useCourseSlug();
+  const courseSlug = useCourseSlug()
   const files = useQuery(api.admin.sadatabase.list, {
     courseSlug,
-  });
-  const deleteFile = useMutation(api.admin.sadatabase.deleteFile);
+  })
+  const deleteFile = useMutation(api.admin.sadatabase.deleteFile)
 
   return (
     <>
@@ -34,20 +33,20 @@ export default function AdminSuperAssistantPage() {
         <UploadFile />
       </Title>
 
-      <table className="text-sm w-full divide-y divide-slate-300">
+      <table className="w-full divide-y divide-slate-300 text-sm">
         <thead>
           <tr>
-            <th scope="col" className="px-2 py-3 align-bottom text-left">
+            <th scope="col" className="px-2 py-3 text-left align-bottom">
               Filename
             </th>
-            <th scope="col" className="px-2 py-3 align-bottom text-left">
+            <th scope="col" className="px-2 py-3 text-left align-bottom">
               Week
             </th>
-            <th scope="col" className="px-2 py-3 align-bottom text-left">
+            <th scope="col" className="px-2 py-3 text-left align-bottom">
               Creation time
             </th>
-            <th scope="col" className="py-3 align-bottom justify-end"></th>
-            <th scope="col" className="pr-2 py-3 align-bottom justify-end"></th>
+            <th scope="col" className="justify-end py-3 align-bottom"></th>
+            <th scope="col" className="justify-end py-3 pr-2 align-bottom"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -65,18 +64,18 @@ export default function AdminSuperAssistantPage() {
               </td>
               <td>
                 <button
-                  className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-red-500 hover:text-white"
                   type="button"
                   title="Delete"
                   onClick={async (e) => {
-                    e.preventDefault();
+                    e.preventDefault()
                     await deleteFile({
                       courseSlug: courseSlug,
                       name: file.name,
-                    });
+                    })
                   }}
                 >
-                  <TrashIcon className="w-5 h-5" />
+                  <TrashIcon className="h-5 w-5" />
                 </button>
               </td>
             </tr>
@@ -84,32 +83,30 @@ export default function AdminSuperAssistantPage() {
         </tbody>
       </table>
     </>
-  );
+  )
 }
 
 function EditWeek({ fileId }: { fileId: Id<"saDatabase"> }) {
-  const changeWeek = useMutation(api.admin.sadatabase.changeWeek);
-  const [isEditWeekModalOpen, setIsEditWeekModalOpen] = useState(false);
-  const weekNumber = useQuery(api.admin.sadatabase.getWeek, { fileId });
+  const changeWeek = useMutation(api.admin.sadatabase.changeWeek)
+  const [isEditWeekModalOpen, setIsEditWeekModalOpen] = useState(false)
+  const weekNumber = useQuery(api.admin.sadatabase.getWeek, { fileId })
   const [newWeekNumber, setNewWeekNumber] = useState(
-    weekNumber === undefined || weekNumber === null
-      ? ""
-      : weekNumber.toString(),
-  );
+    weekNumber === undefined || weekNumber === null ? "" : weekNumber.toString()
+  )
 
   return (
     <>
       <div className="flex justify-end">
         <button
-          className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-500 hover:text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-500 hover:text-white"
           type="button"
           title="Edit week number"
           onClick={async (e) => {
-            e.preventDefault();
-            setIsEditWeekModalOpen(true);
+            e.preventDefault()
+            setIsEditWeekModalOpen(true)
           }}
         >
-          <PencilIcon className="w-5 h-5" />
+          <PencilIcon className="h-5 w-5" />
         </button>
       </div>
 
@@ -126,12 +123,12 @@ function EditWeek({ fileId }: { fileId: Id<"saDatabase"> }) {
             onChange={(value) => setNewWeekNumber(value)}
           />
         </div>
-        <div className="mt-4 flex gap-2 justify-end">
+        <div className="mt-4 flex justify-end gap-2">
           <Button
             onClick={() => {
-              setIsEditWeekModalOpen(false);
+              setIsEditWeekModalOpen(false)
               if (weekNumber !== undefined && weekNumber !== null) {
-                setNewWeekNumber(weekNumber.toString());
+                setNewWeekNumber(weekNumber.toString())
               }
             }}
             variant="secondary"
@@ -142,16 +139,16 @@ function EditWeek({ fileId }: { fileId: Id<"saDatabase"> }) {
           <Button
             onClick={async () => {
               if (isNaN(Number(newWeekNumber))) {
-                toast.error("Please provide a valid number.");
+                toast.error("Please provide a valid number.")
               } else if (Number(newWeekNumber) !== weekNumber) {
-                setIsEditWeekModalOpen(false);
+                setIsEditWeekModalOpen(false)
                 await changeWeek({
                   fileId: fileId,
                   newWeek: Number(newWeekNumber),
-                });
+                })
               } else {
-                setIsEditWeekModalOpen(false);
-                setNewWeekNumber(weekNumber.toString());
+                setIsEditWeekModalOpen(false)
+                setNewWeekNumber(weekNumber.toString())
               }
             }}
             variant="primary"
@@ -162,59 +159,62 @@ function EditWeek({ fileId }: { fileId: Id<"saDatabase"> }) {
         </div>
       </Modal>
     </>
-  );
+  )
 }
 
-function UploadFile({}: {}) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const uploadFile = useMutation(api.admin.sadatabase.uploadFile);
-  const generateUploadUrl = useMutation(api.admin.sadatabase.generateUploadUrl);
-  const { startUpload } = useUploadFiles(() => generateUploadUrl({}));
-  const [week, setWeek] = useState("");
-  const courseSlug = useCourseSlug();
-  const [file, setFile] = useState<File | null>(null);
+function UploadFile() {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const uploadFile = useMutation(api.admin.sadatabase.uploadFile)
+  const generateUploadUrl = useMutation(api.admin.sadatabase.generateUploadUrl)
+  const { startUpload } = useFileUpload(() => generateUploadUrl({}))
+  const [week, setWeek] = useState("")
+  const courseSlug = useCourseSlug()
+  const [file, setFile] = useState<File | null>(null)
   const get = useQuery(api.admin.sadatabase.get, {
     courseSlug: courseSlug,
     name: file?.name,
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  })
+  const [isLoading, setIsLoading] = useState(false)
 
   async function handleUploadFile() {
-    const storageIds: { pageNumber: number; storageId: string }[] = [];
+    const storageIds: { pageNumber: number; storageId: string }[] = []
 
     if (file !== null) {
-      const uploaded = await startUpload([file]);
-      const storageId = (uploaded[0].response as any).storageId;
+      const uploaded = await startUpload([file])
+      const storageId = (uploaded[0].response as { storageId: string })
+        .storageId
       storageIds.push({
         pageNumber: 0,
         storageId,
-      });
+      })
 
-      const filename = file.name.split(".")[0];
-      const url = URL.createObjectURL(file);
+      const filename = file.name.split(".")[0]
+      const url = URL.createObjectURL(file)
       const pages = await PdfToImg(url, {
         imgType: "jpg",
         pages: "all",
         returnType: "buffer",
-      });
-      URL.revokeObjectURL(url);
+      })
+      URL.revokeObjectURL(url)
 
-      for (let index in pages) {
+      for (const index of pages.keys()) {
         const pageFile = new File(
           [pages[index]],
           `${filename}_page${index}.jpg`,
-          { type: "image/jpg" },
-        );
-        const pageUploaded = await startUpload([pageFile]);
-        const pageStorageId = (pageUploaded[0].response as any).storageId;
+          { type: "image/jpg" }
+        )
+        const pageUploaded = await startUpload([pageFile])
+        const pageStorageId = (
+          pageUploaded[0].response as { storageId: string }
+        ).storageId
         storageIds.push({
-          pageNumber: Number(index) + 1,
+          pageNumber: index + 1,
           storageId: pageStorageId,
-        });
+        })
       }
     }
 
-    return storageIds;
+    return storageIds
   }
 
   return (
@@ -222,15 +222,21 @@ function UploadFile({}: {}) {
       <Button
         type="button"
         onClick={() => {
-          setIsModalOpen(true);
+          setIsModalOpen(true)
         }}
       >
-        <PlusIcon className="w-5 h-5" />
+        <PlusIcon className="h-5 w-5" />
         Upload file
       </Button>
 
       <Transition appear show={isLoading} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={() => {}}>
+        <Dialog
+          as="div"
+          className="relative z-10"
+          onClose={() => {
+            /* Do nothing on close during loading */
+          }}
+        >
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -270,29 +276,29 @@ function UploadFile({}: {}) {
       >
         <form
           onSubmit={async (e) => {
-            e.preventDefault();
-            if (file === null) return;
+            e.preventDefault()
+            if (file === null) return
             if (get === true) {
-              toast.error("A file with this name already exists.");
-              setFile(null);
+              toast.error("A file with this name already exists.")
+              setFile(null)
             } else {
-              const weekNumber = Number(week);
+              const weekNumber = Number(week)
               if (week === "" || Number.isNaN(weekNumber)) {
-                setWeek("");
-                toast.error("Please provide a valid week number.");
+                setWeek("")
+                toast.error("Please provide a valid week number.")
               } else {
-                setIsModalOpen(false);
-                setIsLoading(true);
-                const storageIds = await handleUploadFile();
-                setFile(null);
-                setWeek("");
+                setIsModalOpen(false)
+                setIsLoading(true)
+                const storageIds = await handleUploadFile()
+                setFile(null)
+                setWeek("")
                 await uploadFile({
                   courseSlug: courseSlug,
                   week: weekNumber,
                   name: file ? file.name : "",
                   storageIds: storageIds,
-                });
-                setIsLoading(false);
+                })
+                setIsLoading(false)
               }
             }
           }}
@@ -309,9 +315,9 @@ function UploadFile({}: {}) {
             <Button
               type="button"
               onClick={() => {
-                setIsModalOpen(false);
-                setWeek("");
-                setFile(null);
+                setIsModalOpen(false)
+                setWeek("")
+                setFile(null)
               }}
               variant="secondary"
               size="sm"
@@ -325,16 +331,15 @@ function UploadFile({}: {}) {
         </form>
       </Modal>
     </>
-  );
+  )
 }
 
 function OpenFile({ filename }: { filename: string }) {
-  const courseSlug = useCourseSlug();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const courseSlug = useCourseSlug()
   const url = useQuery(api.admin.sadatabase.getUrl, {
     courseSlug: courseSlug,
     name: filename,
-  });
+  })
 
   return (
     <>
@@ -344,5 +349,5 @@ function OpenFile({ filename }: { filename: string }) {
         </a>
       )}
     </>
-  );
+  )
 }
