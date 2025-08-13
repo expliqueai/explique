@@ -15,7 +15,7 @@ import { Modal } from "@/components/Modal";
 import { toast } from "sonner";
 
 export default function Chat({ chatId }: { chatId: Id<"chats"> }) {
-  const chat = useQuery(api.sachatmessages.list, { chatId });
+  const chat = useQuery(api.superassistant.chatmessages.list, { chatId });
 
   useEffect(() => {
     setTimeout(() => {
@@ -105,8 +105,8 @@ function ReportMessage({
   messageId: Id<"chatMessages">;
   isReported: boolean;
 }) {
-  const reportMessage = useMutation(api.sachatmessages.reportMessage);
-  const unreportMessage = useMutation(api.sachatmessages.unreportMessage);
+  const reportMessage = useMutation(api.superassistant.chatmessages.reportMessage);
+  const unreportMessage = useMutation(api.superassistant.chatmessages.unreportMessage);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reason, setReason] = useState("");
 
@@ -182,7 +182,7 @@ function ReportMessage({
 }
 
 function NewMessage({ chatId }: { chatId: Id<"chats"> }) {
-  const sendMessage = useMutation(api.sachatmessages.sendMessage);
+  const sendMessage = useMutation(api.superassistant.chatmessages.sendMessage);
   const [message, setMessage] = useState("");
 
   function autoResizeTextarea() {

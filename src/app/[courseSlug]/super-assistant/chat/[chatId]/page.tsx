@@ -18,7 +18,7 @@ type ChatProps = {
 export default function ChatPage({
   params: { courseSlug, chatId },
 }: ChatProps) {
-  const chatName = useQuery(api.sachat.getName, { chatId });
+  const chatName = useQuery(api.superassistant.chat.getName, { chatId });
 
   return (
     <>

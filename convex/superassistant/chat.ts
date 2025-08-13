@@ -3,12 +3,12 @@ import {
   queryWithAuth,
   mutationWithAuth,
   actionWithAuth,
-} from "./auth/withAuth";
-import { getCourseRegistration } from "./courses";
+} from "../auth/withAuth";
+import { getCourseRegistration } from "../courses";
 import OpenAI from "openai";
-import { internalAction, internalMutation } from "./_generated/server";
-import { internal } from "./_generated/api";
-import { api } from "../convex/_generated/api";
+import { internalAction, internalMutation } from "../_generated/server";
+import { internal } from "../_generated/api";
+import { api } from "../../convex/_generated/api";
 
 export const getCreationTime = queryWithAuth({
   args: {
@@ -51,7 +51,7 @@ export const generateChat = mutationWithAuth({
       lastModified: chat?._creationTime,
     });
 
-    await ctx.scheduler.runAfter(0, internal.sachat.generateFirstMessages, {
+    await ctx.scheduler.runAfter(0, internal.superassistant.chat.generateFirstMessages, {
       courseId: course._id,
       userId: userId,
       chatId: chatId,
@@ -106,7 +106,7 @@ export const generateFirstMessages = internalAction({
       });
     }
 
-    await ctx.runMutation(internal.sachatmessages.insertMessage, {
+    await ctx.runMutation(internal.superassistant.chatmessages.insertMessage, {
       chatId: chatId,
       assistant: false,
       content: message1 as Array<
@@ -119,7 +119,7 @@ export const generateFirstMessages = internalAction({
       content: message1,
     });
 
-    await ctx.runMutation(internal.sachatmessages.insertMessage, {
+    await ctx.runMutation(internal.superassistant.chatmessages.insertMessage, {
       chatId: chatId,
       assistant: false,
       content: reason,
@@ -130,7 +130,7 @@ export const generateFirstMessages = internalAction({
     });
 
     const assistantMessageId = await ctx.runMutation(
-      internal.sachatmessages.insertMessage,
+      internal.superassistant.chatmessages.insertMessage,
       {
         chatId: chatId,
         assistant: true,
@@ -154,7 +154,7 @@ export const generateFirstMessages = internalAction({
     );
     const message2 = answer.choices[0]?.message?.content ?? "";
 
-    await ctx.runMutation(internal.sachatmessages.writeSystemResponse, {
+    await ctx.runMutation(internal.superassistant.chatmessages.writeSystemResponse, {
       chatId: chatId,
       assistantMessageId: assistantMessageId,
       content: message2,

@@ -4,11 +4,11 @@ import {
   MutationCtx,
   internalAction,
   internalQuery,
-} from "./_generated/server";
+} from "../_generated/server";
 import { ConvexError, v } from "convex/values";
-import { Session, queryWithAuth, mutationWithAuth } from "./auth/withAuth";
-import { Id } from "./_generated/dataModel";
-import { internal } from "./_generated/api";
+import { Session, queryWithAuth, mutationWithAuth } from "../auth/withAuth";
+import { Id } from "../_generated/dataModel";
+import { internal } from "../_generated/api";
 import OpenAI from "openai";
 
 export const insertMessage = internalMutation({
@@ -183,7 +183,7 @@ async function sendMessageController(
     content: "",
   });
 
-  ctx.scheduler.runAfter(0, internal.sachatmessages.answerChatCompletionsApi, {
+  ctx.scheduler.runAfter(0, internal.superassistant.chatmessages.answerChatCompletionsApi, {
     chatId,
     userMessageId,
     assistantMessageId,
@@ -248,7 +248,7 @@ export const writeSystemResponse = internalMutation({
   ) => {
     const chat = await db.get(chatId);
     if (!chat) {
-      throw new Error("Can’t find the attempt");
+      throw new Error("Can't find the attempt");
     }
 
     await db.patch(assistantMessageId, { content, appearance });
@@ -265,7 +265,7 @@ export const answerChatCompletionsApi = internalAction({
     const openai = new OpenAI();
 
     const messages = await ctx.runQuery(
-      internal.sachatmessages.generateTranscriptMessages,
+      internal.superassistant.chatmessages.generateTranscriptMessages,
       {
         chatId,
       },
@@ -285,8 +285,8 @@ export const answerChatCompletionsApi = internalAction({
         },
       );
     } catch (err) {
-      console.error("Can’t create a completion", err);
-      await ctx.runMutation(internal.sachatmessages.writeSystemResponse, {
+      console.error("Can't create a completion", err);
+      await ctx.runMutation(internal.superassistant.chatmessages.writeSystemResponse, {
         chatId,
         assistantMessageId,
         appearance: "error",
@@ -298,14 +298,14 @@ export const answerChatCompletionsApi = internalAction({
     const message = response.choices[0].message;
     if (!message.content) {
       console.error("No content in the response", message);
-      await ctx.runMutation(internal.sachatmessages.writeSystemResponse, {
+      await ctx.runMutation(internal.superassistant.chatmessages.writeSystemResponse, {
         chatId,
         assistantMessageId,
         appearance: "error",
         content: "",
       });
     } else {
-      await ctx.runMutation(internal.sachatmessages.writeSystemResponse, {
+      await ctx.runMutation(internal.superassistant.chatmessages.writeSystemResponse, {
         chatId,
         assistantMessageId,
         appearance: undefined,
