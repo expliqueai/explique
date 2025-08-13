@@ -2,7 +2,7 @@
 
 import { useParams, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import ReactPlayer from "react-player/file";
+import ReactPlayer from "react-player";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "@/usingSession";
 import { api } from "../../../../../convex/_generated/api";
@@ -26,8 +26,8 @@ export default function VideoPage() {
 
   const [currentTime, setCurrentTime] = useState(0);
   const handleProgress = useCallback(
-    ({ playedSeconds }: { playedSeconds: number }) => {
-      setCurrentTime(playedSeconds);
+    (state: { playedSeconds: number }) => {
+      setCurrentTime(state.playedSeconds);
     },
     [],
   );
@@ -51,7 +51,7 @@ export default function VideoPage() {
     [send, initializeChat, lectureId, hasThread, currentTime],
   );
 
-  const playerRef = useRef<ReactPlayer>(null);
+  const playerRef = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Function to seek to a specific timestamp
@@ -110,6 +110,7 @@ export default function VideoPage() {
             width="100%"
             height="100%"
             controls
+            // @ts-ignore
             onProgress={handleProgress}
           />
         </div>

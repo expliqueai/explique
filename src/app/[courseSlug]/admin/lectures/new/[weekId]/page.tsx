@@ -1,6 +1,6 @@
 "use client";
 
-import { useAction, useQuery } from "@/usingSession";
+import { useAction } from "@/usingSession";
 import { useParams, useRouter } from "next/navigation";
 
 import LectureForm, { toConvexState } from "@/components/LectureForm";
@@ -35,7 +35,7 @@ export default function NewLecture() {
               "Hi there! 👋 I'm Questionable Prof, your AI assistant for this lecture video. Feel free to ask me any questions you have about the material. Let's learn together!",
           }}
           onSubmit={async (state) => {
-            if (!ReactPlayer.canPlay(state.url)) {
+            if (!ReactPlayer.canPlay?.(state.url)) {
               toast.error("Invalid video URL.");
               return;
             }
