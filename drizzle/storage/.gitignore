@@ -1,3 +1,0 @@
-# Ignore all files in the folder, but keep it in the repository structure.
-*
-!.gitignore

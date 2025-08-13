@@ -101,7 +101,7 @@ export default function VideoPage() {
         isSolid
       />
       {/* Main content container - responsive layout */}
-      <div className="flex flex-col lg:flex-row p-6 flex-grow overflow-hidden">
+      <div className="flex flex-col lg:flex-row p-6 grow overflow-hidden">
         {/* Video Player Section */}
         <div className="min-h-[40vh] lg:min-h-0 max-h-[50vh] lg:max-h-none items-center relative w-full lg:flex-1 rounded-xl overflow-hidden bg-black">
           <ReactPlayer
@@ -115,7 +115,7 @@ export default function VideoPage() {
         </div>
 
         {/* Chat Section - height constrained in mobile */}
-        <div className="w-full max-h-[45vh] lg:max-h-none lg:min-w-[65ch] lg:w-[65ch] border rounded-xl lg:ml-4 flex flex-col flex-shrink-0 mt-4 lg:mt-0 overflow-hidden">
+        <div className="w-full max-h-[45vh] lg:max-h-none lg:min-w-[65ch] lg:w-[65ch] border rounded-xl lg:ml-4 flex flex-col shrink-0 mt-4 lg:mt-0 overflow-hidden">
           <div
             ref={scrollRef}
             className="overflow-y-auto flex-1 flex flex-col gap-6 p-4"

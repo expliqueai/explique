@@ -13,11 +13,6 @@ import {
 import { toast } from "sonner";
 import { useConvex, usePaginatedQuery } from "convex/react";
 import { useSessionId } from "@/components/SessionProvider";
-import {
-  Identities,
-  useIdentities,
-  useIsUsingIdentities,
-} from "@/hooks/useIdentities";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { Textarea } from "@/components/Input";
 import { useMutation, useQuery } from "@/usingSession";
@@ -53,26 +48,16 @@ export default function ScoresPage() {
   );
 }
 
-function shownEmail(
-  identities: Identities,
-  user: { identifier?: string; email: string | null },
-) {
-  return user.identifier !== undefined && user.identifier in identities
-    ? identities[user.identifier].email
-    : user.email ?? "Unknown";
-}
-
 function DownloadAllButton() {
   const convex = useConvex();
   const sessionId = useSessionId();
-  const identites = useIdentities();
   const courseSlug = useCourseSlug();
   const weeks = useQuery(api.admin.users.listExercisesForTable, { courseSlug });
 
   const [spreadsheet, setSpreadsheet] = useState<string | null>(null);
 
   async function copyAllResults() {
-    if (identites === undefined || weeks === undefined) return;
+    if (weeks === undefined) return;
 
     async function getAllRegistrations() {
       let continueCursor = null;
@@ -107,7 +92,7 @@ function DownloadAllButton() {
         "Completed exercises",
       ],
       ...users.map((user) => [
-        shownEmail(identites, user),
+        user.email ?? "Unknown",
         user.role === "admin" ? "Admin" : user.role === "ta" ? "TA" : "",
         ...weeks.flatMap((week) =>
           week.exercises.map((exercise) =>
@@ -121,7 +106,7 @@ function DownloadAllButton() {
     setSpreadsheet(rows.map((cols) => cols.join("\t")).join("\n"));
   }
 
-  if (!identites || weeks === undefined) return null;
+  if (weeks === undefined) return null;
 
   return (
     <>
@@ -169,7 +154,6 @@ function DownloadAllButton() {
 }
 
 function ScoresTable() {
-  const identities = useIdentities();
   const courseSlug = useCourseSlug();
   const sessionId = useSessionId();
 
@@ -184,7 +168,7 @@ function ScoresTable() {
     { initialNumItems: 15 },
   );
 
-  if (!identities || weeks === undefined || users === undefined) {
+  if (weeks === undefined || users === undefined) {
     return <div className="h-96 bg-slate-200 rounded-xl animate-pulse" />;
   }
 
@@ -202,7 +186,7 @@ function ScoresTable() {
               key={user.id}
             >
               <div className="px-2 py-3 flex-1 truncate">
-                {shownEmail(identities, user).replace("@epfl.ch", "")}
+                {user.email?.replace("@epfl.ch", "") ?? "Unknown"}
               </div>
               <div className="pl-2 flex items-center">
                 <RoleSelector value={user.role} userId={user.id} />
@@ -226,7 +210,7 @@ function ScoresTable() {
                 ))}
               </React.Fragment>
             ))}
-            <div className="px-2 py-3 flex items-end justify-end text-right w-20 shrink-0 border-b border-b-slate-300 flex-grow">
+            <div className="px-2 py-3 flex items-end justify-end text-right w-20 shrink-0 border-b border-b-slate-300 grow">
               #
             </div>
           </div>
@@ -254,7 +238,7 @@ function ScoresTable() {
                   ))}
                 </React.Fragment>
               ))}
-              <div className="px-2 py-3 w-20 items-center text-right tabular-nums font-semibold border-b-slate-200 border-b shrink-0 flex-grow">
+              <div className="px-2 py-3 w-20 items-center text-right tabular-nums font-semibold border-b-slate-200 border-b shrink-0 grow">
                 {user.completedExercises.length}
               </div>
             </div>
@@ -266,7 +250,7 @@ function ScoresTable() {
         <div className="flex justify-center">
           <button
             type="button"
-            className="rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:bg-gray-50"
+            className="rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:bg-gray-50"
             disabled={status !== "CanLoadMore"}
             onClick={() => {
               loadMore(200);
@@ -320,69 +304,62 @@ function RoleSelector({ value, userId }: { value: Role; userId: Id<"users"> }) {
         }}
       >
         {({ open }) => (
-          <>
-            <div className="relative">
-              <ListboxButton className="relative w-full cursor-default rounded-md p-1 pr-6 text-left text-gray-900 ring-inset focus:outline-none focus:ring-2 sm:text-sm sm:leading-6 h-10">
-                <span className="block">
-                  <RoleBadge value={value} />
-                </span>
-                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                  <ChevronUpDownIcon
-                    className="h-5 w-5 text-gray-400"
-                    aria-hidden="true"
-                  />
-                </span>
-              </ListboxButton>
+          <div className="relative">
+            <ListboxButton className="relative w-full cursor-default rounded-md p-1 pr-6 text-left text-gray-900 ring-inset focus:outline-hidden focus:ring-2 sm:text-sm sm:leading-6 h-10">
+              <span className="block">
+                <RoleBadge value={value} />
+              </span>
+              <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                <ChevronUpDownIcon
+                  className="h-5 w-5 text-gray-400"
+                  aria-hidden="true"
+                />
+              </span>
+            </ListboxButton>
 
-              <Transition
-                show={open}
-                leave="transition ease-in duration-100"
-                leaveFrom="opacity-100"
-                leaveTo="opacity-0"
-              >
-                <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-30 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                  {roles.map((role) => (
-                    <ListboxOption
-                      key={role}
-                      className={({ focus }) =>
-                        clsx(
-                          focus && "bg-gray-100",
-                          "relative cursor-default select-none py-2 pl-8 pr-4 text-gray-900 h-10",
-                        )
-                      }
-                      value={role}
-                    >
-                      {({ selected }) => (
-                        <>
-                          <span
-                            className={clsx(
-                              selected ? "font-semibold" : "font-normal",
-                              "truncate flex items-center h-full",
-                            )}
-                          >
-                            <RoleBadge value={role} />
+            <Transition
+              show={open}
+              leave="transition ease-in duration-100"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-30 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm">
+                {roles.map((role) => (
+                  <ListboxOption
+                    key={role}
+                    className={({ focus }) =>
+                      clsx(
+                        focus && "bg-gray-100",
+                        "relative cursor-default select-none py-2 pr-4 text-gray-900 h-10",
+                      )
+                    }
+                    value={role}
+                  >
+                    {({ selected }) => (
+                      <div className="flex">
+                        <span
+                          className={clsx(
+                            selected ? "font-semibold" : "font-normal",
+                            "truncate flex items-center h-full pl-8",
+                          )}
+                        >
+                          <RoleBadge value={role} />
+                        </span>
+                        {selected && (
+                          <span className="text-purple-600 flex items-center">
+                            <CheckIcon20
+                              className="h-5 w-5"
+                              aria-hidden="true"
+                            />
                           </span>
-
-                          {selected ? (
-                            <span
-                              className={clsx(
-                                "text-purple-600 absolute inset-y-0 left-0 flex items-center pl-1.5",
-                              )}
-                            >
-                              <CheckIcon20
-                                className="h-5 w-5"
-                                aria-hidden="true"
-                              />
-                            </span>
-                          ) : null}
-                        </>
-                      )}
-                    </ListboxOption>
-                  ))}
-                </ListboxOptions>
-              </Transition>
-            </div>
-          </>
+                        )}
+                      </div>
+                    )}
+                  </ListboxOption>
+                ))}
+              </ListboxOptions>
+            </Transition>
+          </div>
         )}
       </Listbox>
     </div>
@@ -394,7 +371,6 @@ function AddUsers() {
   const courseSlug = useCourseSlug();
   const convex = useConvex();
   const sessionId = useSessionId();
-  const isUsingIdentities = useIsUsingIdentities();
   const addUser = useMutation(api.admin.users.register);
 
   return (
@@ -421,35 +397,12 @@ function AddUsers() {
 
         setEmails("");
 
-        let users;
-        if (isUsingIdentities) {
-          const jwt = await convex.query(api.admin.identitiesJwt.default, {
-            sessionId,
-            courseSlug,
-          });
-
-          const resConvert = await fetch(
-            "/api/admin/computeIdentifiers?for=" + validatedEmails.join(","),
-            {
-              headers: {
-                Authorization: `Bearer ${jwt}`,
-              },
-            },
-          );
-          if (resConvert.status !== 200) {
-            toast.error("Failed to retrieve the email addresses.");
-            return;
-          }
-          const identifiers = (await resConvert.json()) as string[];
-          users = { identifiers };
-        } else {
-          users = { emails: validatedEmails };
-        }
-
+        let users = { emails: validatedEmails };
         const { added, ignored } = await addUser({
           courseSlug,
           users,
         });
+
         toast.success(
           (added === 1
             ? `1 user has been added.`
@@ -477,16 +430,6 @@ function AddUsers() {
           </>
         }
         onChange={setEmails}
-        hint={
-          <>
-            {isUsingIdentities && (
-              <span className="flex gap-1 items-center">
-                <LockClosedIcon className="w-4 h-4" aria-hidden />
-                The personal data of the users never leave the EPFL servers.
-              </span>
-            )}
-          </>
-        }
         required
       />
 

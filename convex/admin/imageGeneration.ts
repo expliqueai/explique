@@ -25,12 +25,14 @@ export default actionWithAuth({
     }
 
     await getCourseRegistration(ctx, ctx.session, courseSlug, "admin");
-    
+
     // Validate the entity exists
     if (exerciseId) {
       await validateExerciseInCourse(ctx, courseSlug, exerciseId);
     } else if (lectureId) {
-      const lecture = await ctx.runQuery(internal.lectures.get, { id: lectureId });
+      const lecture = await ctx.runQuery(internal.lectures.get, {
+        id: lectureId,
+      });
       if (!lecture) {
         throw new ConvexError("Lecture not found");
       }
@@ -48,7 +50,10 @@ export default actionWithAuth({
       size,
       quality,
     });
-    const imageUrl = opanaiResponse.data[0].url!;
+    const imageUrl = opanaiResponse.data?.[0]?.url;
+    if (!imageUrl) {
+      throw new Error("No image URL received from OpenAI");
+    }
 
     const blob = await (await fetch(imageUrl)).blob();
     const storageId = await ctx.storage.store(blob);

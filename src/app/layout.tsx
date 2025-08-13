@@ -1,7 +1,7 @@
 "use client";
 
 import "./globals.css";
-import ConvexClientProvider from "./ConvexClientProvider";
+import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { SessionProvider } from "@/components/SessionProvider";
 import { Toaster } from "sonner";
 

@@ -87,7 +87,7 @@ export const list = queryWithAuth({
 });
 
 export const insertRow = internalMutation({
-  args: { ...exerciseAdminSchema, assistantId: v.string() },
+  args: exerciseAdminSchema,
   handler: async ({ db }, row) => {
     return await db.insert("exercises", row);
   },
@@ -96,10 +96,7 @@ export const insertRow = internalMutation({
 export const updateRow = internalMutation({
   args: {
     id: v.id("exercises"),
-    row: v.object({
-      ...exerciseAdminSchema,
-      assistantId: v.string(),
-    }),
+    row: v.object(exerciseAdminSchema),
   },
   handler: async ({ db }, { id, row }) => {
     // Verify that the course isn’t changed
@@ -130,50 +127,18 @@ export const updateRow = internalMutation({
   },
 });
 
-export async function createAssistant(
-  instructions: string,
-  model: string,
-  completionFunctionDescription: string,
-) {
-  const openai = new OpenAI();
-  return await openai.beta.assistants.create({
-    instructions,
-    model: model,
-    tools: [
-      {
-        type: "function",
-        function: {
-          name: "markComplete",
-          description: completionFunctionDescription,
-          parameters: {},
-        },
-      },
-    ],
-  });
-}
-
 export const createInternal = internalAction({
   args: exerciseAdminSchema,
   handler: async ({ runMutation }, row) => {
     validateQuiz(row.quiz);
-    if (
-      row.chatCompletionsApi &&
-      !COMPLETION_VALID_MODELS.includes(row.model as any)
-    ) {
+    if (!COMPLETION_VALID_MODELS.includes(row.model as any)) {
       throw new ConvexError(
         `The model ${row.model} is not supported by the Chat Completions API.`,
       );
     }
 
-    const assistant = await createAssistant(
-      row.instructions,
-      row.model,
-      row.completionFunctionDescription,
-    );
-
     await runMutation(internal.admin.exercises.insertRow, {
       ...{ ...row, sessionId: undefined },
-      assistantId: assistant.id,
     });
   },
 });
@@ -262,29 +227,15 @@ export const update = actionWithAuth({
 
     validateQuiz(exercise.quiz);
 
-    // Verify that this exercise can be edited by the user
-
-    if (
-      exercise.chatCompletionsApi &&
-      !COMPLETION_VALID_MODELS.includes(exercise.model as any)
-    ) {
+    if (!COMPLETION_VALID_MODELS.includes(exercise.model as any)) {
       throw new ConvexError(
         `The model ${exercise.model} is not supported by the Chat Completions API.`,
       );
     }
 
-    const assistant = await createAssistant(
-      exercise.instructions,
-      exercise.model,
-      exercise.completionFunctionDescription,
-    );
-
     await ctx.runMutation(internal.admin.exercises.updateRow, {
       id,
-      row: {
-        ...exercise,
-        assistantId: assistant.id,
-      },
+      row: exercise,
     });
   },
 });

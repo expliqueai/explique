@@ -30,10 +30,10 @@ export default function ChatBubble({
     <div className={clsx("flex", isSystem ? "mr-6" : "ml-6")}>
       <div
         className={clsx(
-          "inline-block p-3 sm:p-4 rounded-xl shadow relative break-words max-w-[90%]",
+          "inline-block p-3 sm:p-4 rounded-xl shadow-sm relative break-words max-w-[90%]",
           isSystem && "bg-white rounded-bl-none",
           !isSystem &&
-            "bg-gradient-to-b from-purple-500 to-purple-600 text-white rounded-br-none ml-auto",
+            "bg-linear-to-b from-purple-500 to-purple-600 text-white rounded-br-none ml-auto",
         )}
       >
         <ChatBubbleContents

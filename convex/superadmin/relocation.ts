@@ -8,7 +8,6 @@ import {
 } from "../_generated/server";
 import { exerciseAdminSchema } from "../schema";
 import { internal } from "../_generated/api";
-import { createAssistant } from "../admin/exercises";
 import { Id } from "../_generated/dataModel";
 import { StorageActionWriter } from "convex/server";
 
@@ -24,7 +23,6 @@ const exportSchema = v.array(
         name: v.string(),
         instructions: v.string(),
         model: v.string(),
-        chatCompletionsApi: v.optional(v.literal(true)),
         feedback: v.optional(
           v.object({
             model: v.string(),
@@ -141,7 +139,6 @@ export const exportCourse = internalQuery({
                 name: exercise.name,
                 instructions: exercise.instructions,
                 model: exercise.model,
-                chatCompletionsApi: exercise.chatCompletionsApi,
                 feedback: exercise.feedback,
                 text: exercise.text,
                 quiz: exercise.quiz,
@@ -187,13 +184,7 @@ export const importCourse = internalAction({
           exercises: await Promise.all(
             week.exercises.map(async (exercise) => ({
               object: {
-                assistantId: (
-                  await createAssistant(
-                    exercise.instructions,
-                    exercise.model,
-                    exercise.completionFunctionDescription,
-                  )
-                ).id,
+                // No longer creating assistants - assistantId removed from schema
                 ...{ ...exercise, image: undefined },
               },
               image: exercise.image
@@ -240,7 +231,6 @@ export const saveImportedCoures = internalMutation({
         exercises: v.array(
           v.object({
             object: v.object({
-              assistantId: v.string(),
               ...exerciseAdminSchema,
               weekId: v.optional(v.any()),
             }),

@@ -29,7 +29,6 @@ import type * as auth_adapters_ConvexMutationAdapter from "../auth/adapters/Conv
 import type * as auth_cron from "../auth/cron.js";
 import type * as auth_google from "../auth/google.js";
 import type * as auth_lucia from "../auth/lucia.js";
-import type * as auth_tequila from "../auth/tequila.js";
 import type * as auth_withAuth from "../auth/withAuth.js";
 import type * as chat from "../chat.js";
 import type * as courses from "../courses.js";
@@ -42,7 +41,6 @@ import type * as superadmin_courses from "../superadmin/courses.js";
 import type * as superadmin_relocation from "../superadmin/relocation.js";
 import type * as superadmin_util from "../superadmin/util.js";
 import type * as video_chat from "../video/chat.js";
-import type * as video_geminiUtils from "../video/geminiUtils.js";
 import type * as weeks from "../weeks.js";
 
 /**
@@ -70,7 +68,6 @@ declare const fullApi: ApiFromModules<{
   "auth/cron": typeof auth_cron;
   "auth/google": typeof auth_google;
   "auth/lucia": typeof auth_lucia;
-  "auth/tequila": typeof auth_tequila;
   "auth/withAuth": typeof auth_withAuth;
   chat: typeof chat;
   courses: typeof courses;
@@ -83,7 +80,6 @@ declare const fullApi: ApiFromModules<{
   "superadmin/relocation": typeof superadmin_relocation;
   "superadmin/util": typeof superadmin_util;
   "video/chat": typeof video_chat;
-  "video/geminiUtils": typeof video_geminiUtils;
   weeks: typeof weeks;
 }>;
 export declare const api: FilterApi<
