@@ -1,30 +1,30 @@
-import React, { useId, useState } from "react";
-import Input, { Select, Textarea } from "@/components/Input";
+import { QuizContents } from "@/components/exercises/QuizExercise"
+import Input, { Select, Textarea } from "@/components/Input"
+import Markdown from "@/components/Markdown"
+import { useCourseSlug } from "@/hooks/useCourseSlug"
+import { useAction, useQuery } from "@/usingSession"
 import {
   EllipsisHorizontalIcon,
   ExclamationCircleIcon,
   PlusIcon,
-} from "@heroicons/react/16/solid";
-import { PlusIcon as PlusIconLarge } from "@heroicons/react/24/outline";
-import { XMarkIcon } from "@heroicons/react/20/solid";
-import { QuizContents } from "@/components/exercises/QuizExercise";
-import Markdown from "@/components/Markdown";
-import { Id } from "../../convex/_generated/dataModel";
-import { api as convexApi } from "../../convex/_generated/api";
-import { useAction, useQuery } from "@/usingSession";
-import clsx from "clsx";
-import { toast } from "sonner";
-import { useCourseSlug } from "@/hooks/useCourseSlug";
-import { PrimaryButton } from "./PrimaryButton";
-import { Button } from "./Button";
+} from "@heroicons/react/16/solid"
+import { XMarkIcon } from "@heroicons/react/20/solid"
+import { PlusIcon as PlusIconLarge } from "@heroicons/react/24/outline"
+import clsx from "clsx"
+import React, { useId, useState } from "react"
+import { toast } from "sonner"
+import { api as convexApi } from "../../convex/_generated/api"
+import { Id } from "../../convex/_generated/dataModel"
+import { Button } from "./Button"
+import { PrimaryButton } from "./PrimaryButton"
 
 export type State = {
-  weekId: Id<"lectureWeeks">;
-  name: string;
-  image?: Id<"images">;
-  url: string;
-  firstMessage?: string;
-};
+  weekId: Id<"lectureWeeks">
+  name: string
+  image?: Id<"images">
+  url: string
+  firstMessage?: string
+}
 
 export function toConvexState(state: State) {
   return {
@@ -33,7 +33,7 @@ export function toConvexState(state: State) {
     weekId: state.weekId,
     url: state.url,
     firstMessage: state.firstMessage,
-  };
+  }
 }
 
 export default function LectureForm({
@@ -43,50 +43,50 @@ export default function LectureForm({
   onReprocess,
   type,
 }: {
-  lectureId?: Id<"lectures">;
-  initialState: State;
-  onSubmit: (state: State) => void;
-  onReprocess?: (state: State) => void;
-  type: "create" | "update";
+  lectureId?: Id<"lectures">
+  initialState: State
+  onSubmit: (state: State) => void
+  onReprocess?: (state: State) => void
+  type: "create" | "update"
 }) {
-  const [name, setName] = useState(initialState.name);
-  const [weekId, setWeekId] = useState(initialState.weekId);
-  const [image, setImage] = useState(initialState.image);
-  const [url, setUrl] = useState(initialState.url);
+  const [name, setName] = useState(initialState.name)
+  const [weekId, setWeekId] = useState(initialState.weekId)
+  const [image, setImage] = useState(initialState.image)
+  const [url, setUrl] = useState(initialState.url)
   const [firstMessage, setFirstMessage] = useState(
-    initialState.firstMessage ?? "",
-  );
-  const [isReprocessing, setIsReprocessing] = useState(false);
+    initialState.firstMessage ?? ""
+  )
+  const [isReprocessing, setIsReprocessing] = useState(false)
 
-  const courseSlug = useCourseSlug();
-  const weeks = useQuery(convexApi.admin.lectureWeeks.list, { courseSlug });
-  const reprocessVideo = useAction(convexApi.admin.lectures.reprocessVideo);
+  const courseSlug = useCourseSlug()
+  const weeks = useQuery(convexApi.admin.lectureWeeks.list, { courseSlug })
+  const reprocessVideo = useAction(convexApi.admin.lectures.reprocessVideo)
 
   return (
     <form
       onSubmit={async (e) => {
-        e.preventDefault();
+        e.preventDefault()
         const state = {
           name,
           image,
           weekId,
           url,
           firstMessage,
-        };
+        }
 
-        onSubmit(state);
+        onSubmit(state)
 
-        if (isReprocessing) {
+        if (isReprocessing && lectureId) {
           await reprocessVideo({
             lectureId,
             courseSlug,
-          });
+          })
 
-          toast.info("The video processing will start soon.");
+          toast.info("The video processing will start soon.")
         }
 
         // Reset reprocessing flag after submission
-        setIsReprocessing(false);
+        setIsReprocessing(false)
       }}
     >
       <Input
@@ -132,7 +132,7 @@ export default function LectureForm({
 
       <div className="h-36"></div>
 
-      <div className="p-8 gap-4 bg-white/60 backdrop-blur-xl fixed bottom-0 left-0 w-full flex justify-end shadow-2xl">
+      <div className="fixed bottom-0 left-0 flex w-full justify-end gap-4 bg-white/60 p-8 shadow-2xl backdrop-blur-xl">
         {type === "update" && (
           <Button
             type="submit"
@@ -147,7 +147,7 @@ export default function LectureForm({
         </PrimaryButton>
       </div>
     </form>
-  );
+  )
 }
 
 function ThumbnailPicker({
@@ -156,30 +156,30 @@ function ThumbnailPicker({
   lectureId,
   name,
 }: {
-  image: Id<"images"> | undefined;
-  setImage: (value: Id<"images"> | undefined) => void;
-  lectureId: Id<"lectures">;
-  name: string;
+  image: Id<"images"> | undefined
+  setImage: (value: Id<"images"> | undefined) => void
+  lectureId: Id<"lectures">
+  name: string
 }) {
-  const courseSlug = useCourseSlug();
+  const courseSlug = useCourseSlug()
   const images = useQuery(convexApi.admin.image.list, {
     courseSlug,
     lectureId,
-  });
-  const generateImage = useAction(convexApi.admin.imageGeneration.default);
+  })
+  const generateImage = useAction(convexApi.admin.imageGeneration.default)
 
   return (
     <div className="mb-6">
-      <div className="block mb-1 text-sm font-medium text-slate-800">
+      <div className="mb-1 block text-sm font-medium text-slate-800">
         Thumbnail
       </div>
 
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex flex-wrap gap-4">
         <button
           type="button"
           className={clsx(
-            "w-40 h-28 p-2 rounded-xl bg-slate-200 cursor-pointer hover:bg-slate-300 text-xl font-light transition-colors",
-            image === undefined && "ring-4 ring-purple-500",
+            "h-28 w-40 cursor-pointer rounded-xl bg-slate-200 p-2 text-xl font-light transition-colors hover:bg-slate-300",
+            image === undefined && "ring-4 ring-purple-500"
           )}
           onClick={() => setImage(undefined)}
         >
@@ -191,8 +191,8 @@ function ThumbnailPicker({
             key={i._id}
             type="button"
             className={clsx(
-              "w-40 h-28 p-2 rounded-xl bg-slate-200 cursor-pointer hover:bg-slate-300 transition-colors",
-              i._id === image && "ring-4 ring-purple-500",
+              "h-28 w-40 cursor-pointer rounded-xl bg-slate-200 p-2 transition-colors hover:bg-slate-300",
+              i._id === image && "ring-4 ring-purple-500"
             )}
             onClick={() => setImage(i._id)}
           >
@@ -206,7 +206,7 @@ function ThumbnailPicker({
                 />
               ))}
               <img
-                className="w-full h-full rounded-lg object-cover"
+                className="h-full w-full rounded-lg object-cover"
                 src={
                   i.thumbnails.find((t) => t.type === "image/avif")?.src ??
                   i.src
@@ -221,16 +221,16 @@ function ThumbnailPicker({
         <button
           type="button"
           className={clsx(
-            "w-40 h-28 p-2 flex items-center justify-center rounded-xl bg-slate-200 cursor-pointer hover:bg-slate-300 text-xl font-light transition-colors",
+            "flex h-28 w-40 cursor-pointer items-center justify-center rounded-xl bg-slate-200 p-2 text-xl font-light transition-colors hover:bg-slate-300"
           )}
           onClick={async () => {
             const answer = prompt(
               "Which prompt to use to generate the image?",
               (images ?? []).find((i) => i._id === image)?.prompt ??
-                `Generate a cartoon-style thumbnail for a lecture video about "${name}"`,
-            );
+                `Generate a cartoon-style thumbnail for a lecture video about "${name}"`
+            )
             if (!answer) {
-              return;
+              return
             }
 
             async function generate(prompt: string) {
@@ -238,20 +238,20 @@ function ThumbnailPicker({
                 prompt,
                 lectureId,
                 courseSlug,
-              });
+              })
 
-              setImage(imageId);
+              setImage(imageId)
             }
 
             toast.promise(generate(answer), {
               loading: "Generating thumbnail…",
               success: "Thumbnail generated",
-            });
+            })
           }}
         >
-          <PlusIconLarge className="w-6 h-6" />
+          <PlusIconLarge className="h-6 w-6" />
         </button>
       </div>
     </div>
-  );
+  )
 }

@@ -331,7 +331,7 @@ function NewMessage({
                 .storageId
               await updateFeedback({
                 courseSlug,
-                storageId: storageId,
+                storageId: storageId as Id<"_storage">,
                 feedbackId: feedbackId,
               })
               setFile(null)

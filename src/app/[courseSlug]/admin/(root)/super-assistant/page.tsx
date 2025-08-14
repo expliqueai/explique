@@ -296,7 +296,10 @@ function UploadFile() {
                   courseSlug: courseSlug,
                   week: weekNumber,
                   name: file ? file.name : "",
-                  storageIds: storageIds,
+                  storageIds: storageIds.map((item) => ({
+                    pageNumber: item.pageNumber,
+                    storageId: item.storageId as Id<"_storage">,
+                  })),
                 })
                 setIsLoading(false)
               }

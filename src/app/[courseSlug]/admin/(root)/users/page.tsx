@@ -1,39 +1,39 @@
-"use client";
+"use client"
 
-import Title from "@/components/typography";
-import { api } from "../../../../../../convex/_generated/api";
-import React, { useState } from "react";
-import clsx from "clsx";
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  MinusIcon,
-  ArrowPathIcon,
-} from "@heroicons/react/16/solid";
-import { toast } from "sonner";
-import { useConvex, usePaginatedQuery } from "convex/react";
-import { useSessionId } from "@/components/SessionProvider";
-import { useCourseSlug } from "@/hooks/useCourseSlug";
-import { Textarea } from "@/components/Input";
-import { useMutation, useQuery } from "@/usingSession";
-import { Button } from "@/components/Button";
-import {
-  ChevronUpDownIcon,
-  LockClosedIcon,
-  TableCellsIcon,
-  CheckIcon as CheckIcon20,
-} from "@heroicons/react/20/solid";
-import { PrimaryButton } from "@/components/PrimaryButton";
-import { Modal } from "@/components/Modal";
-import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
-import { Id } from "../../../../../../convex/_generated/dataModel";
+import { Button } from "@/components/Button"
+import { Textarea } from "@/components/Input"
+import { Modal } from "@/components/Modal"
+import { PrimaryButton } from "@/components/PrimaryButton"
+import { useSessionId } from "@/components/SessionProvider"
+import Title from "@/components/typography"
+import { useCourseSlug } from "@/hooks/useCourseSlug"
+import { useMutation, useQuery } from "@/usingSession"
 import {
   Listbox,
   ListboxButton,
   ListboxOption,
   ListboxOptions,
   Transition,
-} from "@headlessui/react";
+} from "@headlessui/react"
+import {
+  ArrowPathIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  MinusIcon,
+} from "@heroicons/react/16/solid"
+import {
+  CheckIcon as CheckIcon20,
+  ChevronUpDownIcon,
+  LockClosedIcon,
+  TableCellsIcon,
+} from "@heroicons/react/20/solid"
+import { ClipboardDocumentIcon } from "@heroicons/react/24/outline"
+import clsx from "clsx"
+import { useConvex, usePaginatedQuery } from "convex/react"
+import React, { useState } from "react"
+import { toast } from "sonner"
+import { api } from "../../../../../../convex/_generated/api"
+import { Id } from "../../../../../../convex/_generated/dataModel"
 
 export default function ScoresPage() {
   return (
@@ -45,44 +45,44 @@ export default function ScoresPage() {
       <ScoresTable />
       <AddUsers />
     </>
-  );
+  )
 }
 
 function DownloadAllButton() {
-  const convex = useConvex();
-  const sessionId = useSessionId();
-  const courseSlug = useCourseSlug();
-  const weeks = useQuery(api.admin.users.listExercisesForTable, { courseSlug });
+  const convex = useConvex()
+  const sessionId = useSessionId()
+  const courseSlug = useCourseSlug()
+  const weeks = useQuery(api.admin.users.listExercisesForTable, { courseSlug })
 
-  const [spreadsheet, setSpreadsheet] = useState<string | null>(null);
+  const [spreadsheet, setSpreadsheet] = useState<string | null>(null)
 
   async function copyAllResults() {
-    if (weeks === undefined) return;
+    if (weeks === undefined) return
 
     async function getAllRegistrations() {
-      let continueCursor = null;
-      let isDone = false;
-      let page;
+      let continueCursor = null
+      let isDone = false
+      let page
 
-      const results = [];
+      const results = []
 
       while (!isDone) {
-        ({ continueCursor, isDone, page } = await convex.query(
+        ;({ continueCursor, isDone, page } = await convex.query(
           api.admin.users.list,
           {
             courseSlug,
             sessionId,
             paginationOpts: { numItems: 50, cursor: continueCursor },
-          },
-        ));
-        console.log("got", page.length);
-        results.push(...page);
+          }
+        ))
+        console.log("got", page.length)
+        results.push(...page)
       }
 
-      return results;
+      return results
     }
 
-    const users = await getAllRegistrations();
+    const users = await getAllRegistrations()
 
     const rows: string[][] = [
       [
@@ -96,17 +96,17 @@ function DownloadAllButton() {
         user.role === "admin" ? "Admin" : user.role === "ta" ? "TA" : "",
         ...weeks.flatMap((week) =>
           week.exercises.map((exercise) =>
-            user.completedExercises.includes(exercise.id) ? "1" : "0",
-          ),
+            user.completedExercises.includes(exercise.id) ? "1" : "0"
+          )
         ),
         user.completedExercises.length.toString(),
       ]),
-    ];
+    ]
 
-    setSpreadsheet(rows.map((cols) => cols.join("\t")).join("\n"));
+    setSpreadsheet(rows.map((cols) => cols.join("\t")).join("\n"))
   }
 
-  if (weeks === undefined) return null;
+  if (weeks === undefined) return null
 
   return (
     <>
@@ -114,10 +114,10 @@ function DownloadAllButton() {
         onClick={() => {
           toast.promise(copyAllResults(), {
             loading: "Downloading the table…",
-          });
+          })
         }}
       >
-        <TableCellsIcon className="w-5 h-5" />
+        <TableCellsIcon className="h-5 w-5" />
         To Spreadsheet
       </Button>
 
@@ -126,7 +126,7 @@ function DownloadAllButton() {
         isOpen={spreadsheet !== null}
         onClose={() => setSpreadsheet(null)}
       >
-        <div className="font-mono my-4">
+        <div className="my-4 font-mono">
           <Textarea
             value={spreadsheet ?? ""}
             readOnly
@@ -138,26 +138,26 @@ function DownloadAllButton() {
         <div className="flex justify-center">
           <PrimaryButton
             onClick={() => {
-              navigator.clipboard.writeText(spreadsheet ?? "");
+              navigator.clipboard.writeText(spreadsheet ?? "")
               toast.success(
-                "Copied to clipboard. You can paste it in spreadsheet software.",
-              );
+                "Copied to clipboard. You can paste it in spreadsheet software."
+              )
             }}
           >
-            <ClipboardDocumentIcon className="w-5 h-5" />
+            <ClipboardDocumentIcon className="h-5 w-5" />
             Copy to Clipboard
           </PrimaryButton>
         </div>
       </Modal>
     </>
-  );
+  )
 }
 
 function ScoresTable() {
-  const courseSlug = useCourseSlug();
-  const sessionId = useSessionId();
+  const courseSlug = useCourseSlug()
+  const sessionId = useSessionId()
 
-  const weeks = useQuery(api.admin.users.listExercisesForTable, { courseSlug });
+  const weeks = useQuery(api.admin.users.listExercisesForTable, { courseSlug })
   const {
     results: users,
     status,
@@ -165,72 +165,72 @@ function ScoresTable() {
   } = usePaginatedQuery(
     api.admin.users.list,
     { courseSlug, sessionId },
-    { initialNumItems: 15 },
-  );
+    { initialNumItems: 15 }
+  )
 
   if (weeks === undefined || users === undefined) {
-    return <div className="h-96 bg-slate-200 rounded-xl animate-pulse" />;
+    return <div className="h-96 animate-pulse rounded-xl bg-slate-200" />
   }
 
   return (
     <div className="mb-8">
-      <div className="text-sm grid grid-cols-[auto_1fr] mb-4 max-w-full">
+      <div className="mb-4 grid max-w-full grid-cols-[auto_1fr] text-sm">
         <div className="w-72">
-          <div className="px-2 py-3 align-bottom text-left h-40 font-semibold flex items-end border-b border-b-slate-300">
+          <div className="flex h-40 items-end border-b border-b-slate-300 px-2 py-3 text-left align-bottom font-semibold">
             User
           </div>
 
           {users.map((user) => (
             <div
-              className="h-12 flex border-b-slate-200 border-b border-r border-r-slate-300"
+              className="flex h-12 border-r border-b border-r-slate-300 border-b-slate-200"
               key={user.id}
             >
-              <div className="px-2 py-3 flex-1 truncate">
+              <div className="flex-1 truncate px-2 py-3">
                 {user.email?.replace("@epfl.ch", "") ?? "Unknown"}
               </div>
-              <div className="pl-2 flex items-center">
+              <div className="flex items-center pl-2">
                 <RoleSelector value={user.role} userId={user.id} />
               </div>
             </div>
           ))}
         </div>
         <div className="overflow-x-auto">
-          <div className="h-40 flex">
+          <div className="flex h-40">
             {weeks.map((week) => (
               <React.Fragment key={week.id}>
                 {week.exercises.map((exercise) => (
                   <div
-                    className="px-2 py-3 w-12 relative shrink-0 border-b border-b-slate-300"
+                    className="relative w-12 shrink-0 border-b border-b-slate-300 px-2 py-3"
                     key={exercise.id}
                   >
-                    <div className="text-left h-full w-full [writing-mode:vertical-rl] flex items-center rotate-180 leading-tight font-medium">
+                    <div className="flex h-full w-full rotate-180 items-center text-left leading-tight font-medium [writing-mode:vertical-rl]">
                       {exercise.name}
                     </div>
                   </div>
                 ))}
               </React.Fragment>
             ))}
-            <div className="px-2 py-3 flex items-end justify-end text-right w-20 shrink-0 border-b border-b-slate-300 grow">
+            <div className="flex w-20 shrink-0 grow items-end justify-end border-b border-b-slate-300 px-2 py-3 text-right">
               #
             </div>
           </div>
 
           {users.map((user) => (
-            <div className="h-12 flex" key={user.id}>
+            <div className="flex h-12" key={user.id}>
               {weeks.map((week) => (
                 <React.Fragment key={week.id}>
                   {week.exercises.map((exercise, exerciseIndex) => (
                     <div
                       className={clsx(
-                        "px-2 py-3 text-center w-12 shrink-0 border-b-slate-200 border-b",
+                        "w-12 shrink-0 border-b border-b-slate-200 px-2 py-3 text-center",
                         exerciseIndex === week.exercises.length - 1
                           ? "border-r border-r-slate-300"
-                          : "",
+                          : ""
                       )}
                       key={exercise.id}
                     >
                       {user.completedExercises.includes(exercise.id) ? (
-                        <CheckIcon className="w-4 h-4 inline-flex" />
+                        <CheckIcon className="inline-flex h-4 w-4" />
                       ) : (
                         <span className="text-slate-400">—</span>
                       )}
@@ -238,7 +238,7 @@ function ScoresTable() {
                   ))}
                 </React.Fragment>
               ))}
-              <div className="px-2 py-3 w-20 items-center text-right tabular-nums font-semibold border-b-slate-200 border-b shrink-0 grow">
+              <div className="w-20 shrink-0 grow items-center border-b border-b-slate-200 px-2 py-3 text-right font-semibold tabular-nums">
                 {user.completedExercises.length}
               </div>
             </div>
@@ -250,18 +250,18 @@ function ScoresTable() {
         <div className="flex justify-center">
           <button
             type="button"
-            className="rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:bg-gray-50"
+            className="rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50 disabled:bg-gray-50"
             disabled={status !== "CanLoadMore"}
             onClick={() => {
-              loadMore(200);
+              loadMore(200)
             }}
           >
             <div className="flex items-center gap-1">
               {status === "CanLoadMore" ? (
-                <ChevronDownIcon className="w-4 h-4" aria-hidden />
+                <ChevronDownIcon className="h-4 w-4" aria-hidden />
               ) : (
                 <ArrowPathIcon
-                  className="w-4 h-4 animate-spin text-gray-500"
+                  className="h-4 w-4 animate-spin text-gray-500"
                   aria-hidden
                 />
               )}
@@ -271,41 +271,41 @@ function ScoresTable() {
         </div>
       )}
     </div>
-  );
+  )
 }
 
-type Role = null | "ta" | "admin";
+type Role = null | "ta" | "admin"
 function RoleBadge({ value }: { value: Role }) {
   return value === "admin" ? (
-    <span className="inline-block bg-red-200 px-2 py-1 rounded-full mr-2 text-red-900 uppercase tracking-wider font-semibold text-xs">
+    <span className="mr-2 inline-block rounded-full bg-red-200 px-2 py-1 text-xs font-semibold tracking-wider text-red-900 uppercase">
       Admin
     </span>
   ) : value === "ta" ? (
-    <span className="inline-block bg-orange-200 px-2 py-1 rounded-full mr-2 text-orange-900 uppercase tracking-wider font-semibold text-xs">
+    <span className="mr-2 inline-block rounded-full bg-orange-200 px-2 py-1 text-xs font-semibold tracking-wider text-orange-900 uppercase">
       TA
     </span>
   ) : (
-    <MinusIcon className="w-4 h-4 text-slate-400" />
-  );
+    <MinusIcon className="h-4 w-4 text-slate-400" />
+  )
 }
 
 function RoleSelector({ value, userId }: { value: Role; userId: Id<"users"> }) {
-  const roles = [null, "ta", "admin"] as const;
+  const roles = [null, "ta", "admin"] as const
 
-  const courseSlug = useCourseSlug();
-  const setRole = useMutation(api.admin.users.setRole);
+  const courseSlug = useCourseSlug()
+  const setRole = useMutation(api.admin.users.setRole)
 
   return (
-    <div className="w-24 mr-1">
+    <div className="mr-1 w-24">
       <Listbox
         value={value ?? "student"}
         onChange={(newValue) => {
-          setRole({ courseSlug, userId, role: newValue as Role });
+          setRole({ courseSlug, userId, role: newValue as Role })
         }}
       >
         {({ open }) => (
           <div className="relative">
-            <ListboxButton className="relative w-full cursor-default rounded-md p-1 pr-6 text-left text-gray-900 ring-inset focus:outline-hidden focus:ring-2 sm:text-sm sm:leading-6 h-10">
+            <ListboxButton className="relative h-10 w-full cursor-default rounded-md p-1 pr-6 text-left text-gray-900 ring-inset focus:ring-2 focus:outline-hidden sm:text-sm sm:leading-6">
               <span className="block">
                 <RoleBadge value={value} />
               </span>
@@ -323,14 +323,14 @@ function RoleSelector({ value, userId }: { value: Role; userId: Id<"users"> }) {
               leaveFrom="opacity-100"
               leaveTo="opacity-0"
             >
-              <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-30 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-hidden sm:text-sm">
+              <ListboxOptions className="ring-opacity-5 absolute z-10 mt-1 max-h-60 w-30 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black focus:outline-hidden sm:text-sm">
                 {roles.map((role) => (
                   <ListboxOption
                     key={role}
                     className={({ focus }) =>
                       clsx(
                         focus && "bg-gray-100",
-                        "relative cursor-default select-none py-2 pr-4 text-gray-900 h-10",
+                        "relative h-10 cursor-default py-2 pr-4 text-gray-900 select-none"
                       )
                     }
                     value={role}
@@ -340,13 +340,13 @@ function RoleSelector({ value, userId }: { value: Role; userId: Id<"users"> }) {
                         <span
                           className={clsx(
                             selected ? "font-semibold" : "font-normal",
-                            "truncate flex items-center h-full pl-8",
+                            "flex h-full items-center truncate pl-8"
                           )}
                         >
                           <RoleBadge value={role} />
                         </span>
                         {selected && (
-                          <span className="text-purple-600 flex items-center">
+                          <span className="flex items-center text-purple-600">
                             <CheckIcon20
                               className="h-5 w-5"
                               aria-hidden="true"
@@ -363,45 +363,45 @@ function RoleSelector({ value, userId }: { value: Role; userId: Id<"users"> }) {
         )}
       </Listbox>
     </div>
-  );
+  )
 }
 
 function AddUsers() {
-  const [emails, setEmails] = useState("");
-  const courseSlug = useCourseSlug();
-  const convex = useConvex();
-  const sessionId = useSessionId();
-  const addUser = useMutation(api.admin.users.register);
+  const [emails, setEmails] = useState("")
+  const courseSlug = useCourseSlug()
+  const convex = useConvex()
+  const sessionId = useSessionId()
+  const addUser = useMutation(api.admin.users.register)
 
   return (
     <form
       onSubmit={async (e) => {
-        e.preventDefault();
+        e.preventDefault()
 
         const validatedEmails = emails
           .split("\n")
           .map((l) => l.trim())
-          .filter((email) => !!email);
+          .filter((email) => !!email)
 
         if (validatedEmails.length === 0) {
-          return;
+          return
         }
 
         const invalidEmail = validatedEmails.find(
-          (e) => !e.includes("@") || e.includes(" ") || e.includes(","),
-        );
+          (e) => !e.includes("@") || e.includes(" ") || e.includes(",")
+        )
         if (invalidEmail) {
-          toast.error(`Invalid email address: ${invalidEmail}`);
-          return;
+          toast.error(`Invalid email address: ${invalidEmail}`)
+          return
         }
 
-        setEmails("");
+        setEmails("")
 
-        let users = { emails: validatedEmails };
+        const users = { emails: validatedEmails }
         const { added, ignored } = await addUser({
           courseSlug,
           users,
-        });
+        })
 
         toast.success(
           (added === 1
@@ -411,11 +411,11 @@ function AddUsers() {
               ? ""
               : ignored === 1
                 ? " 1 user was already registered."
-                : ` ${ignored} users were already registered.`),
-        );
+                : ` ${ignored} users were already registered.`)
+        )
       }}
     >
-      <h2 className="font-medium text-2xl tracking-wide mb-6 mt-12">
+      <h2 className="mt-12 mb-6 text-2xl font-medium tracking-wide">
         Add Users
       </h2>
 
@@ -424,7 +424,7 @@ function AddUsers() {
         label={
           <>
             Email addresses{" "}
-            <small className="font-normal color-gray-600">
+            <small className="color-gray-600 font-normal">
               (one address by line)
             </small>
           </>
@@ -437,5 +437,5 @@ function AddUsers() {
         Add Users
       </PrimaryButton>
     </form>
-  );
+  )
 }

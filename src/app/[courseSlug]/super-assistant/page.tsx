@@ -417,7 +417,7 @@ function EditFeedback({ feedbackId }: { feedbackId: Id<"feedbacks"> }) {
                 .storageId
               await updateFeedback({
                 courseSlug,
-                storageId: storageId,
+                storageId: storageId as Id<"_storage">,
                 feedbackId: feedbackId,
               })
 
@@ -1029,7 +1029,7 @@ function SuperAssistant() {
                 .storageId
               const feedbackId = await generateFeedback({
                 courseSlug,
-                storageId: storageId,
+                storageId: storageId as Id<"_storage">,
                 name: feedbackName,
                 weekNumber: selectedFeedbackWeek,
               })
