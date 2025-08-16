@@ -96,7 +96,9 @@ async function generateThumbnail(
     .toFormat(format)
     .toBuffer();
 
-  const storageId = await storage.store(new Blob([newBuffer], { type }));
+  const storageId = await storage.store(
+    new Blob([new Uint8Array(newBuffer)], { type }),
+  );
 
   return {
     type,
