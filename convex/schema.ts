@@ -20,7 +20,7 @@ export const lectureSchema = {
   ...lectureAdminSchema,
   status: LECTURE_STATUS,
   modelName: v.optional(v.string()),
-  chunks: v.array(v.string()),
+  chunks: v.optional(v.array(v.string())), // Made optional for migration
 };
 
 export const exerciseAdminSchema = {
@@ -127,6 +127,12 @@ export default defineSchema(
     }).index("by_week_id", ["weekId"]),
 
     lectures: defineTable(lectureSchema).index("by_week_id", ["weekId"]),
+
+    lectureChunks: defineTable({
+      lectureId: v.id("lectures"),
+      content: v.string(),
+      order: v.number(),
+    }).index("by_lecture_id", ["lectureId"]),
 
     lectureChats: defineTable({
       lectureId: v.id("lectures"),

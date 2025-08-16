@@ -304,13 +304,16 @@ export const answerWithGemini = internalAction({
         },
       );
 
-      if (lecture.chunks.length === 0) {
+      const chunks = await ctx.runQuery(internal.admin.lectures.getChunks, {
+        lectureId: args.lectureId,
+      });
+
+      if (chunks.length === 0) {
         throw new ConvexError("Lecture chunks not found");
       }
 
       // Combine system prompt with lecture chunks
-      const enhancedSystemPrompt =
-        SYSTEM_PROMPT + (lecture?.chunks?.join("\n") || "");
+      const enhancedSystemPrompt = SYSTEM_PROMPT + chunks.join("\n");
 
       const genAI = getGeminiClient();
 

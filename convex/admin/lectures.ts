@@ -282,7 +282,15 @@ export const deleteChunks = internalMutation({
     lectureId: v.id("lectures"),
   },
   handler: async (ctx, { lectureId }) => {
-    return await ctx.db.patch(lectureId, { chunks: [] });
+    // Delete chunks from the new table
+    const chunks = await ctx.db
+      .query("lectureChunks")
+      .withIndex("by_lecture_id", (q) => q.eq("lectureId", lectureId))
+      .collect();
+
+    for (const chunk of chunks) {
+      await ctx.db.delete(chunk._id);
+    }
   },
 });
 
@@ -320,7 +328,14 @@ export const getChunks = internalQuery({
     if (!lecture) {
       throw new ConvexError("Lecture not found");
     }
-    return lecture.chunks || [];
+
+    const chunks = await ctx.db
+      .query("lectureChunks")
+      .withIndex("by_lecture_id", (q) => q.eq("lectureId", lectureId))
+      .order("asc")
+      .collect();
+
+    return chunks.sort((a, b) => a.order - b.order).map((c) => c.content);
   },
 });
 
@@ -370,8 +385,17 @@ export const addChunk = mutation({
       throw new ConvexError("Lecture not found");
     }
 
-    return await ctx.db.patch(lectureId, {
-      chunks: [...(lecture.chunks || []), chunk],
+    // Get the current count of chunks for ordering
+    const existingChunks = await ctx.db
+      .query("lectureChunks")
+      .withIndex("by_lecture_id", (q) => q.eq("lectureId", lectureId))
+      .collect();
+
+    // Add chunk to the new table
+    await ctx.db.insert("lectureChunks", {
+      lectureId,
+      content: chunk,
+      order: existingChunks.length,
     });
   },
 });

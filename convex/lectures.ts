@@ -122,9 +122,17 @@ export const list = queryWithAuth({
     }
 
     // Filter lectures that have chunks
-    const lecturesWithChunks = lecturesForCourse.filter(
-      (lecture) => lecture.chunks.length > 0,
-    );
+    const lecturesWithChunks = [];
+    for (const lecture of lecturesForCourse) {
+      const hasChunks = await db
+        .query("lectureChunks")
+        .withIndex("by_lecture_id", (q) => q.eq("lectureId", lecture._id))
+        .first();
+
+      if (hasChunks) {
+        lecturesWithChunks.push(lecture);
+      }
+    }
 
     const result = [];
     for (const week of lectureWeeks) {
