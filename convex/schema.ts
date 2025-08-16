@@ -20,7 +20,6 @@ export const lectureSchema = {
   ...lectureAdminSchema,
   status: LECTURE_STATUS,
   modelName: v.optional(v.string()),
-  chunks: v.optional(v.array(v.string())), // Made optional for migration
 };
 
 export const exerciseAdminSchema = {
