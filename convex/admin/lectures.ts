@@ -1,4 +1,6 @@
-import { ConvexError, v } from "convex/values";
+import { ConvexError, v } from "convex/values"
+import { api, internal } from "../_generated/api"
+import { Id } from "../_generated/dataModel"
 import {
   action,
   ActionCtx,
@@ -6,17 +8,15 @@ import {
   internalMutation,
   internalQuery,
   mutation,
-} from "../_generated/server";
-import { api, internal } from "../_generated/api";
-import { LECTURE_STATUS, lectureAdminSchema, lectureSchema } from "../schema";
+} from "../_generated/server"
 import {
   actionWithAuth,
   mutationWithAuth,
   queryWithAuth,
-} from "../auth/withAuth";
-import { getCourseRegistration } from "../courses";
-import { Id } from "../_generated/dataModel";
-import { getImageForLecture } from "../lectures";
+} from "../auth/withAuth"
+import { getCourseRegistration } from "../courses"
+import { getImageForLecture } from "../lectures"
+import { LECTURE_STATUS, lectureAdminSchema, lectureSchema } from "../schema"
 
 export const get = queryWithAuth({
   args: {
@@ -24,21 +24,21 @@ export const get = queryWithAuth({
     courseSlug: v.string(),
   },
   handler: async ({ db, session }, { id, courseSlug }) => {
-    await getCourseRegistration(db, session, courseSlug, "admin");
+    await getCourseRegistration(db, session, courseSlug, "admin")
 
-    const lecture = await db.get(id);
+    const lecture = await db.get(id)
     if (!lecture) {
-      throw new ConvexError("Lecture not found");
+      throw new ConvexError("Lecture not found")
     }
 
-    const { weekId } = lecture;
+    const { weekId } = lecture
     if (weekId === null) {
-      throw new ConvexError("The lecture has been deleted");
+      throw new ConvexError("The lecture has been deleted")
     }
 
-    return { ...lecture, weekId };
+    return { ...lecture, weekId }
   },
-});
+})
 
 export const list = queryWithAuth({
   args: {
@@ -49,22 +49,22 @@ export const list = queryWithAuth({
       db,
       session,
       courseSlug,
-      "admin",
-    );
+      "admin"
+    )
 
     const lectureWeeks = await db
       .query("lectureWeeks")
       .withIndex("by_course_and_start_date", (q) =>
-        q.eq("courseId", course._id),
+        q.eq("courseId", course._id)
       )
-      .collect();
+      .collect()
 
     // @TODO Only query the lectures from this course
-    const lectures = await db.query("lectures").collect();
+    const lectures = await db.query("lectures").collect()
 
-    const result = [];
+    const result = []
     for (const week of lectureWeeks) {
-      const resultLectures = [];
+      const resultLectures = []
       for (const lecture of lectures) {
         if (lecture.weekId === week._id) {
           resultLectures.push({
@@ -73,26 +73,26 @@ export const list = queryWithAuth({
             status: lecture.status,
             url: lecture.url,
             image: await getImageForLecture(db, storage, lecture),
-          });
+          })
         }
       }
 
       result.push({
         ...week,
         lectures: resultLectures,
-      });
+      })
     }
 
-    return result;
+    return result
   },
-});
+})
 
 export const insertRow = internalMutation({
   args: { ...lectureSchema },
   handler: async ({ db }, row) => {
-    return await db.insert("lectures", row);
+    return await db.insert("lectures", row)
   },
-});
+})
 
 export const updateRow = internalMutation({
   args: {
@@ -101,48 +101,48 @@ export const updateRow = internalMutation({
   },
   handler: async ({ db }, { id, row }) => {
     // Verify that the course isn't changed
-    const existing = await db.get(id);
+    const existing = await db.get(id)
     if (!existing) {
-      throw new ConvexError("Lecture not found");
+      throw new ConvexError("Lecture not found")
     }
 
     // Only validate weekId if it's being updated
     if (row && row.weekId !== undefined) {
-      const oldWeekId = existing.weekId;
-      const newWeekId = row.weekId;
+      const oldWeekId = existing.weekId
+      const newWeekId = row.weekId
 
       if (newWeekId === null) {
-        throw new ConvexError("Invalid data");
+        throw new ConvexError("Invalid data")
       }
 
       if (oldWeekId === null) {
-        throw new ConvexError("Can't unpublish this lecture");
+        throw new ConvexError("Can't unpublish this lecture")
       }
 
       // Verify that the lecture stays in the same course
-      const oldWeek = await db.get(oldWeekId);
-      const newWeek = await db.get(newWeekId);
+      const oldWeek = await db.get(oldWeekId)
+      const newWeek = await db.get(newWeekId)
       if (!oldWeek || !newWeek || newWeek.courseId !== oldWeek.courseId) {
-        throw new ConvexError("The course of a lecture cannot be changed");
+        throw new ConvexError("The course of a lecture cannot be changed")
       }
     }
 
     if (!row) {
-      throw new ConvexError("Invalid data");
+      throw new ConvexError("Invalid data")
     }
 
-    return await db.patch(id, row);
+    return await db.patch(id, row)
   },
-});
+})
 
 export const createInternal = internalAction({
   args: lectureSchema,
   handler: async ({ runMutation }, row): Promise<Id<"lectures">> => {
     return await runMutation(internal.admin.lectures.insertRow, {
       ...{ ...row, sessionId: undefined },
-    });
+    })
   },
-});
+})
 
 export const create = actionWithAuth({
   args: {
@@ -154,35 +154,35 @@ export const create = actionWithAuth({
       ctx,
       ctx.session,
       courseSlug,
-      "admin",
-    );
+      "admin"
+    )
 
-    const { weekId } = lecture;
+    const { weekId } = lecture
     if (weekId === null) {
-      throw new ConvexError("Invalid week ID");
+      throw new ConvexError("Invalid week ID")
     }
 
     // Validate the week ID
     const week = await ctx.runQuery(internal.admin.lectureWeeks.getInternal, {
       id: weekId,
-    });
+    })
     if (!week || week.courseId !== course._id) {
-      throw new ConvexError("Invalid week");
+      throw new ConvexError("Invalid week")
     }
 
     const id = await ctx.runAction(
       internal.admin.lectures.createInternal,
-      lecture,
-    );
+      lecture
+    )
 
     await ctx.scheduler.runAfter(0, internal.admin.lectures.processVideo, {
       lectureId: id,
       url: lecture.url,
-    });
+    })
 
-    return id;
+    return id
   },
-});
+})
 
 export const processVideo = internalAction({
   args: {
@@ -192,11 +192,11 @@ export const processVideo = internalAction({
   handler: async (ctx, { lectureId, url }) => {
     try {
       // Check for the processing URL environment variable
-      const processingUrl = process.env.LECTURES_PROCESSING_URL;
+      const processingUrl = process.env.LECTURES_PROCESSING_URL
       if (!processingUrl) {
         throw new Error(
-          "LECTURES_PROCESSING_URL environment variable is not configured",
-        );
+          "LECTURES_PROCESSING_URL environment variable is not configured"
+        )
       }
 
       const response = await fetch(processingUrl, {
@@ -209,30 +209,30 @@ export const processVideo = internalAction({
         headers: {
           "Content-Type": "application/json",
         },
-      });
+      })
 
       if (!response.ok || !response.body) {
         throw new Error(
-          `Failed to start video processing: ${response.statusText}`,
-        );
+          `Failed to start video processing: ${response.statusText}`
+        )
       }
 
       await ctx.runMutation(api.admin.lectures.setStatus, {
         lectureId,
         status: "PROCESSING",
         authToken: process.env.VIDEO_PROCESSING_API_TOKEN!,
-      });
+      })
     } catch (error) {
       await ctx.runMutation(api.admin.lectures.setStatus, {
         lectureId,
         status: "FAILED",
         authToken: process.env.VIDEO_PROCESSING_API_TOKEN!,
-      });
+      })
 
-      throw error;
+      throw error
     }
   },
-});
+})
 
 export const reprocessVideo = actionWithAuth({
   args: {
@@ -240,42 +240,42 @@ export const reprocessVideo = actionWithAuth({
     courseSlug: v.string(),
   },
   handler: async (ctx, { lectureId, courseSlug }) => {
-    await getCourseRegistration(ctx, ctx.session, courseSlug, "admin");
-    await validateLectureInCourse(ctx, courseSlug, lectureId);
+    await getCourseRegistration(ctx, ctx.session, courseSlug, "admin")
+    await validateLectureInCourse(ctx, courseSlug, lectureId)
 
     const lecture = await ctx.runQuery(internal.admin.lectures.getInternal, {
       id: lectureId,
-    });
+    })
 
     if (!lecture) {
-      throw new ConvexError("Lecture not found");
+      throw new ConvexError("Lecture not found")
     }
 
     if (lecture.status === "PROCESSING") {
-      throw new ConvexError("The video is already being processed");
+      throw new ConvexError("The video is already being processed")
     }
 
     if (!process.env.VIDEO_PROCESSING_API_TOKEN) {
       throw new ConvexError(
-        "VIDEO_PROCESSING_API_TOKEN environment variable is not configured",
-      );
+        "VIDEO_PROCESSING_API_TOKEN environment variable is not configured"
+      )
     }
 
     await ctx.runMutation(api.admin.lectures.setStatus, {
       lectureId,
       status: "NOT_STARTED",
       authToken: process.env.VIDEO_PROCESSING_API_TOKEN,
-    });
+    })
 
     // Erase all previous chunks
-    await ctx.runMutation(internal.admin.lectures.deleteChunks, { lectureId });
+    await ctx.runMutation(internal.admin.lectures.deleteChunks, { lectureId })
 
     await ctx.runAction(internal.admin.lectures.processVideo, {
       lectureId,
       url: lecture.url,
-    });
+    })
   },
-});
+})
 
 export const deleteChunks = internalMutation({
   args: {
@@ -286,73 +286,33 @@ export const deleteChunks = internalMutation({
     const chunks = await ctx.db
       .query("lectureChunks")
       .withIndex("by_lecture_id", (q) => q.eq("lectureId", lectureId))
-      .collect();
+      .collect()
 
     for (const chunk of chunks) {
-      await ctx.db.delete(chunk._id);
+      await ctx.db.delete(chunk._id)
     }
   },
-});
-
-export const createAssistant = action({
-  args: {
-    lectureId: v.id("lectures"),
-    authToken: v.string(),
-  },
-  handler: async (ctx, { lectureId, authToken }) => {
-    if (authToken !== process.env.VIDEO_PROCESSING_API_TOKEN) {
-      throw new ConvexError("Invalid authentification token");
-    }
-
-    const chunks = await ctx.runQuery(internal.admin.lectures.getChunks, {
-      lectureId,
-    });
-    if (!chunks) {
-      throw new ConvexError("Lecture chunks not found");
-    }
-
-    await ctx.runMutation(api.admin.lectures.setAssistantId, {
-      lectureId,
-      modelName: "gemini-2.5-flash-preview-04-17",
-      authToken,
-    });
-  },
-});
+})
 
 export const getChunks = internalQuery({
   args: {
     lectureId: v.id("lectures"),
   },
   handler: async (ctx, { lectureId }) => {
-    const lecture = await ctx.db.get(lectureId);
+    const lecture = await ctx.db.get(lectureId)
     if (!lecture) {
-      throw new ConvexError("Lecture not found");
+      throw new ConvexError("Lecture not found")
     }
 
     const chunks = await ctx.db
       .query("lectureChunks")
       .withIndex("by_lecture_id", (q) => q.eq("lectureId", lectureId))
       .order("asc")
-      .collect();
+      .collect()
 
-    return chunks.sort((a, b) => a.order - b.order).map((c) => c.content);
+    return chunks.sort((a, b) => a.order - b.order).map((c) => c.content)
   },
-});
-
-export const setAssistantId = mutation({
-  args: {
-    lectureId: v.id("lectures"),
-    modelName: lectureSchema.modelName,
-    authToken: v.string(),
-  },
-  handler: async (ctx, { lectureId, authToken, modelName }) => {
-    if (authToken !== process.env.VIDEO_PROCESSING_API_TOKEN) {
-      throw new ConvexError("Invalid authentification token");
-    }
-
-    return await ctx.db.patch(lectureId, { modelName });
-  },
-});
+})
 
 export const setStatus = mutation({
   args: {
@@ -362,12 +322,12 @@ export const setStatus = mutation({
   },
   handler: async (ctx, { lectureId, status, authToken }) => {
     if (authToken !== process.env.VIDEO_PROCESSING_API_TOKEN) {
-      throw new ConvexError("Invalid authentification token");
+      throw new ConvexError("Invalid authentification token")
     }
 
-    return await ctx.db.patch(lectureId, { status: status });
+    return await ctx.db.patch(lectureId, { status: status })
   },
-});
+})
 
 export const addChunk = mutation({
   args: {
@@ -377,68 +337,68 @@ export const addChunk = mutation({
   },
   handler: async (ctx, { lectureId, chunk, authToken }) => {
     if (authToken !== process.env.VIDEO_PROCESSING_API_TOKEN) {
-      throw new ConvexError("Invalid authentification token");
+      throw new ConvexError("Invalid authentification token")
     }
 
-    const lecture = await ctx.db.get(lectureId);
+    const lecture = await ctx.db.get(lectureId)
     if (!lecture) {
-      throw new ConvexError("Lecture not found");
+      throw new ConvexError("Lecture not found")
     }
 
     // Get the current count of chunks for ordering
     const existingChunks = await ctx.db
       .query("lectureChunks")
       .withIndex("by_lecture_id", (q) => q.eq("lectureId", lectureId))
-      .collect();
+      .collect()
 
     // Add chunk to the new table
     await ctx.db.insert("lectureChunks", {
       lectureId,
       content: chunk,
       order: existingChunks.length,
-    });
+    })
   },
-});
+})
 
 export const courseSlugOfLecture = internalQuery({
   args: {
     id: v.id("lectures"),
   },
   handler: async (ctx, args) => {
-    const lecture = await ctx.db.get(args.id);
+    const lecture = await ctx.db.get(args.id)
     if (!lecture) {
-      throw new ConvexError("Lecture not found");
+      throw new ConvexError("Lecture not found")
     }
 
-    const weekId = lecture.weekId;
+    const weekId = lecture.weekId
     if (weekId === null) {
-      throw new ConvexError("This lecture has been deleted");
+      throw new ConvexError("This lecture has been deleted")
     }
-    const week = await ctx.db.get(weekId);
+    const week = await ctx.db.get(weekId)
     if (!week) {
-      throw new ConvexError("Week not found");
+      throw new ConvexError("Week not found")
     }
 
-    const course = await ctx.db.get(week.courseId);
+    const course = await ctx.db.get(week.courseId)
     if (!course) {
-      throw new ConvexError("Course not found");
+      throw new ConvexError("Course not found")
     }
 
-    return course.slug;
+    return course.slug
   },
-});
+})
 
 export async function validateLectureInCourse(
   ctx: Omit<ActionCtx, "auth">,
   courseSlug: string,
-  id: Id<"lectures">,
+  id: Id<"lectures">
 ) {
   const lectureCourseSlug = await ctx.runQuery(
     internal.admin.lectures.courseSlugOfLecture,
-    { id },
-  );
+    { id }
+  )
   if (lectureCourseSlug !== courseSlug) {
-    throw new ConvexError("Lecture not found");
+    throw new ConvexError("Lecture not found")
   }
 }
 
@@ -449,15 +409,15 @@ export const update = actionWithAuth({
     courseSlug: v.string(),
   },
   handler: async (ctx, { id, lecture, courseSlug }) => {
-    await getCourseRegistration(ctx, ctx.session, courseSlug, "admin");
-    await validateLectureInCourse(ctx, courseSlug, id);
+    await getCourseRegistration(ctx, ctx.session, courseSlug, "admin")
+    await validateLectureInCourse(ctx, courseSlug, id)
 
     await ctx.runMutation(internal.admin.lectures.updateRow, {
       id,
       row: lecture,
-    });
+    })
   },
-});
+})
 
 export const softDelete = mutationWithAuth({
   args: {
@@ -469,36 +429,36 @@ export const softDelete = mutationWithAuth({
       ctx.db,
       ctx.session,
       courseSlug,
-      "admin",
-    );
+      "admin"
+    )
 
-    const lecture = await ctx.db.get(id);
+    const lecture = await ctx.db.get(id)
     if (!lecture) {
-      throw new ConvexError("Lecture not found");
+      throw new ConvexError("Lecture not found")
     }
 
-    const weekId = lecture.weekId;
+    const weekId = lecture.weekId
     if (weekId === null) {
-      throw new ConvexError("The lecture has already been deleted");
+      throw new ConvexError("The lecture has already been deleted")
     }
 
-    const week = await ctx.db.get(weekId);
+    const week = await ctx.db.get(weekId)
     if (!week) {
-      throw new Error("Week not found");
+      throw new Error("Week not found")
     }
     if (week.courseId !== course._id) {
-      throw new ConvexError("Lecture not found");
+      throw new ConvexError("Lecture not found")
     }
 
-    await ctx.db.patch(lecture._id, { weekId: null });
+    await ctx.db.patch(lecture._id, { weekId: null })
   },
-});
+})
 
 export const getInternal = internalQuery({
   args: {
     id: v.id("lectures"),
   },
   handler: async (ctx, { id }) => {
-    return await ctx.db.get(id);
+    return await ctx.db.get(id)
   },
-});
+})

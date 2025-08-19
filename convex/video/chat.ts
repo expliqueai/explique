@@ -1,20 +1,20 @@
-import { ConvexError, v } from "convex/values";
-import {
-  actionWithAuth,
-  mutationWithAuth,
-  queryWithAuth,
-} from "../auth/withAuth";
+import { google } from "@ai-sdk/google"
+import { generateText } from "ai"
+import { ConvexError, v } from "convex/values"
+import { internal } from "../_generated/api"
+import { Id } from "../_generated/dataModel"
 import {
   ActionCtx,
   internalAction,
   internalMutation,
   internalQuery,
-} from "../_generated/server";
-import { internal } from "../_generated/api";
-import { Id } from "../_generated/dataModel";
-import { lectureSchema } from "../schema";
-import { google } from "@ai-sdk/google";
-import { generateText } from "ai";
+} from "../_generated/server"
+import {
+  actionWithAuth,
+  mutationWithAuth,
+  queryWithAuth,
+} from "../auth/withAuth"
+import { lectureSchema } from "../schema"
 
 const SYSTEM_PROMPT = `
 You are an AI language model designed to assist users in navigating and understanding the content of a video. Your capabilities include answering questions about specific moments in the video using the preprocessed data provided. You can also suggest insightful questions to help users explore the video content more deeply.
@@ -58,16 +58,17 @@ Video data:
 
 Important: The timestamp of the beginning of a segment is inclusive but the timestamp of the end of a segment is exclusive.
 
-`;
+`
 
-const FALLBACK_MODEL = "gemini-2.5-pro-preview-03-25";
+const CHAT_MODEL_PROVIDER = google("gemini-2.5-flash")
+const FALLBACK_MODEL_PROVIDER = google("gemini-2.5-pro")
 
 // Default generation config for Vercel AI SDK
 const defaultGenerationConfig = {
   temperature: 0.7,
   topP: 0.95,
   topK: 64,
-};
+}
 
 export const get = queryWithAuth({
   args: {
@@ -75,27 +76,27 @@ export const get = queryWithAuth({
   },
   handler: async ({ db, session }, { lectureId }) => {
     if (!session) {
-      throw new ConvexError("Unauthenticated");
+      throw new ConvexError("Unauthenticated")
     }
 
     const chat = await db
       .query("lectureChats")
       .withIndex("by_lecture_and_user", (q) =>
-        q.eq("lectureId", lectureId).eq("userId", session.user._id),
+        q.eq("lectureId", lectureId).eq("userId", session.user._id)
       )
-      .first();
+      .first()
 
     if (!chat) {
       return {
         hasThread: false,
         messages: [],
-      };
+      }
     }
 
     const messages = await db
       .query("lectureChatMessages")
       .withIndex("by_lecture_chat_id", (q) => q.eq("lectureChatId", chat._id))
-      .collect();
+      .collect()
 
     return {
       hasThread: true,
@@ -106,9 +107,9 @@ export const get = queryWithAuth({
         appearance: message.appearance,
         isFallbackModel: message.isFallbackModel,
       })),
-    };
+    }
   },
-});
+})
 
 export const initialize = actionWithAuth({
   args: {
@@ -116,25 +117,25 @@ export const initialize = actionWithAuth({
   },
   handler: async (ctx, args) => {
     if (!ctx.session) {
-      throw new ConvexError("Unauthenticated");
+      throw new ConvexError("Unauthenticated")
     }
 
     // Get lecture using internal query instead of direct db access
     const lecture = await ctx.runQuery(internal.video.chat._getLecture, {
       lectureId: args.lectureId,
-    });
+    })
 
     if (!lecture) {
-      throw new ConvexError("Lecture not found");
+      throw new ConvexError("Lecture not found")
     }
 
     await ctx.runMutation(internal.video.chat._createChat, {
       lectureId: args.lectureId,
       userId: ctx.session.user._id,
       firstMessage: lecture.firstMessage,
-    });
+    })
   },
-});
+})
 
 // Internal query to get lecture data
 export const _getLecture = internalQuery({
@@ -142,9 +143,9 @@ export const _getLecture = internalQuery({
     lectureId: v.id("lectures"),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.lectureId);
+    return await ctx.db.get(args.lectureId)
   },
-});
+})
 
 export const _createChat = internalMutation({
   args: {
@@ -156,18 +157,18 @@ export const _createChat = internalMutation({
     const existing = await ctx.db
       .query("lectureChats")
       .withIndex("by_lecture_and_user", (q) =>
-        q.eq("lectureId", args.lectureId).eq("userId", args.userId),
+        q.eq("lectureId", args.lectureId).eq("userId", args.userId)
       )
-      .first();
+      .first()
 
     if (existing) {
-      throw new ConvexError("Chat already initialized");
+      throw new ConvexError("Chat already initialized")
     }
 
     const chatId = await ctx.db.insert("lectureChats", {
       lectureId: args.lectureId,
       userId: args.userId,
-    });
+    })
 
     // Add welcome message from the system
     if (args.firstMessage) {
@@ -175,10 +176,10 @@ export const _createChat = internalMutation({
         lectureChatId: chatId,
         content: args.firstMessage,
         system: true,
-      });
+      })
     }
   },
-});
+})
 
 export const sendMessage = mutationWithAuth({
   args: {
@@ -187,51 +188,46 @@ export const sendMessage = mutationWithAuth({
   },
   handler: async (ctx, args) => {
     if (!ctx.session) {
-      throw new ConvexError("Unauthenticated");
+      throw new ConvexError("Unauthenticated")
     }
-    const { user } = ctx.session;
+    const { user } = ctx.session
 
-    const lecture = await ctx.db.get(args.lectureId);
+    const lecture = await ctx.db.get(args.lectureId)
     if (!lecture) {
-      throw new ConvexError("Lecture not found");
-    }
-
-    if (!lecture.modelName) {
-      throw new ConvexError("This lecture hasn't been initialized yet");
+      throw new ConvexError("Lecture not found")
     }
 
     const chat = await ctx.db
       .query("lectureChats")
       .withIndex("by_lecture_and_user", (q) =>
-        q.eq("lectureId", args.lectureId).eq("userId", user._id),
+        q.eq("lectureId", args.lectureId).eq("userId", user._id)
       )
-      .first();
+      .first()
     if (!chat) {
-      throw new ConvexError("Chat not initialized");
+      throw new ConvexError("Chat not initialized")
     }
 
     await ctx.db.insert("lectureChatMessages", {
       lectureChatId: chat._id,
       content: args.message,
       system: false,
-    });
+    })
 
     const systemMessageId = await ctx.db.insert("lectureChatMessages", {
       lectureChatId: chat._id,
       content: "",
       system: true,
       appearance: "typing",
-    });
+    })
 
     await ctx.scheduler.runAfter(0, internal.video.chat.answerWithGemini, {
       message: args.message,
-      modelName: lecture.modelName,
       lectureId: args.lectureId,
       lectureChatId: chat._id,
       systemMessageId,
-    });
+    })
   },
-});
+})
 
 // Function to build conversation history from lectureChatMessages
 export const _getConversationHistory = internalQuery({
@@ -242,21 +238,21 @@ export const _getConversationHistory = internalQuery({
     const messages = await ctx.db
       .query("lectureChatMessages")
       .withIndex("by_lecture_chat_id", (q) =>
-        q.eq("lectureChatId", args.lectureChatId),
+        q.eq("lectureChatId", args.lectureChatId)
       )
-      .collect();
+      .collect()
 
     // Sort messages by _creationTime to ensure correct order
     const sortedMessages = [...messages].sort(
-      (a, b) => a._creationTime - b._creationTime,
-    );
+      (a, b) => a._creationTime - b._creationTime
+    )
 
     // Build conversation history in Gemini format
     // Pair user messages with system responses
-    const history = [];
+    const history = []
     for (let i = 0; i < sortedMessages.length; i += 2) {
-      const userMessage = sortedMessages[i];
-      const systemMessage = sortedMessages[i + 1];
+      const userMessage = sortedMessages[i]
+      const systemMessage = sortedMessages[i + 1]
 
       // Only add complete message pairs to history
       if (
@@ -269,67 +265,60 @@ export const _getConversationHistory = internalQuery({
       ) {
         history.push(
           { role: "user", parts: [{ text: userMessage.content }] },
-          { role: "model", parts: [{ text: systemMessage.content }] },
-        );
+          { role: "model", parts: [{ text: systemMessage.content }] }
+        )
       }
     }
 
-    return history;
+    return history
   },
-});
+})
 
 // Generate response using Vercel AI SDK
 async function generateGeminiResponse({
-  model,
   systemPrompt,
   messages,
-  fallbackModel = "gemini-2.5-pro-preview-03-25",
 }: {
-  model: string;
-  systemPrompt: string;
-  messages: Array<{ role: "user" | "assistant"; content: string }>;
-  fallbackModel?: string;
+  systemPrompt: string
+  messages: Array<{ role: "user" | "assistant"; content: string }>
 }) {
   try {
     // Try with primary model first
     const response = await generateText({
-      model: google(model),
+      model: CHAT_MODEL_PROVIDER,
       system: systemPrompt,
       messages,
       ...defaultGenerationConfig,
       abortSignal: AbortSignal.timeout(3 * 60 * 1000), // 3 minutes
-    });
+    })
 
     return {
       text: response.text,
       isFallbackModel: false,
-    };
+    }
   } catch (primaryError) {
-    console.warn(
-      `Primary model ${model} failed, trying fallback:`,
-      primaryError,
-    );
+    console.warn(`Primary model failed, trying fallback:`, primaryError)
 
     try {
       // Try with fallback model
       const fallbackResponse = await generateText({
-        model: google(fallbackModel),
+        model: FALLBACK_MODEL_PROVIDER,
         system: systemPrompt,
         messages,
         ...defaultGenerationConfig,
         abortSignal: AbortSignal.timeout(3 * 60 * 1000), // 3 minutes
-      });
+      })
 
       return {
         text: fallbackResponse.text,
         isFallbackModel: true,
-      };
+      }
     } catch (fallbackError) {
       console.error(
-        `Both primary model ${model} and fallback model ${fallbackModel} failed:`,
-        fallbackError,
-      );
-      throw fallbackError;
+        `Both primary model and fallback model failed:`,
+        fallbackError
+      )
+      throw fallbackError
     }
   }
 }
@@ -338,7 +327,6 @@ async function generateGeminiResponse({
 export const answerWithGemini = internalAction({
   args: {
     message: v.string(),
-    modelName: v.string(),
     lectureId: v.id("lectures"),
     lectureChatId: v.id("lectureChats"),
     systemMessageId: v.id("lectureChatMessages"),
@@ -348,10 +336,10 @@ export const answerWithGemini = internalAction({
       // Get lecture data to include in system prompt
       const lecture = await ctx.runQuery(internal.video.chat._getLecture, {
         lectureId: args.lectureId,
-      });
+      })
 
       if (!lecture) {
-        throw new ConvexError("Lecture not found");
+        throw new ConvexError("Lecture not found")
       }
 
       // Get conversation history from messages
@@ -359,39 +347,37 @@ export const answerWithGemini = internalAction({
         internal.video.chat._getConversationHistory,
         {
           lectureChatId: args.lectureChatId,
-        },
-      );
+        }
+      )
 
       const chunks = await ctx.runQuery(internal.admin.lectures.getChunks, {
         lectureId: args.lectureId,
-      });
+      })
 
       if (chunks.length === 0) {
-        throw new ConvexError("Lecture chunks not found");
+        throw new ConvexError("Lecture chunks not found")
       }
 
       // Combine system prompt with lecture chunks
-      const enhancedSystemPrompt = SYSTEM_PROMPT + chunks.join("\n");
+      const enhancedSystemPrompt = SYSTEM_PROMPT + chunks.join("\n")
 
       // Convert Gemini chat history format to Vercel AI SDK format
       const messages = chatHistory.map((msg) => ({
         role: msg.role === "model" ? ("assistant" as const) : ("user" as const),
         content: msg.parts[0].text,
-      }));
+      }))
 
       // Add the current user message
       messages.push({
         role: "user" as const,
         content: args.message,
-      });
+      })
 
       // Generate response using Vercel AI SDK
       const result = await generateGeminiResponse({
-        model: args.modelName,
         systemPrompt: enhancedSystemPrompt,
         messages,
-        fallbackModel: FALLBACK_MODEL,
-      });
+      })
 
       // Update the system message with the response
       await ctx.runMutation(internal.video.chat.writeSystemResponse, {
@@ -399,13 +385,13 @@ export const answerWithGemini = internalAction({
         appearance: undefined,
         content: result.text,
         isFallbackModel: result.isFallbackModel,
-      });
+      })
     } catch (err) {
-      console.error("Error generating response:", err);
-      await sendError(ctx, args.systemMessageId);
+      console.error("Error generating response:", err)
+      await sendError(ctx, args.systemMessageId)
     }
   },
-});
+})
 
 // Add this query to get lecture ID from lecture chat
 export const _getChatLectureId = internalQuery({
@@ -413,13 +399,13 @@ export const _getChatLectureId = internalQuery({
     lectureChatId: v.id("lectureChats"),
   },
   handler: async (ctx, args) => {
-    const chat = await ctx.db.get(args.lectureChatId);
+    const chat = await ctx.db.get(args.lectureChatId)
     if (!chat) {
-      throw new ConvexError("Chat not found");
+      throw new ConvexError("Chat not found")
     }
-    return chat.lectureId;
+    return chat.lectureId
   },
-});
+})
 
 // Keep the existing functions for writing responses
 export const writeSystemResponse = internalMutation({
@@ -434,19 +420,19 @@ export const writeSystemResponse = internalMutation({
       content: args.content,
       appearance: args.appearance,
       isFallbackModel: args.isFallbackModel,
-    });
+    })
   },
-});
+})
 
 async function sendError(
   ctx: ActionCtx,
-  systemMessageId: Id<"lectureChatMessages">,
+  systemMessageId: Id<"lectureChatMessages">
 ) {
   await ctx.runMutation(internal.video.chat.writeSystemResponse, {
     content: "",
     appearance: "error",
     systemMessageId,
-  });
+  })
 }
 
 export const clearHistory = mutationWithAuth({
@@ -455,33 +441,33 @@ export const clearHistory = mutationWithAuth({
   },
   handler: async (ctx, args) => {
     if (!ctx.session) {
-      throw new ConvexError("Unauthenticated");
+      throw new ConvexError("Unauthenticated")
     }
 
     const chat = await ctx.db
       .query("lectureChats")
       .withIndex("by_lecture_and_user", (q) =>
-        q.eq("lectureId", args.lectureId).eq("userId", ctx.session!.user._id),
+        q.eq("lectureId", args.lectureId).eq("userId", ctx.session!.user._id)
       )
-      .first();
+      .first()
 
     if (chat) {
       const messages = await ctx.db
         .query("lectureChatMessages")
         .withIndex("by_lecture_chat_id", (q) => q.eq("lectureChatId", chat._id))
-        .collect();
+        .collect()
 
       // Sort messages by creation time
       const sortedMessages = [...messages].sort(
-        (a, b) => a._creationTime - b._creationTime,
-      );
+        (a, b) => a._creationTime - b._creationTime
+      )
 
       for (let i = 0; i < sortedMessages.length; i++) {
-        const message = sortedMessages[i];
+        const message = sortedMessages[i]
         if (!(i == 0 && message.system)) {
-          await ctx.db.delete(message._id);
+          await ctx.db.delete(message._id)
         }
       }
     }
   },
-});
+})
