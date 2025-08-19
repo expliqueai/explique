@@ -1,28 +1,28 @@
-"use client";
+"use client"
 
-import { useAction, useQuery } from "@/usingSession";
-import React from "react";
-import { useParams, useRouter } from "next/navigation";
-import { api } from "../../../../../../convex/_generated/api";
-import { Id } from "../../../../../../convex/_generated/dataModel";
-import ExerciseForm, { toConvexState } from "@/components/ExerciseForm";
-import Title from "@/components/typography";
-import { toast } from "sonner";
-import { useCourseSlug } from "@/hooks/useCourseSlug";
+import ExerciseForm, { toConvexState } from "@/components/ExerciseForm"
+import Title from "@/components/typography"
+import { useCourseSlug } from "@/hooks/useCourseSlug"
+import { useAction, useQuery } from "@/usingSession"
+import { useParams, useRouter } from "next/navigation"
+import React from "react"
+import { toast } from "sonner"
+import { api } from "../../../../../../convex/_generated/api"
+import { Id } from "../../../../../../convex/_generated/dataModel"
 
 export default function EditExercise() {
-  const router = useRouter();
-  const params = useParams();
-  const update = useAction(api.admin.exercises.update);
-  const courseSlug = useCourseSlug();
+  const router = useRouter()
+  const params = useParams()
+  const update = useAction(api.admin.exercises.update)
+  const courseSlug = useCourseSlug()
 
   const exercise = useQuery(api.admin.exercises.get, {
     id: params.exerciseId as Id<"exercises">,
     courseSlug,
-  });
+  })
 
   return (
-    <div className="bg-slate-100 h-full p-10 flex justify-center">
+    <div className="flex h-full justify-center bg-slate-100 p-10">
       <div className="max-w-6xl flex-1">
         <Title backHref={`/${courseSlug}/admin/exercises`}>Edit Exercise</Title>
 
@@ -37,7 +37,6 @@ export default function EditExercise() {
               image: exercise.image,
               imagePrompt: exercise.imagePrompt,
               instructions: exercise.instructions,
-              model: exercise.model,
               text: exercise.text,
               feedback: exercise.feedback ?? null,
 
@@ -50,9 +49,9 @@ export default function EditExercise() {
                           question,
                           answers: answers.map((a) => a.text),
                           correctAnswerIndex: answers.findIndex(
-                            (a) => a.correct,
+                            (a) => a.correct
                           ),
-                        }),
+                        })
                       ),
                       randomize:
                         typeof batch.randomize === "boolean"
@@ -70,13 +69,13 @@ export default function EditExercise() {
                 courseSlug,
                 id: exercise._id,
                 exercise: toConvexState(state),
-              });
-              toast.success("Exercise updated successfully.");
-              router.push(`/${courseSlug}/admin/exercises`);
+              })
+              toast.success("Exercise updated successfully.")
+              router.push(`/${courseSlug}/admin/exercises`)
             }}
           />
         )}
       </div>
     </div>
-  );
+  )
 }

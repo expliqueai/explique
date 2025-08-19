@@ -1,72 +1,55 @@
+import { google } from "@ai-sdk/google"
+import { generateText } from "ai"
+import { ConvexError, v } from "convex/values"
+import { z } from "zod"
+import { internal } from "./_generated/api"
+import { Id } from "./_generated/dataModel"
 import {
+  DatabaseReader,
   internalAction,
   internalMutation,
-  DatabaseReader,
-  MutationCtx,
   internalQuery,
-} from "./_generated/server";
-import { ConvexError, v } from "convex/values";
-import { openai as openaiProvider } from "@ai-sdk/openai";
-import { generateText } from "ai";
-import OpenAI from "openai";
-import { internal } from "./_generated/api";
-import { Session, mutationWithAuth, queryWithAuth } from "./auth/withAuth";
-import { Id } from "./_generated/dataModel";
-import { z } from "zod";
+  MutationCtx,
+} from "./_generated/server"
+import { mutationWithAuth, queryWithAuth, Session } from "./auth/withAuth"
 
-export const COMPLETION_VALID_MODELS = [
-  "gpt-4-1106-preview",
-  "gpt-4-vision-preview",
-  "gpt-4",
-  "gpt-4o",
-  "gpt-4-0314",
-  "gpt-4-0613",
-  "gpt-4-32k",
-  "gpt-4-32k-0314",
-  "gpt-4-32k-0613",
-  "gpt-3.5-turbo",
-  "gpt-3.5-turbo-16k",
-  "gpt-3.5-turbo-0301",
-  "gpt-3.5-turbo-0613",
-  "gpt-3.5-turbo-1106",
-  "gpt-3.5-turbo-16k-0613",
-] as const;
+const CHAT_MODEL_PROVIDER = google("gemini-2.5-flash")
 
 async function getAttemptIfAuthorized(
   db: DatabaseReader,
   session: Session | null,
-  attemptId: Id<"attempts">,
+  attemptId: Id<"attempts">
 ) {
   if (!session) {
-    throw new ConvexError("Logged out");
+    throw new ConvexError("Logged out")
   }
 
-  const attempt = await db.get(attemptId);
-  if (attempt === null) throw new ConvexError("Unknown attempt");
+  const attempt = await db.get(attemptId)
+  if (attempt === null) throw new ConvexError("Unknown attempt")
 
-  const exercise = await db.get(attempt.exerciseId);
-  if (exercise === null) throw new Error("No exercise");
+  const exercise = await db.get(attempt.exerciseId)
+  if (exercise === null) throw new Error("No exercise")
 
-  const weekId = exercise.weekId;
+  const weekId = exercise.weekId
   if (weekId === null) {
-    throw new ConvexError("This exercise has been deleted");
+    throw new ConvexError("This exercise has been deleted")
   }
-  const week = await db.get(weekId);
-  if (week === null) throw new Error("No week");
+  const week = await db.get(weekId)
+  if (week === null) throw new Error("No week")
 
   const registration = await db
     .query("registrations")
     .withIndex("by_user_and_course", (q) =>
-      q.eq("userId", session.user._id).eq("courseId", week.courseId),
+      q.eq("userId", session.user._id).eq("courseId", week.courseId)
     )
-    .first();
-  if (!registration) throw new Error("User not enrolled in the course.");
+    .first()
+  if (!registration) throw new Error("User not enrolled in the course.")
 
   if (attempt.userId !== session.user._id && registration.role !== "admin") {
-    throw new ConvexError("Forbidden");
+    throw new ConvexError("Forbidden")
   }
 
-  return attempt;
+  return attempt
 }
 
 // Returns the messages for attempt
@@ -75,23 +58,23 @@ export const getMessages = queryWithAuth({
     attemptId: v.id("attempts"),
   },
   handler: async ({ db, session }, { attemptId }) => {
-    await getAttemptIfAuthorized(db, session, attemptId);
+    await getAttemptIfAuthorized(db, session, attemptId)
 
     const rows = await db
       .query("messages")
       .withIndex("by_attempt", (x) => x.eq("attemptId", attemptId))
-      .collect();
+      .collect()
 
     const reportedMessages = await db
       .query("reports")
       .withIndex("by_attempt", (x) => x.eq("attemptId", attemptId))
-      .collect();
+      .collect()
 
-    const result = [];
+    const result = []
     for (const message of rows) {
       const isReported = reportedMessages.some(
-        (x) => x.messageId === message._id,
-      );
+        (x) => x.messageId === message._id
+      )
 
       result.push({
         id: message._id,
@@ -99,12 +82,12 @@ export const getMessages = queryWithAuth({
         content: message.content,
         appearance: message.appearance,
         isReported: isReported,
-      });
+      })
     }
 
-    return result;
+    return result
   },
-});
+})
 
 export const insertMessage = internalMutation({
   args: {
@@ -114,9 +97,9 @@ export const insertMessage = internalMutation({
     appearance: v.optional(v.literal("finished")),
   },
   handler: async ({ db }, { attemptId, system, content }) => {
-    return await db.insert("messages", { attemptId, system, content });
+    return await db.insert("messages", { attemptId, system, content })
   },
-});
+})
 
 export const writeSystemResponse = internalMutation({
   args: {
@@ -128,14 +111,14 @@ export const writeSystemResponse = internalMutation({
   },
   handler: async (
     { db },
-    { attemptId, userMessageId, systemMessageId, content, appearance },
+    { attemptId, userMessageId, systemMessageId, content, appearance }
   ) => {
-    const attempt = await db.get(attemptId);
+    const attempt = await db.get(attemptId)
     if (!attempt) {
-      throw new Error("Can’t find the attempt");
+      throw new Error("Can’t find the attempt")
     }
 
-    await db.patch(systemMessageId, { content, appearance });
+    await db.patch(systemMessageId, { content, appearance })
 
     await db.insert("logs", {
       type: "answerGenerated",
@@ -145,9 +128,9 @@ export const writeSystemResponse = internalMutation({
       userMessageId,
       systemMessageId,
       variant: "explain",
-    });
+    })
   },
-});
+})
 
 async function sendMessageController(
   ctx: Omit<MutationCtx, "auth">,
@@ -155,28 +138,28 @@ async function sendMessageController(
     message,
     attemptId,
   }: {
-    attemptId: Id<"attempts">;
-    message: string;
-  },
+    attemptId: Id<"attempts">
+    message: string
+  }
 ) {
-  const attempt = await ctx.db.get(attemptId);
-  if (!attempt) throw new Error(`Attempt ${attemptId} not found`);
+  const attempt = await ctx.db.get(attemptId)
+  if (!attempt) throw new Error(`Attempt ${attemptId} not found`)
 
-  const exercise = await ctx.db.get(attempt.exerciseId);
-  if (!exercise) throw new Error(`Exercise ${attempt.exerciseId} not found`);
+  const exercise = await ctx.db.get(attempt.exerciseId)
+  if (!exercise) throw new Error(`Exercise ${attempt.exerciseId} not found`)
 
   const userMessageId = await ctx.db.insert("messages", {
     attemptId,
     system: false,
     content: message,
-  });
+  })
 
   const systemMessageId = await ctx.db.insert("messages", {
     attemptId,
     system: true,
     appearance: "typing",
     content: "",
-  });
+  })
 
   await ctx.db.insert("logs", {
     type: "messageSent",
@@ -186,17 +169,16 @@ async function sendMessageController(
     userMessageId,
     systemMessageId,
     variant: "explain",
-  });
+  })
 
   // Always use Chat Completions API (Assistants API deprecated)
   ctx.scheduler.runAfter(0, internal.chat.answerChatCompletionsApi, {
     attemptId,
     userMessageId,
     systemMessageId,
-    model: exercise.model,
     completionFunctionDescription: exercise.completionFunctionDescription,
     instructions: exercise.instructions,
-  });
+  })
 }
 
 export const sendMessageInternal = internalMutation({
@@ -205,9 +187,9 @@ export const sendMessageInternal = internalMutation({
     message: v.string(),
   },
   handler: async (ctx, args) => {
-    await sendMessageController(ctx, args);
+    await sendMessageController(ctx, args)
   },
-});
+})
 
 export const sendMessage = mutationWithAuth({
   args: {
@@ -215,21 +197,17 @@ export const sendMessage = mutationWithAuth({
     message: v.string(),
   },
   handler: async (ctx, { attemptId, message }) => {
-    const attempt = await getAttemptIfAuthorized(
-      ctx.db,
-      ctx.session,
-      attemptId,
-    );
+    const attempt = await getAttemptIfAuthorized(ctx.db, ctx.session, attemptId)
     // Only allow messages if using explanation variant (threadId was not null before migration)
     if (attempt.threadId === null)
-      throw new ConvexError("Not doing the explanation exercise");
+      throw new ConvexError("Not doing the explanation exercise")
 
     await sendMessageController(ctx, {
       message,
       attemptId,
-    });
+    })
   },
-});
+})
 
 export const reportMessage = mutationWithAuth({
   args: {
@@ -237,60 +215,59 @@ export const reportMessage = mutationWithAuth({
     reason: v.string(),
   },
   handler: async (ctx, { messageId, reason }) => {
-    const message = await ctx.db.get(messageId);
-    if (message === null) throw new ConvexError("Message not found");
+    const message = await ctx.db.get(messageId)
+    if (message === null) throw new ConvexError("Message not found")
 
     const attempt = await getAttemptIfAuthorized(
       ctx.db,
       ctx.session,
-      message.attemptId,
-    );
+      message.attemptId
+    )
 
-    const exercise = await ctx.db.get(attempt.exerciseId);
-    if (exercise === null) throw new ConvexError("Exercise not found");
+    const exercise = await ctx.db.get(attempt.exerciseId)
+    if (exercise === null) throw new ConvexError("Exercise not found")
 
-    const weekId = exercise.weekId;
+    const weekId = exercise.weekId
     if (weekId === null) {
-      throw new ConvexError("This exercise has been deleted");
+      throw new ConvexError("This exercise has been deleted")
     }
-    const week = await ctx.db.get(weekId);
-    if (week === null) throw new ConvexError("Week not found");
+    const week = await ctx.db.get(weekId)
+    if (week === null) throw new ConvexError("Week not found")
 
     await ctx.db.insert("reports", {
       attemptId: message.attemptId,
       messageId: messageId,
       courseId: week.courseId,
       reason: reason,
-    });
+    })
   },
-});
+})
 
 export const unreportMessage = mutationWithAuth({
   args: {
     messageId: v.id("messages"),
   },
   handler: async (ctx, { messageId }) => {
-    const message = await ctx.db.get(messageId);
-    if (message === null) throw new ConvexError("Message not found");
+    const message = await ctx.db.get(messageId)
+    if (message === null) throw new ConvexError("Message not found")
 
-    await getAttemptIfAuthorized(ctx.db, ctx.session, message.attemptId);
+    await getAttemptIfAuthorized(ctx.db, ctx.session, message.attemptId)
 
     const report = await ctx.db
       .query("reports")
       .withIndex("by_message", (x) => x.eq("messageId", messageId))
-      .first();
-    if (report === null) throw new ConvexError("No report");
+      .first()
+    if (report === null) throw new ConvexError("No report")
 
-    await ctx.db.delete(report._id);
+    await ctx.db.delete(report._id)
   },
-});
+})
 
 export const answerChatCompletionsApi = internalAction({
   args: {
     attemptId: v.id("attempts"),
     userMessageId: v.id("messages"),
     systemMessageId: v.id("messages"),
-    model: v.string(),
     instructions: v.string(),
     completionFunctionDescription: v.string(),
   },
@@ -300,35 +277,22 @@ export const answerChatCompletionsApi = internalAction({
       attemptId,
       userMessageId,
       systemMessageId,
-      model,
       completionFunctionDescription,
       instructions,
-    },
-  ) => {
-    const openai = new OpenAI();
-
-    if (!COMPLETION_VALID_MODELS.includes(model as any)) {
-      await ctx.runMutation(internal.chat.writeSystemResponse, {
-        attemptId,
-        userMessageId,
-        systemMessageId,
-        appearance: "error",
-        content: "",
-      });
-      throw new Error(`Invalid model ${model}`);
     }
-
+  ) => {
+    // Use the model from exercise config if set, otherwise use default
     const messages = await ctx.runQuery(
       internal.chat.generateTranscriptMessages,
       {
         attemptId,
-      },
-    );
+      }
+    )
 
-    let response;
+    let response
     try {
       response = await generateText({
-        model: openaiProvider(model),
+        model: CHAT_MODEL_PROVIDER,
         messages: [{ role: "system", content: instructions }, ...messages],
         tools: {
           markComplete: {
@@ -338,17 +302,17 @@ export const answerChatCompletionsApi = internalAction({
         },
         temperature: 0.7,
         abortSignal: AbortSignal.timeout(3 * 60 * 1000), // 3 minutes
-      });
+      })
     } catch (err) {
-      console.error("Can’t create a completion", err);
+      console.error("Can’t create a completion", err)
       await ctx.runMutation(internal.chat.writeSystemResponse, {
         attemptId,
         userMessageId,
         systemMessageId,
         appearance: "error",
         content: "",
-      });
-      return;
+      })
+      return
     }
 
     if (response.toolCalls && response.toolCalls.length > 0) {
@@ -356,16 +320,16 @@ export const answerChatCompletionsApi = internalAction({
       await ctx.runMutation(internal.chat.markFinished, {
         attemptId,
         systemMessageId,
-      });
+      })
     } else if (!response.text) {
-      console.error("No content in the response", response);
+      console.error("No content in the response", response)
       await ctx.runMutation(internal.chat.writeSystemResponse, {
         attemptId,
         userMessageId,
         systemMessageId,
         appearance: "error",
         content: "",
-      });
+      })
     } else {
       await ctx.runMutation(internal.chat.writeSystemResponse, {
         attemptId,
@@ -373,10 +337,10 @@ export const answerChatCompletionsApi = internalAction({
         systemMessageId,
         appearance: undefined,
         content: response.text,
-      });
+      })
     }
   },
-});
+})
 
 export const markFinished = internalMutation({
   args: {
@@ -384,38 +348,38 @@ export const markFinished = internalMutation({
     systemMessageId: v.id("messages"),
   },
   handler: async (ctx, { attemptId, systemMessageId }) => {
-    const attempt = await ctx.db.get(attemptId);
+    const attempt = await ctx.db.get(attemptId)
     if (!attempt) {
-      throw new Error("Can’t find the attempt");
+      throw new Error("Can’t find the attempt")
     }
     // Start feedback
-    const exercise = await ctx.db.get(attempt.exerciseId);
+    const exercise = await ctx.db.get(attempt.exerciseId)
     if (!exercise) {
       throw new Error(
-        "Can’t find the exercise for the attempt that was just completed",
-      );
+        "Can’t find the exercise for the attempt that was just completed"
+      )
     }
 
     if (attempt.status === "exercise") {
       if (exercise.quiz === null) {
         // Mark the exercise as finished
-        const { weekId } = exercise;
+        const { weekId } = exercise
         if (weekId === null) {
-          throw new Error("Deleted exercise");
+          throw new Error("Deleted exercise")
         }
-        const week = await ctx.db.get(weekId);
+        const week = await ctx.db.get(weekId)
         if (!week) {
-          throw new Error("Can’t find the week");
+          throw new Error("Can’t find the week")
         }
 
         const registration = await ctx.db
           .query("registrations")
           .withIndex("by_user_and_course", (q) =>
-            q.eq("userId", attempt.userId).eq("courseId", week.courseId),
+            q.eq("userId", attempt.userId).eq("courseId", week.courseId)
           )
-          .first();
+          .first()
         if (!registration) {
-          throw new Error("The user is no longer registered in the course");
+          throw new Error("The user is no longer registered in the course")
         }
 
         if (!registration.completedExercises.includes(attempt.exerciseId)) {
@@ -424,19 +388,19 @@ export const markFinished = internalMutation({
               ...registration.completedExercises,
               attempt.exerciseId,
             ],
-          });
+          })
         }
       }
 
       await ctx.db.patch(attemptId, {
         status: exercise.quiz === null ? "quizCompleted" : "exerciseCompleted",
-      });
+      })
     }
 
     await ctx.db.patch(systemMessageId, {
       content: "",
       appearance: exercise.feedback ? "feedback" : "finished",
-    });
+    })
 
     await ctx.db.insert("logs", {
       type: "exerciseCompleted",
@@ -444,38 +408,32 @@ export const markFinished = internalMutation({
       attemptId,
       exerciseId: attempt.exerciseId,
       variant: "explain",
-    });
+    })
 
     if (exercise.feedback) {
       await ctx.scheduler.runAfter(0, internal.chat.startFeedback, {
         feedbackMessageId: systemMessageId,
         attemptId,
-        model: exercise.feedback.model,
         prompt: exercise.feedback.prompt,
-      });
+      })
     }
   },
-});
+})
 
 export const startFeedback = internalAction({
   args: {
     attemptId: v.id("attempts"),
     feedbackMessageId: v.id("messages"),
-    model: v.string(),
     prompt: v.string(),
   },
-  handler: async (ctx, { attemptId, feedbackMessageId, model, prompt }) => {
+  handler: async (ctx, { attemptId, feedbackMessageId, prompt }) => {
     try {
-      if (!COMPLETION_VALID_MODELS.includes(model as any)) {
-        throw new Error(`Invalid model ${model}`);
-      }
-
       const transcript = await ctx.runQuery(internal.chat.generateTranscript, {
         attemptId,
-      });
+      })
 
       const response = await generateText({
-        model: openaiProvider(model),
+        model: CHAT_MODEL_PROVIDER,
         messages: [
           {
             role: "system",
@@ -488,23 +446,23 @@ export const startFeedback = internalAction({
         ],
         temperature: 0.7,
         abortSignal: AbortSignal.timeout(3 * 60 * 1000), // 3 minutes
-      });
+      })
 
       await ctx.runMutation(internal.chat.saveFeedback, {
         attemptId,
         feedbackMessageId,
         feedback: response.text,
-      });
+      })
     } catch (err) {
-      console.error("Feedback error", err);
+      console.error("Feedback error", err)
       await ctx.runMutation(internal.chat.saveFeedback, {
         attemptId,
         feedbackMessageId,
         feedback: "error",
-      });
+      })
     }
   },
-});
+})
 
 export const generateTranscript = internalQuery({
   args: {
@@ -514,17 +472,17 @@ export const generateTranscript = internalQuery({
     const messages = await db
       .query("messages")
       .withIndex("by_attempt", (q) => q.eq("attemptId", attemptId))
-      .collect();
+      .collect()
 
     return messages
       .filter((q) => !q.appearance)
       .map(
         ({ content, system }) =>
-          `<message from="${system ? "chatbot" : "student"}">${content}</message>`,
+          `<message from="${system ? "chatbot" : "student"}">${content}</message>`
       )
-      .join("\n\n");
+      .join("\n\n")
   },
-});
+})
 
 export const generateTranscriptMessages = internalQuery({
   args: {
@@ -534,16 +492,16 @@ export const generateTranscriptMessages = internalQuery({
     const messages = await db
       .query("messages")
       .withIndex("by_attempt", (q) => q.eq("attemptId", attemptId))
-      .collect();
+      .collect()
 
     return messages
       .filter((q) => !q.appearance && q.content)
       .map(({ content, system }) => ({
         role: system ? ("assistant" as const) : ("user" as const),
         content: content,
-      }));
+      }))
   },
-});
+})
 
 export const saveFeedback = internalMutation({
   args: {
@@ -552,14 +510,14 @@ export const saveFeedback = internalMutation({
     feedback: v.string(),
   },
   handler: async (ctx, args) => {
-    const attempt = await ctx.db.get(args.attemptId);
+    const attempt = await ctx.db.get(args.attemptId)
     if (!attempt) {
-      throw new Error("Can’t find the attempt");
+      throw new Error("Can’t find the attempt")
     }
 
     await ctx.db.patch(args.feedbackMessageId, {
       content: args.feedback,
-    });
+    })
 
     await ctx.db.insert("logs", {
       type: "feedbackGiven",
@@ -568,6 +526,6 @@ export const saveFeedback = internalMutation({
       exerciseId: attempt.exerciseId,
       systemMessageId: args.feedbackMessageId,
       variant: "explain",
-    });
+    })
   },
-});
+})
