@@ -51,9 +51,6 @@ import * as React from "react"
 import { toast } from "sonner"
 import { api } from "../../../../convex/_generated/api"
 import { Id } from "../../../../convex/_generated/dataModel"
-import { CheckCircleIcon } from "@heroicons/react/24/solid"
-import { ClockIcon } from "@heroicons/react/24/outline"
-
 
 function Login() {
   const router = useRouter()
@@ -948,327 +945,250 @@ function DebouncedInput({
   )
 }
 
-
-type ExerciseItem = { id: string; name: string; description: string }
-
-type Progress = "not_started" | "in_progress" | "completed";
-
-function WeekStatusIcon({ status }: { status: Progress }) {
-  const map: Record<Progress, { label: string; cls: string }> = {
-    not_started: { label: "Not started", cls: "bg-slate-300 text-slate-700" },
-    in_progress: { label: "In progress", cls: "bg-amber-100 text-amber-700" },
-    completed: { label: "Completed", cls: "bg-emerald-100 text-emerald-700" },
-  };
-  const { label, cls } = map[status];
-  return (
-    <span className={clsx("rounded-full px-3 py-1 text-xs font-medium", cls)}>
-      {label}
-    </span>
-  );
-}
-
-function StatusIcon({ status }: { status: Progress }) {
-  return status === "completed" ? (
-    <CheckCircleIcon className="h-5 w-5 text-emerald-400 drop-shadow" />
-  ) : (
-    <ClockIcon className="h-5 w-5 text-amber-400 drop-shadow" />
-  );
-}
-
-
-function WeekHeader({
-  weekNumber,
-  title,
-  status = "not_started",
-  rightBadge,
-}: {
-  weekNumber: number;
-  title?: string;
-  status?: Progress;
-  rightBadge?: React.ReactNode;
-}) {
-  return (
-    <div className="mb-3 flex items-center justify-between">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight">
-          Week {weekNumber}
-          {title ? `: ${title}` : ""}
-        </h2>
-      </div>
-      {rightBadge ?? <WeekStatusIcon status={status} />}
-    </div>
-  );
-}
-
-// REPLACE the whole ExerciseBlob with this version
-function ExerciseBlob({
-  title,
-  snippet,
-  status = "not_started",
-  onClick,
-}: {
-  title: string;
-  snippet: string;
-  status?: Progress;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group relative block w-full rounded-3xl bg-slate-700/90 p-4 text-left shadow-[0_12px_36px_-12px_rgba(0,0,0,.35)] transition hover:bg-slate-700"
-      title={`Upload for ${title}`}
-    >
-      {/* status icon */}
-      <div className="pointer-events-none absolute right-3 top-3">
-        <StatusIcon status={status} />
-      </div>
-
-      <div className="text-base font-semibold text-white">{title}</div>
-      <div
-        className={clsx(
-          "mt-1 text-sm text-slate-200/85",
-          "line-clamp-2 overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]"
-        )}
-      >
-        {snippet}
-      </div>
-    </button>
-  );
-}
-
-
-// REPLACE the whole ExerciseGrid with this version
-function ExerciseGrid({
-  weeks,
-  getStatus,
-  onPick,
-}: {
-  weeks: number[];
-  getStatus: (weekNumber: number, exerciseId: string) => Progress;
-  onPick: (weekNumber: number, exercise: ExerciseItem) => void;
-}) {
-  const mockExercisesByWeek = (w: number): ExerciseItem[] =>
-    [1, 2, 3].map((i) => ({
-      id: `${w}-${i}`,
-      name: `Exercise ${i}`,
-      description:
-        `This will be the description for problem ${i} of Week ${w}. ` +
-        `When the teacher uploads a PDF, we’ll extract the first sentences here. `,
-    }));
-
-  if (!weeks || weeks.length === 0) {
-    return (
-      <div className="rounded-2xl bg-white p-8 text-center text-slate-500 shadow">
-        No assignments yet.
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid gap-10">
-      {weeks.map((w) => {
-        const exs = mockExercisesByWeek(w);
-        const statuses = exs.map((ex) => getStatus(w, ex.id));
-        const allCompleted = statuses.length > 0 && statuses.every((s) => s === "completed");
-        const anyStarted = statuses.some((s) => s !== "not_started");
-        const weekStatus: Progress = allCompleted
-          ? "completed"
-          : anyStarted
-            ? "in_progress"
-            : "not_started";
-
-        return (
-          <section key={w}>
-            <WeekHeader weekNumber={w} status={weekStatus} />
-            <div className="mt-4 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-              {exs.map((ex) => {
-                const status = getStatus(w, ex.id);
-                const snippet =
-                  ex.description.length > 140
-                    ? ex.description.slice(0, 140) + "…"
-                    : ex.description;
-                return (
-                  <ExerciseBlob
-                    key={ex.id}
-                    title={ex.name}
-                    snippet={snippet}
-                    status={status}
-                    onClick={() => onPick(w, ex)}
-                  />
-                );
-              })}
-            </div>
-          </section>
-        );
-      })}
-    </div>
-  );
-}
-
-
-
-
 function SuperAssistant() {
-  const courseSlug = useCourseSlug()
-  const router = useRouter()
-  const weeks = useQuery(api.admin.sadatabase.getWeeks, { courseSlug })
-  const [isUploadOpen, setIsUploadOpen] = useState(false)
-  const [pickedWeek, setPickedWeek] = useState<number | null>(null)
-  const [pickedExercise, setPickedExercise] = useState<string>("")
-  const [pickedExerciseDesc, setPickedExerciseDesc] = useState<string>("")
   const [file, setFile] = useState<File | null>(null)
-  const [feedbackName, setFeedbackName] = useState("")
+  const courseSlug = useCourseSlug()
+  const [isModal1Open, setIsModal1Open] = useState(false)
+  const [isModal2Open, setIsModal2Open] = useState(false)
   const [chatName, setChatName] = useState("")
   const [statement, setStatement] = useState("")
+  const router = useRouter()
   const generateFeedback = useMutation(api.feedback.generateFeedback)
   const generateUploadUrl = useMutation(api.feedback.generateUploadUrl)
   const { startUpload } = useFileUpload(() => generateUploadUrl({}))
   const generateChat = useMutation(api.superassistant.chat.generateChat)
+  const [feedbackName, setFeedbackName] = useState("")
+  const weeks = useQuery(api.admin.sadatabase.getWeeks, { courseSlug })
+  const [selectedFeedbackWeek, setSelectedFeedbackWeek] = useState<string>("")
+  const [selectedChatWeek, setSelectedChatWeek] = useState<string>("")
 
-  // ADD near other useState hooks
-  const [statusByWeek, setStatusByWeek] = useState<Record<number, Record<string, Progress>>>({});
-  const [pickedExerciseId, setPickedExerciseId] = useState<string | null>(null);
-
-  const getStatus = (w: number, exId: string): Progress =>
-    statusByWeek[w]?.[exId] ?? "not_started";
-
-  const setStatus = (w: number, exId: string, s: Progress) =>
-    setStatusByWeek((prev) => ({
-      ...prev,
-      [w]: { ...(prev[w] ?? {}), [exId]: s },
-    }));
-
-  const handlePick = (weekNumber: number, exercise: ExerciseItem) => {
-    setPickedWeek(weekNumber);
-    setPickedExercise(exercise.name);
-    setPickedExerciseDesc(exercise.description);
-    setPickedExerciseId(exercise.id);
-    setStatus(weekNumber, exercise.id, "in_progress");
-    setIsUploadOpen(true);
-  };
+  useEffect(() => {
+  if (weeks && weeks.length > 0) {
+    setSelectedFeedbackWeek(prev => prev || String(weeks[0]))
+    setSelectedChatWeek(prev => prev || String(weeks[0]))
+  }
+}, [weeks])
 
   return (
     <>
-      <div className="mt-16 mb-10">
-        {weeks === undefined ? (
-          <LoadingGrid />
-        ) : (
-          <ExerciseGrid weeks={weeks} getStatus={getStatus} onPick={handlePick} />
-        )}
+      <div className="mt-16 mb-16 flex flex-row gap-3 text-3xl font-medium">
+        <div className="basis-1/2 justify-items-center">
+          <p className="text-center text-xl">Get feedback on an exercise</p>
+          <div className="mt-4 grid justify-items-center">
+            <button
+              className="block rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
+              type="button"
+              onClick={() => {
+                setIsModal1Open(true)
+              }}
+            >
+              <div className="p-8 pr-10 pl-10">
+                <div className="flex flex-col items-center justify-center gap-2 text-xl text-sky-700">
+                  <PlusIcon className="mb-2 h-6 w-6" />
+                  <span>New feedback</span>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div className="h-auto w-1 self-stretch bg-gray-400"></div>
+
+        <div className="basis-1/2 justify-items-center">
+          <p className="text-center text-xl">
+            Still stuck? Chat with the Super-Assistant
+          </p>
+          <div className="mt-4 grid justify-items-center">
+            <button
+              className="rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
+              type="button"
+              onClick={() => {
+                setIsModal2Open(true)
+              }}
+            >
+              <div className="p-8 pr-16 pl-16">
+                <div className="flex flex-col items-center justify-center gap-2 text-xl text-sky-700">
+                  <PlusIcon className="mb-2 h-6 w-6" />
+                  <span>New chat</span>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
 
       <Modal
-        isOpen={isUploadOpen}
-        onClose={() => {
-          setIsUploadOpen(false)
-          setFile(null)
-          setFeedbackName("")
-          setChatName("")
-          setStatement("")
-          setPickedExerciseDesc("")
-        }}
-        title={
-          pickedWeek
-            ? `Upload for Week ${pickedWeek} — ${pickedExercise}`
-            : "Upload your attempt"
-        }
+        isOpen={isModal1Open}
+        onClose={() => setIsModal1Open(false)}
+        title="Upload your tentative solution to get feedback."
       >
-        {pickedExerciseDesc && (
-          <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-slate-800">
-            {pickedExerciseDesc}
-          </div>
-        )}
-
         <form
           onSubmit={async (e) => {
             e.preventDefault()
-            if (file === null || pickedWeek == null) {
-              toast.error("Please pick an exercise and upload an image.")
-              return
-            }
-
-            const uploaded = await startUpload([file])
-            const storageId = (uploaded[0].response as { storageId: string })
-              .storageId as Id<"_storage">
-
-            const feedbackId = await generateFeedback({
-              courseSlug,
-              storageId,
-              name: feedbackName || `${pickedExercise} — Week ${pickedWeek}`,
-              weekNumber: pickedWeek,
-            })
-
-            const chatId = await generateChat({
-              courseSlug,
-              reason:
-                statement || `Discussion for ${pickedExercise} (Week ${pickedWeek})`,
-              name: chatName || `${pickedExercise} (Week ${pickedWeek})`,
-              weekNumber: pickedWeek,
-            })
-
-            if ((feedbackId || chatId) && pickedExerciseId && pickedWeek != null) {
-            setStatus(pickedWeek, pickedExerciseId, "completed")
-          }
-
-            if (feedbackId) {
-              router.push(`/${courseSlug}/super-assistant/feedback/${feedbackId}`)
-            } else if (chatId) {
-              router.push(`/${courseSlug}/super-assistant/chat/${chatId}`)
+            if (file === null) {
+              toast.error(
+                "You have to upload your tentative solution to get feedback."
+              )
             } else {
-              toast.error("Failed to generate feedback/chat.")
-            }
+              const uploaded = await startUpload([file])
+              const storageId = (uploaded[0].response as { storageId: string })
+                .storageId
+              const feedbackId = await generateFeedback({
+                courseSlug,
+                storageId: storageId as Id<"_storage">,
+                name: feedbackName,
+                weekNumber: Number(selectedFeedbackWeek),
+              })
 
-            setIsUploadOpen(false)
-            setFile(null)
-            setFeedbackName("")
-            setChatName("")
-            setStatement("")
-            setPickedExerciseDesc("")
+              if (feedbackId) {
+                router.push(
+                  `/${courseSlug}/super-assistant/feedback/${feedbackId}`
+                )
+              } else {
+                toast.error("Failed to generate feedback.")
+              }
+              setFile(null)
+              setIsModal1Open(false)
+            }
           }}
         >
-          <UploadWithImage value={file} onChange={setFile} />
-
-          <div className="mt-4 grid gap-3">
-            <Input
-              label="Add a note for the assistant (optional):"
-              placeholder="What do you want help with?"
-              value={statement}
-              onChange={setStatement}
-            />
-          </div>
-
-          <div className="mt-4 flex justify-end gap-2">
+          <UploadWithImage value={file} onChange={(value) => setFile(value)} />
+          {weeks !== undefined && (
+            <>
+              <label
+                htmlFor="week-number"
+                className="block text-sm font-medium text-slate-800"
+              >
+                Please select the week you are working on:
+              </label>
+              <select
+                name="week"
+                id="week-number"
+                value={selectedFeedbackWeek}
+                onChange={(e) =>
+                  setSelectedFeedbackWeek(e.target.value)
+                }
+                className="form-select mt-1 mb-6 h-10 w-full rounded-md border border-slate-300 p-2 font-sans focus:border-inherit focus:ring-2 focus:ring-inherit focus:outline-none"
+              >
+                {weeks.map((week) => (
+                  <option key={week} value={String(week)}>
+                    Week {week}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+          <Input
+            label="Name this new feedback (optional):"
+            placeholder="Name"
+            value={feedbackName}
+            onChange={(value) => setFeedbackName(value)}
+          />
+          <div className="flex justify-end gap-2">
             <Button
               type="button"
               onClick={() => {
-                setIsUploadOpen(false)
+                setIsModal1Open(false)
                 setFile(null)
                 setFeedbackName("")
-                setChatName("")
-                setStatement("")
-                setPickedExerciseDesc("")
               }}
               variant="secondary"
               size="sm"
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" disabled={!file || pickedWeek == null}>
-              Upload & Continue
+            <Button type="submit" size="sm">
+              Generate feedback
             </Button>
           </div>
         </form>
       </Modal>
 
-      <div className="mt-12">
-        <h3 className="mb-3 text-lg font-semibold text-slate-800">History</h3>
-        <Table />
-      </div>
+      <Modal
+        isOpen={isModal2Open}
+        onClose={() => setIsModal2Open(false)}
+        title="Start a chat with the Super-Assistant."
+      >
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault()
+            const chatId = await generateChat({
+              courseSlug,
+              reason: statement,
+              name: chatName,
+              weekNumber: Number(selectedChatWeek),
+            })
+
+            if (chatId) {
+              router.push(`/${courseSlug}/super-assistant/chat/${chatId}`)
+            } else {
+              toast.error("Failed to generate chat.")
+            }
+
+            setIsModal2Open(false)
+          }}
+        >
+          <div className="h-6"></div>
+          {weeks !== undefined && (
+            <>
+              <label
+                htmlFor="week-number"
+                className="block text-sm font-medium text-slate-800"
+              >
+                Please select the week you are working on:
+              </label>
+              <select
+                name="week"
+                id="week-number"
+                value={selectedChatWeek}
+                onChange={(e) => setSelectedChatWeek(e.target.value)}
+                className="form-select mt-1 mb-6 h-10 w-full rounded-md border border-slate-300 p-2 font-sans focus:border-inherit focus:ring-2 focus:ring-inherit focus:outline-none"
+              >
+                {weeks.map((week) => (
+                  <option key={week} value={week}>
+                    Week {week}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+          <Input
+            label="Name this new chat (optional):"
+            placeholder="Name"
+            value={chatName}
+            onChange={(value) => setChatName(value)}
+          />
+          <Input
+            label="Specify the exercise and what clarification you need:"
+            placeholder="Reason for new chat"
+            value={statement}
+            onChange={(value) => setStatement(value)}
+            required
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              onClick={() => {
+                setIsModal2Open(false)
+                setChatName("")
+                setStatement("")
+              }}
+              variant="secondary"
+              size="sm"
+            >
+              Cancel
+            </Button>
+            <Button type="submit" size="sm">
+              Generate new chat
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Table />
     </>
   )
 }
-
 
 function LoadingGrid() {
   return (

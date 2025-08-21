@@ -41,8 +41,8 @@ export default function Feedback({
           <ImageMessage imageUrl={imageUrl} />
         )}
 
-        {chat?.map((message) => (
-          <>
+        {chat?.map((message, i) => (
+           <Fragment key={(message as any).id ?? (message as any)._id ?? i}>
             {typeof message.content !== "string" &&
               message.role === "user" &&
               message.content[1].type === "image_url" && (
@@ -123,7 +123,7 @@ export default function Feedback({
                   </div>
                 </div>
               )}
-          </>
+          </Fragment>
         ))}
       </div>
 
