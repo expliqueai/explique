@@ -1037,7 +1037,7 @@ function SuperAssistant() {
                 courseSlug,
                 storageId: storageId as Id<"_storage">,
                 name: feedbackName,
-                weekNumber: selectedFeedbackWeek,
+                weekNumber: Number(selectedFeedbackWeek),
               })
 
               if (feedbackId) {
