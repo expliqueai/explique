@@ -1018,7 +1018,6 @@ function ExerciseBlob({
       className="group relative block w-full rounded-3xl bg-slate-700/90 p-4 text-left shadow-[0_12px_36px_-12px_rgba(0,0,0,.35)] transition hover:bg-slate-700"
       title={`Upload for ${title}`}
     >
-      {/* status icon */}
       <div className="pointer-events-none absolute right-3 top-3">
         <StatusIcon status={status} />
       </div>
