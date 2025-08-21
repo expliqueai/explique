@@ -1000,7 +1000,6 @@ function WeekHeader({
   );
 }
 
-// REPLACE the whole ExerciseBlob with this version
 function ExerciseBlob({
   title,
   snippet,
@@ -1038,7 +1037,6 @@ function ExerciseBlob({
 }
 
 
-// REPLACE the whole ExerciseGrid with this version
 function ExerciseGrid({
   weeks,
   getStatus,
@@ -1126,7 +1124,6 @@ function SuperAssistant() {
   const { startUpload } = useFileUpload(() => generateUploadUrl({}))
   const generateChat = useMutation(api.superassistant.chat.generateChat)
 
-  // ADD near other useState hooks
   const [statusByWeek, setStatusByWeek] = useState<Record<number, Record<string, Progress>>>({});
   const [pickedExerciseId, setPickedExerciseId] = useState<string | null>(null);
 
