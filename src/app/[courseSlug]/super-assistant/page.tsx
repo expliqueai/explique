@@ -95,6 +95,7 @@ function CourseSelector() {
   return (
     <>
       <Listbox
+        as="div" 
         value={courseSlug}
         onChange={(selectedCourseSlug) => {
           router.push(`/${selectedCourseSlug}`)
@@ -104,6 +105,7 @@ function CourseSelector() {
           <>
             <div className="relative">
               <ListboxButton
+                as="button"
                 className={clsx(
                   "h-28 w-full cursor-default rounded-2xl px-6 py-1.5 text-left text-gray-900 ring-inset focus:ring-4 focus:outline-none sm:h-32 sm:px-10 sm:text-sm sm:leading-6",
                   open && "ring-4"
@@ -131,9 +133,10 @@ function CourseSelector() {
                 leaveFrom="opacity-100"
                 leaveTo="opacity-0"
               >
-                <ListboxOptions className="ring-opacity-5 absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black focus:outline-none sm:text-sm">
+                <ListboxOptions as="ul" className="ring-opacity-5 absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black focus:outline-none sm:text-sm">
                   {courses.map((course) => (
                     <ListboxOption
+                      as="li"
                       key={course.slug}
                       className={({ focus }) =>
                         clsx(
@@ -956,12 +959,15 @@ function SuperAssistant() {
   const generateChat = useMutation(api.superassistant.chat.generateChat)
   const [feedbackName, setFeedbackName] = useState("")
   const weeks = useQuery(api.admin.sadatabase.getWeeks, { courseSlug })
-  const [selectedFeedbackWeek, setSelectedFeedbackWeek] = useState<number>(
-    weeks === undefined ? NaN : weeks[0]
-  )
-  const [selectedChatWeek, setSelectedChatWeek] = useState<number>(
-    weeks === undefined ? NaN : weeks[0]
-  )
+  const [selectedFeedbackWeek, setSelectedFeedbackWeek] = useState<string>("")
+  const [selectedChatWeek, setSelectedChatWeek] = useState<string>("")
+
+  useEffect(() => {
+  if (weeks && weeks.length > 0) {
+    setSelectedFeedbackWeek(prev => prev || String(weeks[0]))
+    setSelectedChatWeek(prev => prev || String(weeks[0]))
+  }
+}, [weeks])
 
   return (
     <>
@@ -1060,12 +1066,12 @@ function SuperAssistant() {
                 id="week-number"
                 value={selectedFeedbackWeek}
                 onChange={(e) =>
-                  setSelectedFeedbackWeek(Number(e.target.value))
+                  setSelectedFeedbackWeek(e.target.value)
                 }
                 className="form-select mt-1 mb-6 h-10 w-full rounded-md border border-slate-300 p-2 font-sans focus:border-inherit focus:ring-2 focus:ring-inherit focus:outline-none"
               >
                 {weeks.map((week) => (
-                  <option key={week} value={week}>
+                  <option key={week} value={String(week)}>
                     Week {week}
                   </option>
                 ))}
@@ -1110,7 +1116,7 @@ function SuperAssistant() {
               courseSlug,
               reason: statement,
               name: chatName,
-              weekNumber: selectedChatWeek,
+              weekNumber: Number(selectedChatWeek),
             })
 
             if (chatId) {
@@ -1135,7 +1141,7 @@ function SuperAssistant() {
                 name="week"
                 id="week-number"
                 value={selectedChatWeek}
-                onChange={(e) => setSelectedChatWeek(Number(e.target.value))}
+                onChange={(e) => setSelectedChatWeek(e.target.value)}
                 className="form-select mt-1 mb-6 h-10 w-full rounded-md border border-slate-300 p-2 font-sans focus:border-inherit focus:ring-2 focus:ring-inherit focus:outline-none"
               >
                 {weeks.map((week) => (
