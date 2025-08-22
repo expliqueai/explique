@@ -27,7 +27,7 @@ export type State = {
   weekId: Id<"weeks">
   name: string
   instructions: string
-  model: string
+  model: string | undefined
   text: string
   image?: Id<"images">
   imagePrompt?: string
