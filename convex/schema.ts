@@ -27,9 +27,11 @@ export const exerciseAdminSchema = {
   weekId: v.union(v.id("weeks"), v.null()), // null = soft-deleted exercise
 
   instructions: v.string(), // instructions for the chatbot in the explanation part
+  model: v.optional(v.string()),
   feedback: v.optional(
     // whether to provide some feedback after the explanation
     v.object({
+      model: v.optional(v.string()),
       prompt: v.string(), // the system prompt of the feedback part
     })
   ),
