@@ -27,6 +27,7 @@ export type State = {
   weekId: Id<"weeks">
   name: string
   instructions: string
+  model: string
   text: string
   image?: Id<"images">
   imagePrompt?: string
@@ -47,6 +48,7 @@ export function toConvexState(state: State) {
     image: state.image,
     imagePrompt: state.imagePrompt,
     instructions: state.instructions,
+    model: state.model,
     text: state.text,
     weekId: state.weekId,
 
@@ -131,6 +133,7 @@ export default function ExerciseForm({
         onSubmit({
           name,
           instructions,
+          model: initialState.model,
           image,
           text,
           weekId,
@@ -511,8 +514,6 @@ function QuizBatch({
                 ),
               })
             }}
-            batchNumber={batchIndex}
-            questionNumber={questionIndex}
           />
         ))}
       </div>
@@ -525,15 +526,11 @@ function QuizQuestion({
   onChange,
   showDeleteButton,
   onDelete,
-  batchNumber,
-  questionNumber,
 }: {
   question: Question
   onChange: (question: Question) => void
   showDeleteButton: boolean
   onDelete: () => void
-  batchNumber: number
-  questionNumber: number
 }) {
   const correctAnswerName = useId()
 
