@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   useQuery as useConvexQuery,
   useMutation as useConvexMutation,
@@ -21,7 +22,7 @@ export function useQuery<
   return useConvexQuery(
     query,
     args === "skip" ? "skip" : ({ ...args, sessionId } as any),
-  );
+  ) as any;
 }
 
 export function useMutation<
@@ -48,7 +49,7 @@ export function useMutation<
       }
     },
     [doMutation, sessionId],
-  ) as any; // We don't support optimistic updates
+  ) as any
 }
 
 export function useAction<
@@ -75,5 +76,5 @@ export function useAction<
       }
     },
     [doAction, sessionId],
-  ) as any; // We don't support optimistic updates
+  ) as any
 }

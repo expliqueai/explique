@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Input, { InputWithCheckbox } from "./Input";
 import { PrimaryButton } from "./PrimaryButton";
-import { toast } from "sonner";
 
 export type State = {
   name: string;

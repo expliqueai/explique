@@ -28,7 +28,7 @@ export default function SuperadminAddCoursePage() {
               await save({ name, code });
               toast.success("Course created.");
               router.push(`/superadmin`);
-            } catch (e) {}
+            } catch {}
           }}
         >
           <Input

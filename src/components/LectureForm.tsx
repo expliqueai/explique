@@ -1,14 +1,6 @@
-import React, { useId, useState } from "react";
+import React, { useState } from "react";
 import Input, { Select, Textarea } from "@/components/Input";
-import {
-  EllipsisHorizontalIcon,
-  ExclamationCircleIcon,
-  PlusIcon,
-} from "@heroicons/react/16/solid";
 import { PlusIcon as PlusIconLarge } from "@heroicons/react/24/outline";
-import { XMarkIcon } from "@heroicons/react/20/solid";
-import { QuizContents } from "@/components/exercises/QuizExercise";
-import Markdown from "@/components/Markdown";
 import { Id } from "../../convex/_generated/dataModel";
 import { api as convexApi } from "../../convex/_generated/api";
 import { useAction, useQuery } from "@/usingSession";
@@ -40,13 +32,11 @@ export default function LectureForm({
   lectureId,
   initialState,
   onSubmit,
-  onReprocess,
   type,
 }: {
   lectureId?: Id<"lectures">;
   initialState: State;
   onSubmit: (state: State) => void;
-  onReprocess?: (state: State) => void;
   type: "create" | "update";
 }) {
   const [name, setName] = useState(initialState.name);

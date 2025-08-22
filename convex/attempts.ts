@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { Doc, Id } from "./_generated/dataModel";
+import { Id } from "./_generated/dataModel";
 import {
   actionWithAuth,
   mutationWithAuth,
@@ -75,8 +75,6 @@ export const get = queryWithAuth({
         attempt.status === "quizCompleted" ||
         isSolutionShown)
     ) {
-      const { identifier } = session.user;
-
       quiz = shownQuestions(
         exercise.quiz,
         attempt.userId,

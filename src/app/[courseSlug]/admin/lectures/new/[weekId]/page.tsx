@@ -1,6 +1,6 @@
 "use client";
 
-import { useAction, useQuery } from "@/usingSession";
+import { useAction } from "@/usingSession";
 import { useParams, useRouter } from "next/navigation";
 
 import LectureForm, { toConvexState } from "@/components/LectureForm";
@@ -9,7 +9,6 @@ import { api } from "../../../../../../../convex/_generated/api";
 import Title from "@/components/typography";
 import { toast } from "sonner";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
-import { useAdminIdentity } from "@/hooks/useAdminIdentity";
 import ReactPlayer from "react-player";
 
 export default function NewLecture() {
@@ -18,7 +17,6 @@ export default function NewLecture() {
   const initialWeekId = params.weekId as Id<"lectureWeeks">;
   const courseSlug = useCourseSlug();
   const create = useAction(api.admin.lectures.create);
-  const jwt = useAdminIdentity();
 
   return (
     <div className="bg-slate-100 h-full p-10 flex justify-center">

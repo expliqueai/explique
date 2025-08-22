@@ -26,11 +26,6 @@ export function ExerciseLinkWithMenu({ exercise }: { exercise: Exercise }) {
   const deleteExercise = useMutation(api.admin.exercises.softDelete);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const [destinationCourse, setDestinationCourse] =
-    useState<Id<"courses"> | null>(null);
-  const [destinationWeek, setDestinationWeek] = useState<Id<"weeks"> | null>(
-    null,
-  );
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
 
   return (

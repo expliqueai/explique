@@ -1,7 +1,6 @@
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import { mutationWithAuth, queryWithAuth } from "../auth/withAuth";
 import { validateSuperadminSession } from "./util";
-import slugify from "@sindresorhus/slugify";
 import { generateSlug } from "../admin/course";
 
 export const list = queryWithAuth({

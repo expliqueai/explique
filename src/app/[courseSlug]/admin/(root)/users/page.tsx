@@ -19,7 +19,6 @@ import { useMutation, useQuery } from "@/usingSession";
 import { Button } from "@/components/Button";
 import {
   ChevronUpDownIcon,
-  LockClosedIcon,
   TableCellsIcon,
   CheckIcon as CheckIcon20,
 } from "@heroicons/react/20/solid";
@@ -34,6 +33,15 @@ import {
   ListboxOptions,
   Transition,
 } from "@headlessui/react";
+
+type WeekWithExercises = {
+  id: Id<"weeks">;
+  name: string;
+  exercises: {
+    id: Id<"exercises">;
+    name: string;
+  }[];
+};
 
 export default function ScoresPage() {
   return (
@@ -88,13 +96,13 @@ function DownloadAllButton() {
       [
         "User",
         "Role",
-        ...weeks.flatMap((week) => week.exercises.map((e) => e.name)),
+        ...weeks.flatMap((week: WeekWithExercises) => week.exercises.map((e) => e.name)),
         "Completed exercises",
       ],
       ...users.map((user) => [
         user.email ?? "Unknown",
         user.role === "admin" ? "Admin" : user.role === "ta" ? "TA" : "",
-        ...weeks.flatMap((week) =>
+        ...weeks.flatMap((week: WeekWithExercises) =>
           week.exercises.map((exercise) =>
             user.completedExercises.includes(exercise.id) ? "1" : "0",
           ),
@@ -196,7 +204,7 @@ function ScoresTable() {
         </div>
         <div className="overflow-x-auto">
           <div className="h-40 flex">
-            {weeks.map((week) => (
+            {weeks.map((week: WeekWithExercises) => (
               <React.Fragment key={week.id}>
                 {week.exercises.map((exercise) => (
                   <div
@@ -217,7 +225,7 @@ function ScoresTable() {
 
           {users.map((user) => (
             <div className="h-12 flex" key={user.id}>
-              {weeks.map((week) => (
+              {weeks.map((week: WeekWithExercises) => (
                 <React.Fragment key={week.id}>
                   {week.exercises.map((exercise, exerciseIndex) => (
                     <div
@@ -369,8 +377,6 @@ function RoleSelector({ value, userId }: { value: Role; userId: Id<"users"> }) {
 function AddUsers() {
   const [emails, setEmails] = useState("");
   const courseSlug = useCourseSlug();
-  const convex = useConvex();
-  const sessionId = useSessionId();
   const addUser = useMutation(api.admin.users.register);
 
   return (
@@ -397,7 +403,7 @@ function AddUsers() {
 
         setEmails("");
 
-        let users = { emails: validatedEmails };
+        const users = { emails: validatedEmails };
         const { added, ignored } = await addUser({
           courseSlug,
           users,

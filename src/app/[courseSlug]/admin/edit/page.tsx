@@ -38,7 +38,7 @@ function Form({
           const { slug } = await save({ courseSlug, name, code });
           toast.success("Course saved.");
           router.push(`/${slug}/admin`);
-        } catch (e) {
+        } catch {
           onSumbitStop?.();
         }
       }}

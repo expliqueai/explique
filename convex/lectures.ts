@@ -1,11 +1,9 @@
 import { StorageReader } from "convex/server"
 import { ConvexError, v } from "convex/values"
-import { Doc, Id } from "./_generated/dataModel"
+import { Doc } from "./_generated/dataModel"
 import {
   DatabaseReader,
   internalQuery,
-  mutation,
-  query,
 } from "./_generated/server"
 import { queryWithAuth } from "./auth/withAuth"
 import { getCourseRegistration } from "./courses"
@@ -85,8 +83,6 @@ export const list = queryWithAuth({
       session,
       courseSlug
     )
-
-    const { user } = session
 
     const now = +new Date()
 

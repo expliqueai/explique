@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { queryWithAuth } from "./auth/withAuth";
 import { DatabaseReader, internalQuery } from "./_generated/server";
 import { getCourseRegistration } from "./courses";
-import { Doc, Id } from "./_generated/dataModel";
+import { Doc } from "./_generated/dataModel";
 import { StorageReader } from "convex/server";
 
 export const getRow = internalQuery({
@@ -80,8 +80,6 @@ export const list = queryWithAuth({
       session,
       courseSlug,
     );
-
-    const { user } = session;
 
     const now = +new Date();
     const weeks = await db
