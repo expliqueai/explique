@@ -59,7 +59,11 @@ ENV IDENTIFIER_SALT=${IDENTIFIER_SALT}
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/public ./public
+RUN --mount=from=builder,source=/app,target=/tmp/build \
+    if [ -d "/tmp/build/public" ]; then \
+        cp -r /tmp/build/public ./public && chown -R nextjs:nodejs ./public; \
+    fi
+
 COPY --from=builder /app/drizzle ./drizzle
 
 # Set the correct permission for prerender cache
