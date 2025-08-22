@@ -39,6 +39,7 @@ build-a-docker:
   only:
     refs:
       - main
+      - nightly
 
   image:
     name: gcr.io/kaniko-project/executor:debug
