@@ -18,6 +18,8 @@ import BeatLoader from "react-spinners/BeatLoader"
 import { toast } from "sonner"
 import { api } from "../../../../../../convex/_generated/api"
 import { Id } from "../../../../../../convex/_generated/dataModel"
+import { useSearchParams } from "next/navigation";
+
 
 export default function AdminSuperAssistantPage() {
   const courseSlug = useCourseSlug()
@@ -234,7 +236,6 @@ function UploadFile() {
           as="div"
           className="relative z-10"
           onClose={() => {
-            /* Do nothing on close during loading */
           }}
         >
           <Transition.Child
