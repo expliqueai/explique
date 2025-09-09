@@ -1,25 +1,24 @@
-"use client";
+"use client"
 
-import { useAction } from "@/usingSession";
-import { useParams, useRouter } from "next/navigation";
-
-import LectureForm, { toConvexState } from "@/components/LectureForm";
-import { Id } from "../../../../../../../convex/_generated/dataModel";
-import { api } from "../../../../../../../convex/_generated/api";
-import Title from "@/components/typography";
-import { toast } from "sonner";
-import { useCourseSlug } from "@/hooks/useCourseSlug";
-import ReactPlayer from "react-player";
+import LectureForm, { toConvexState } from "@/components/LectureForm"
+import Title from "@/components/typography"
+import { useCourseSlug } from "@/hooks/useCourseSlug"
+import { useAction } from "@/usingSession"
+import { useParams, useRouter } from "next/navigation"
+import ReactPlayer from "react-player"
+import { toast } from "sonner"
+import { api } from "../../../../../../../convex/_generated/api"
+import { Id } from "../../../../../../../convex/_generated/dataModel"
 
 export default function NewLecture() {
-  const router = useRouter();
-  const params = useParams();
-  const initialWeekId = params.weekId as Id<"lectureWeeks">;
-  const courseSlug = useCourseSlug();
-  const create = useAction(api.admin.lectures.create);
+  const router = useRouter()
+  const params = useParams()
+  const initialWeekId = params.weekId as Id<"lectureWeeks">
+  const courseSlug = useCourseSlug()
+  const create = useAction(api.admin.lectures.create)
 
   return (
-    <div className="bg-slate-100 h-full p-10 flex justify-center">
+    <div className="flex h-full justify-center bg-slate-100 p-10">
       <div className="max-w-6xl flex-1">
         <Title backHref={`/${courseSlug}/admin/lectures`}>New Lecture</Title>
         <LectureForm
@@ -34,26 +33,25 @@ export default function NewLecture() {
           }}
           onSubmit={async (state) => {
             if (!ReactPlayer.canPlay(state.url)) {
-              toast.error("Invalid video URL.");
-              return;
+              toast.error("Invalid video URL.")
+              return
             }
 
             await create({
               courseSlug,
               lecture: {
                 ...toConvexState(state),
-                chunks: [],
                 status: "NOT_STARTED",
               },
-            });
+            })
 
-            toast.success("Lecture created successfully.");
-            toast.info("The video processing will start soon.");
+            toast.success("Lecture created successfully.")
+            toast.info("The video processing will start soon.")
 
-            router.push(`/${courseSlug}/admin/lectures`);
+            router.push(`/${courseSlug}/admin/lectures`)
           }}
         />
       </div>
     </div>
-  );
+  )
 }
