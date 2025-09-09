@@ -161,6 +161,16 @@ export const updateRow = internalMutation({
   },
 })
 
+export const updateUrl = internalMutation({
+  args: {
+    lectureId: v.id("lectures"),
+    url: v.string(),
+  },
+  handler: async ({ db }, { lectureId, url }) => {
+    return await db.patch(lectureId, { url })
+  },
+})
+
 export const createInternal = internalAction({
   args: lectureSchema,
   handler: async ({ runMutation }, row): Promise<Id<"lectures">> => {
@@ -234,18 +244,30 @@ export const processVideo = internalAction({
       const response = await fetch(processingUrl, {
         method: "POST",
         body: JSON.stringify({
-          kalturaVideoId: urlValidation.videoId,
-          convexLectureId: lectureId,
+          kaltura_video_id: urlValidation.videoId,
+          convex_lecture_id: lectureId,
         }),
         headers: {
           "Content-Type": "application/json",
         },
       })
 
-      if (!response.ok || !response.body) {
+      if (!response.ok) {
+        const errorText = await response.text()
         throw new Error(
-          `Failed to start video processing: ${response.statusText}`
+          `Failed to start video processing: ${response.status} ${response.statusText} - ${errorText}`
         )
+      }
+
+      // Parse the response to get the playable_url
+      const responseData = await response.json()
+      // TODO: Properly handle source types
+      if (responseData.playable_url) {
+        // Update the lecture URL with the M3U8 playable URL
+        await ctx.runMutation(internal.admin.lectures.updateUrl, {
+          lectureId: lectureId,
+          url: responseData.playable_url,
+        })
       }
 
       await ctx.runMutation(api.admin.lectures.setStatus, {
