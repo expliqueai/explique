@@ -17,6 +17,33 @@ import { getCourseRegistration } from "../courses"
 import { getImageForLecture } from "../lectures"
 import { LECTURE_STATUS, lectureAdminSchema, lectureSchema } from "../schema"
 
+const MEDIASPACE_REGEX =
+  /^https:\/\/mediaspace\.epfl\.ch\/media\/.*\/(0_[a-zA-Z0-9]+)$/
+
+function validateAndExtractMediaSpaceUrl(url: string): {
+  isValid: boolean
+  videoId?: string
+  error?: string
+} {
+  if (!url.startsWith("https://mediaspace.epfl.ch")) {
+    return {
+      isValid: false,
+      error: "URL must start with https://mediaspace.epfl.ch",
+    }
+  }
+
+  const match = url.match(MEDIASPACE_REGEX)
+  if (!match) {
+    return {
+      isValid: false,
+      error:
+        "Please enter a valid EPFL MediaSpace URL ending with a video ID (0_...)",
+    }
+  }
+
+  return { isValid: true, videoId: match[1] }
+}
+
 export const get = queryWithAuth({
   args: {
     id: v.id("lectures"),
@@ -190,6 +217,12 @@ export const processVideo = internalAction({
   },
   handler: async (ctx, { lectureId, url }) => {
     try {
+      // Validate MediaSpace URL and extract video ID
+      const urlValidation = validateAndExtractMediaSpaceUrl(url)
+      if (!urlValidation.isValid) {
+        throw new Error(urlValidation.error || "Invalid MediaSpace URL")
+      }
+
       // Check for the processing URL environment variable
       const processingUrl = process.env.LECTURES_PROCESSING_URL
       if (!processingUrl) {
@@ -201,9 +234,8 @@ export const processVideo = internalAction({
       const response = await fetch(processingUrl, {
         method: "POST",
         body: JSON.stringify({
-          url,
-          convexUrl: process.env.CONVEX_CLOUD_URL,
-          lectureId,
+          kalturaVideoId: urlValidation.videoId,
+          convexLectureId: lectureId,
         }),
         headers: {
           "Content-Type": "application/json",
