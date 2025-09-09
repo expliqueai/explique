@@ -32,11 +32,6 @@ export default function NewLecture() {
               "Hi there! 👋 I'm Questionable Prof, your AI assistant for this lecture video. Feel free to ask me any questions you have about the material. Let's learn together!",
           }}
           onSubmit={async (state) => {
-            if (!ReactPlayer.canPlay(state.url)) {
-              toast.error("Invalid video URL.")
-              return
-            }
-
             await create({
               courseSlug,
               lecture: {
