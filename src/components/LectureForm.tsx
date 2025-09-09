@@ -160,7 +160,9 @@ export default function LectureForm({
       <div className="h-36"></div>
 
       <div className="fixed bottom-0 left-0 flex w-full justify-end gap-4 bg-white/60 p-8 shadow-2xl backdrop-blur-xl">
-        {type === "update" && (
+        {
+          // TODO: Properly handle media sources
+          /* {type === "update" && (
           <Button
             type="submit"
             variant="danger"
@@ -168,7 +170,8 @@ export default function LectureForm({
           >
             Save & Reprocess video
           </Button>
-        )}
+        )} */
+        }
         <PrimaryButton type="submit">
           {type === "create" ? "Create" : "Save"}
         </PrimaryButton>
