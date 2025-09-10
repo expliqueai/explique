@@ -15,6 +15,7 @@ type ChatBubbleProps = {
   report?: ReportMessageProps;
   components?: Partial<Components> | null;
   isFallbackModel?: boolean;
+  disableCopy?: boolean;
 };
 
 export default function ChatBubble({
@@ -23,6 +24,7 @@ export default function ChatBubble({
   report,
   components,
   isFallbackModel = false,
+  disableCopy = false,
 }: ChatBubbleProps) {
   const isSystem = author === "system";
 
@@ -34,6 +36,7 @@ export default function ChatBubble({
           isSystem && "bg-white rounded-bl-none",
           !isSystem &&
             "bg-linear-to-b from-purple-500 to-purple-600 text-white rounded-br-none ml-auto",
+          disableCopy && "select-none",
         )}
       >
         <ChatBubbleContents
@@ -41,6 +44,7 @@ export default function ChatBubble({
           isSystem={isSystem}
           components={components}
           isFallbackModel={isFallbackModel}
+          disableCopy={disableCopy}
         />
 
         {report && <ReportMessage {...report} />}
@@ -54,11 +58,13 @@ const ChatBubbleContents = React.memo(function ChatBubbleContents({
   isSystem,
   components,
   isFallbackModel,
+  disableCopy,
 }: {
   contents: ChatBubbleProps["contents"];
   isSystem: boolean;
   components?: Partial<Components> | null;
   isFallbackModel?: boolean;
+  disableCopy?: boolean;
 }) {
   if (contents.type === "typing") {
     return (
@@ -88,7 +94,10 @@ const ChatBubbleContents = React.memo(function ChatBubbleContents({
       )}
       <Markdown
         text={contents.message}
-        className={isSystem ? undefined : "prose-userMessage"}
+        className={clsx(
+          isSystem ? undefined : "prose-userMessage",
+          disableCopy && "select-none"
+        )}
         components={components}
       />
     </>
