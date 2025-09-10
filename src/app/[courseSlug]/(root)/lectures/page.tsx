@@ -36,7 +36,7 @@ function ProjectGrid() {
                 <span className="mr-2 inline-block rounded-lg bg-amber-200 px-2 py-1 font-semibold text-amber-900 uppercase">
                   No lectures uploaded yet
                 </span>
-                Your instructors will upload the lectures soon.
+                Your instructor(s) will upload the lectures soon.
               </p>
             )}
             <div className="grid gap-6 md:grid-cols-2">
