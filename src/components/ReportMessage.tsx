@@ -25,7 +25,7 @@ export default function ReportMessage({
       <div className="box-content flex items-center justify-end p-1">
         <button
           className={clsx(
-            "absolute -right-10 bottom-0 flex h-8 w-8 items-center justify-center rounded-full shadow-md",
+            "absolute -right-10 bottom-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full shadow-md",
             isReported && "bg-purple-600 text-white hover:bg-purple-700",
             !isReported && "bg-white text-purple-600 hover:bg-neutral-50"
           )}

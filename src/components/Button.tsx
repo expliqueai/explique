@@ -1,5 +1,5 @@
-import clsx from "clsx";
-import React from "react";
+import clsx from "clsx"
+import React from "react"
 
 export function Button({
   children,
@@ -13,22 +13,22 @@ export function Button({
 }: React.PropsWithChildren<
   (
     | {
-        disabled?: boolean;
-        onClick?: () => void;
-        type?: "button" | "submit";
-        href?: never;
-        target?: never;
+        disabled?: boolean
+        onClick?: () => void
+        type?: "button" | "submit"
+        href?: never
+        target?: never
       }
     | {
-        disabled?: never;
-        onClick?: never;
-        type?: never;
-        href: string;
-        target?: string;
+        disabled?: never
+        onClick?: never
+        type?: never
+        href: string
+        target?: string
       }
   ) & {
-    variant?: "primary" | "secondary" | "danger";
-    size?: "sm" | "base";
+    variant?: "primary" | "secondary" | "danger"
+    size?: "sm" | "base"
   }
 >) {
   const className = clsx(
@@ -42,8 +42,8 @@ export function Button({
       variant == "danger" &&
       "bg-red-100 hover:bg-red-200 text-red-900",
     !disabled && variant == "secondary" && "text-gray-600 hover:bg-gray-100",
-    disabled && "text-gray-700 bg-gray-200 cursor-not-allowed",
-  );
+    disabled && "text-gray-700 bg-gray-200 cursor-not-allowed"
+  )
 
   return href !== undefined ? (
     <a href={href} className={className} target={target}>
@@ -58,5 +58,5 @@ export function Button({
     >
       {children}
     </button>
-  );
+  )
 }
