@@ -35,7 +35,7 @@ export default function ChatBubble({
           "inline-block p-3 sm:p-4 rounded-xl shadow-sm relative break-words max-w-[90%]",
           isSystem && "bg-white rounded-bl-none",
           !isSystem &&
-            "bg-linear-to-b from-purple-500 to-purple-600 text-white rounded-br-none ml-auto",
+            "bg-gradient-to-b from-purple-500 to-purple-600 text-white rounded-br-none ml-auto",
           disableCopy && "select-none",
         )}
       >

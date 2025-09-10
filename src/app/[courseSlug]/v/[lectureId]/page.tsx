@@ -92,7 +92,7 @@ export default function VideoPage() {
         title={lectureMetadata?.name}
         action={
           <button
-            className="sm:w-16 sm:h-16 w-14 h-14 flex items-center justify-center"
+            className="sm:w-16 sm:h-16 w-14 h-14 flex items-center justify-center cursor-pointer"
             onClick={() => clearChatHistory({ lectureId })}
           >
             <ArrowPathIcon className="w-6 h-6" />

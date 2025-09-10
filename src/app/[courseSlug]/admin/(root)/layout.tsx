@@ -23,7 +23,7 @@ export default function AdminRootLayout({ children }: { children: ReactNode }) {
     <div className="bg-slate-100 h-min-full flex flex-col md:flex-row md:justify-center p-6 sm:p-10 gap-10">
       <nav className="md:w-48 flex flex-col gap-2">
         <Link
-          className="flex items-center gap-1 h-10 text-slate-600 hover:text-slate-900 transition-colors rounded focus:outline-hidden focus:ring-4"
+          className="flex items-center gap-1 h-10 text-slate-600 hover:text-slate-900 transition-colors rounded focus:outline-none "
           href={`/${courseSlug}`}
         >
           <ChevronLeftIcon className="w-5 h-5" />

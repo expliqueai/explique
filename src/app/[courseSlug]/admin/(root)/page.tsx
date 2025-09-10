@@ -22,7 +22,7 @@ export default function AdminExercisePage() {
         </Button>
       </Title>
 
-      <div className="bg-linear-to-b from-purple-200 via-indigo-200 to-blue-200 rounded-lg shadow-sm">
+      <div className="bg-gradient-to-b from-purple-200 via-indigo-200 to-blue-200 rounded-lg shadow-sm">
         <div className="p-6 sm:p-10 flex justify-center">
           <div className="max-w-6xl flex-1">
             <div className="bg-white shadow-xl rounded-2xl p-2 md:p-14 w-full max-w-2xl mx-auto">

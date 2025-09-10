@@ -32,7 +32,7 @@ export function Button({
   }
 >) {
   const className = clsx(
-    "font-medium px-4 py-2 rounded-2xl cursor-pointer inline-flex items-center gap-2 border border-transparent focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 tracking-normal",
+    "font-medium px-4 py-2 rounded-2xl cursor-pointer inline-flex items-center gap-2 border border-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 tracking-normal",
     size == "sm" && "text-sm rounded-lg",
     size == "base" && "text-base",
     !disabled &&

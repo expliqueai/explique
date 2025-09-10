@@ -120,4 +120,12 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    @apply accent-purple-600;
+  }
 }
