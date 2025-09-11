@@ -56,6 +56,14 @@ export default function LectureForm({
   const reprocessVideo = useAction(convexApi.admin.lectures.reprocessVideo)
 
   const urlValidation = useMemo(() => {
+    // Skip validation for update forms
+    // For now, the URL changes to the direct m3u8 link after creation
+    // This means the validation would always fail on update
+    // TODO: Properly handle multiple media sources
+    if (type === "update") {
+      return { isValid: true, error: null }
+    }
+
     if (!url) return { isValid: true, error: null }
 
     if (!url.startsWith("https://mediaspace.epfl.ch")) {
@@ -75,7 +83,7 @@ export default function LectureForm({
     }
 
     return { isValid: true, error: null }
-  }, [url])
+  }, [url, type])
 
   return (
     <form
@@ -116,6 +124,7 @@ export default function LectureForm({
         onChange={setName}
         placeholder="Bogo Sort"
         required
+        disabled={type === "update"}
       />
 
       {weeks && (
@@ -131,7 +140,8 @@ export default function LectureForm({
         label="MediaSpace video URL"
         value={url}
         onChange={setUrl}
-        required
+        required={type === "create"}
+        disabled={type === "update"}
         placeholder="https://mediaspace.epfl.ch/media/My+Super+Awesome+Lecture+Video/0_Expl1qu34I"
       />
 
