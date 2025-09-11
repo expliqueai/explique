@@ -124,7 +124,6 @@ export default function LectureForm({
         onChange={setName}
         placeholder="Bogo Sort"
         required
-        disabled={type === "update"}
       />
 
       {weeks && (
