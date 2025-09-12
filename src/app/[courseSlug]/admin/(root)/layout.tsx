@@ -9,6 +9,8 @@ import {
   AcademicCapIcon,
   ExclamationCircleIcon,
   VideoCameraIcon,
+  ChatBubbleLeftRightIcon,	
+  DocumentIcon
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { ReactNode } from "react";
@@ -46,6 +48,10 @@ export default function AdminRootLayout({ children }: { children: ReactNode }) {
           <VideoCameraIcon />
           Lectures
         </NavLink>
+        <NavLink href={`/${courseSlug}/admin/super-assistant`}>
+          <DocumentIcon />
+          Uploaded Files
+          </NavLink>
         <NavLink href={`/${courseSlug}/admin/users`}>
           <UserIcon />
           Users

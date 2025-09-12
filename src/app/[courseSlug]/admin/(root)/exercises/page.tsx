@@ -6,6 +6,8 @@ import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { WeekList } from "@/components/admin/WeekList";
 import { toast } from "sonner";
 import { ExerciseLinkWithMenu } from "@/components/admin/ExerciseLinkWithMenu";
+import { Id } from "../../../../../../convex/_generated/dataModel"
+// import ExtractedProblemsList from "@/components/ExtractedProblemsList"
 
 export default function AdminExercisesPage() {
   const courseSlug = useCourseSlug();
@@ -21,7 +23,12 @@ export default function AdminExercisesPage() {
         toast.success("Week deleted successfully");
       }}
       renderItem={(exercise) => (
-        <ExerciseLinkWithMenu key={exercise.id} exercise={exercise} />
+        <><ExerciseLinkWithMenu key={exercise.id} exercise={exercise} /><div className="flex-1">
+          {/* <ExtractedProblemsList
+            courseSlug={courseSlug}
+            week={exercise.weekNumber} // ✅ now accessible
+          /> */}
+        </div></>
       )}
       newItemPath="/admin/exercises/new"
       weekType="weeks"
