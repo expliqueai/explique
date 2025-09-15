@@ -23,14 +23,36 @@ export const listProblemSets = queryWithAuth({
   },
 });
 
+function parseExerciseNumber(num: string | undefined): [number, string] {
+  if (!num) return [Infinity, ""];
+
+  const match = num.match(/^(\d+)([a-zA-Z]*)$/);
+  if (!match) return [Infinity, num];
+
+  const base = parseInt(match[1], 10);
+  const suffix = match[2] || "";
+  return [base, suffix];
+}
 
 export const listProblemsForSet = queryWithAuth({
   args: { problemSetId: v.id("problemSets") },
   handler: async (ctx, { problemSetId }) => {
-    return await ctx.db
+    const problems = await ctx.db
       .query("problems")
       .withIndex("by_problemSet", (q) => q.eq("problemSetId", problemSetId))
       .collect();
+
+    return problems.sort((a, b) => {
+      const [aNum, aSuffix] = parseExerciseNumber(a.number);
+      const [bNum, bSuffix] = parseExerciseNumber(b.number);
+
+      if (aNum !== bNum) return aNum - bNum;
+
+      if (aSuffix === "" && bSuffix !== "") return -1;
+      if (aSuffix !== "" && bSuffix === "") return 1;
+
+      return aSuffix.localeCompare(bSuffix);
+    });
   },
 });
 
@@ -122,14 +144,19 @@ export const insertProblem2 = internalMutation({
     problemSetId: v.id("problemSets"),
     pageNumber: v.number(),
     rawExtraction: v.string(),
+    number: v.optional(v.string()),
+    //order: v.number(),
   },
-  handler: async (ctx, { problemSetId, pageNumber, rawExtraction }) => {
+  handler: async (ctx, { problemSetId, pageNumber, rawExtraction, number}) => {
     await ctx.db.insert("problems", {
       problemSetId,
       pageNumber,
       rawExtraction,
+      number,
       validatedContent: undefined,
       validated: false,
+      //order,
+      starred: false,
     });
   },
 });
@@ -194,13 +221,15 @@ export const startExtraction = internalAction({
             console.error("Failed to parse extraction JSON:", err, content);
           }
 
-          for (const problem of problems) {
+           for (const [idx, problem] of problems.entries()) {
             await ctx.runMutation(
               internal.superassistant.problemExtraction.insertProblem2,
               {
                 problemSetId,
                 pageNumber: i + 1,
                 rawExtraction: JSON.stringify(problem),
+                number: problem.number,
+                //order: idx,
               }
             );
           }
@@ -267,6 +296,7 @@ export const saveDraftProblem = internalMutation({
     problemSetId: v.id("problemSets"),
     pageNumber: v.number(),
     rawExtraction: v.string(),
+    //order: v.number(),
   },
   handler: async ({ db }, { problemSetId, pageNumber, rawExtraction }) => {
     await db.insert("problems", {
@@ -274,8 +304,72 @@ export const saveDraftProblem = internalMutation({
       pageNumber,
       rawExtraction,
       validated: false,
+      //order,
     });
   },
 });
 
 
+export const deleteProblem = mutationWithAuth({
+  args: { problemId: v.id("problems") },
+  handler: async (ctx, { problemId }) => {
+    await ctx.db.delete(problemId);
+  },
+});
+
+export const toggleStarProblem = mutationWithAuth({
+  args: { problemId: v.id("problems") },
+  handler: async (ctx, { problemId }) => {
+    const prob = await ctx.db.get(problemId);
+    await ctx.db.patch(problemId, { starred: !prob?.starred });
+  },
+});
+
+
+// export const reorderProblems = mutationWithAuth({
+//   args: {
+//     problemSetId: v.id("problemSets"),
+//     from: v.number(),
+//     to: v.number(),
+//   },
+//   handler: async (ctx, { problemSetId, from, to }) => {
+//     const problems = await ctx.db
+//       .query("problems")
+//       .withIndex("by_problemSet", (q) => q.eq("problemSetId", problemSetId))
+//       .collect();
+
+//     const sorted = problems.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+//     const [moved] = sorted.splice(from, 1);
+//     sorted.splice(to, 0, moved);
+
+//     await Promise.all(
+//       sorted.map((p, idx) =>
+//         ctx.db.patch(p._id, { order: idx })
+//       )
+//     );
+//   },
+// });
+
+export const getWeek = queryWithAuth({
+  args: { weekId: v.id("weeks") },
+  handler: async (ctx, { weekId }) => {
+    return await ctx.db.get(weekId);
+  },
+});
+
+export const deleteProblemSet = mutationWithAuth({
+  args: { problemSetId: v.id("problemSets") },
+  handler: async (ctx, { problemSetId }) => {
+    const problems = await ctx.db
+      .query("problems")
+      .withIndex("by_problemSet", (q) => q.eq("problemSetId", problemSetId))
+      .collect();
+
+    for (const prob of problems) {
+      await ctx.db.delete(prob._id);
+    }
+
+    await ctx.db.delete(problemSetId);
+  },
+});

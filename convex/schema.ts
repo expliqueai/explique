@@ -293,6 +293,8 @@ export default defineSchema(
       number: v.optional(v.string()),
       validatedContent: v.optional(v.string()),
       validated: v.optional(v.boolean()),
+      starred: v.optional(v.boolean()), 
+      //order: v.optional(v.number()), 
     }).index("by_problemSet", ["problemSetId"]),
 
     reports: defineTable({

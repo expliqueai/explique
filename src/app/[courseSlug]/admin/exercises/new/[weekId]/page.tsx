@@ -36,7 +36,6 @@ export default function NewItemPage() {
       <div className="max-w-6xl flex-1">
         <Title backHref={`/${courseSlug}/admin/exercises`}>New Item</Title>
 
-        {/* Toggle buttons */}
         <div className="mb-6 flex gap-2">
           <Button
             type="button"
@@ -56,7 +55,6 @@ export default function NewItemPage() {
           </Button>
         </div>
 
-        {/* Render correct form */}
         {mode === "explain" ? (
           <ExplainQuizForm
             courseSlug={courseSlug}
@@ -131,7 +129,6 @@ function extractWeekNumberFromName(name?: string): string {
   return m ? m[1] : "";
 }
 
-
 function ProblemsUploadForm({
   courseSlug,
   initialWeekId,
@@ -142,8 +139,8 @@ function ProblemsUploadForm({
   onDone: () => void;
 }) {
   const [questionsPdf, setQuestionsPdf] = useState<File | null>(null);
+  const [problemSetName, setProblemSetName] = useState(""); // 👈 new field
   const [submitting, setSubmitting] = useState(false);
-  const [week, setWeek] = useState<string>("");
 
   const weeks = useQuery(api.admin.exercises.list, { courseSlug });
 
@@ -155,50 +152,40 @@ function ProblemsUploadForm({
     api.superassistant.problemExtraction.createProblemSet
   );
 
-  useEffect(() => {
-    if (!initialWeekId || !weeks) return;
-    const w: any = (weeks as any[]).find(
-      (wk) => (wk._id ?? wk.id) === initialWeekId
-    );
-    const num = w?.week ?? w?.number ?? extractWeekNumberFromName(w?.name);
-    if (num) setWeek(String(num));
-  }, [weeks, initialWeekId]);
-
   async function handleOnePdf(file: File) {
-  const storageIds: { pageNumber: number; storageId: string }[] = [];
+    const storageIds: { pageNumber: number; storageId: string }[] = [];
 
-  const uploaded = await startUpload([file]);
-  storageIds.push({
-    pageNumber: 0,
-    storageId: (uploaded[0].response as { storageId: string }).storageId,
-  });
-
-  const filename = file.name.split(".")[0];
-  const pages: string[] = await PdfToImg(URL.createObjectURL(file), {
-    imgType: "png",
-    pages: "all",
-  });
-
-  for (let i = 0; i < pages.length; i++) {
-    const base64Data = pages[i].replace(/^data:image\/\w+;base64,/, "");
-    const byteArray = Uint8Array.from(atob(base64Data), (c) =>
-      c.charCodeAt(0)
-    );
-
-    const pageFile = new File([byteArray], `${filename}_page${i + 1}.png`, {
-      type: "image/png",
-    });
-
-
-    const pageUploaded = await startUpload([pageFile]);
+    const uploaded = await startUpload([file]);
     storageIds.push({
-      pageNumber: i + 1,
-      storageId: (pageUploaded[0].response as { storageId: string }).storageId,
+      pageNumber: 0,
+      storageId: (uploaded[0].response as { storageId: string }).storageId,
     });
-  }
 
-  return storageIds;
-}
+    const filename = file.name.split(".")[0];
+    const pages: string[] = await PdfToImg(URL.createObjectURL(file), {
+      imgType: "png",
+      pages: "all",
+    });
+
+    for (let i = 0; i < pages.length; i++) {
+      const base64Data = pages[i].replace(/^data:image\/\w+;base64,/, "");
+      const byteArray = Uint8Array.from(atob(base64Data), (c) =>
+        c.charCodeAt(0)
+      );
+
+      const pageFile = new File([byteArray], `${filename}_page${i + 1}.png`, {
+        type: "image/png",
+      });
+
+      const pageUploaded = await startUpload([pageFile]);
+      storageIds.push({
+        pageNumber: i + 1,
+        storageId: (pageUploaded[0].response as { storageId: string }).storageId,
+      });
+    }
+
+    return storageIds;
+  }
 
   return (
     <form
@@ -209,9 +196,8 @@ function ProblemsUploadForm({
           toast.error("Please upload a questions PDF.");
           return;
         }
-        const weekNumber = Number(week);
-        if (!week || Number.isNaN(weekNumber)) {
-          toast.error("Please provide a valid week number.");
+        if (!initialWeekId) {
+          toast.error("Week not found.");
           return;
         }
 
@@ -226,7 +212,7 @@ function ProblemsUploadForm({
 
           await uploadFile({
             courseSlug,
-            week: weekNumber,
+            week: 0,
             name: questionsPdf.name,
             storageIds: storages.map((s) => ({
               pageNumber: s.pageNumber,
@@ -239,7 +225,7 @@ function ProblemsUploadForm({
             weekId: initialWeekId as Id<"weeks">,
             storageId: pdfStorageId,
             storageIds: imageStorageIds,
-            name: questionsPdf.name,
+            name: problemSetName || questionsPdf.name,
           });
 
           toast.success("Problems uploaded! Extraction will start soon.");
@@ -253,28 +239,37 @@ function ProblemsUploadForm({
       }}
     >
       <p className="mb-4 text-slate-700">
-        Upload the <strong>questions PDF</strong> for the selected week. We’ll
+        Upload the <strong>questions PDF</strong> for this week. We’ll
         extract and process it for the Super-Assistant.
       </p>
 
-      <div>
+      <div className="mb-4">
         <label className="mb-2 block text-sm font-medium text-slate-700">
           Questions PDF
         </label>
         <Upload value={questionsPdf} onChange={setQuestionsPdf} />
       </div>
 
-      <div className="mt-4">
+      <div className="mb-4">
         <Input
-          label="Week number"
-          placeholder="e.g., 1"
-          value={week}
-          onChange={setWeek}
-          required
+          label="Problem Set Name (optional)"
+          placeholder="Defaults to PDF filename"
+          value={problemSetName}
+          onChange={setProblemSetName}
         />
       </div>
 
-      <div className="mt-4 flex justify-end gap-2">
+      <div className="mb-4">
+        <p className="text-sm text-slate-600">
+          <strong>Week:</strong>{" "}
+          {
+            weeks?.find((wk: any) => (wk._id ?? wk.id) === initialWeekId)
+              ?.name ?? "Unknown"
+          }
+        </p>
+      </div>
+
+      <div className="flex justify-end gap-2">
         <Button
           type="button"
           variant="secondary"
