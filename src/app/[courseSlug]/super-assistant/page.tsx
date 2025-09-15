@@ -1195,6 +1195,12 @@ function SuperAssistant() {
               weekNumber: pickedWeek,
             })
 
+            if (feedbackId?.skipped?.length) {
+                feedbackId.skipped.forEach((url: string) => {
+                    toast.error(`⚠️ Skipped unsupported file: ${url}`);
+                });
+}
+
             const chatId = await generateChat({
               courseSlug,
               reason:

@@ -72,6 +72,7 @@ export const generateFirstMessages = internalAction({
     weekNumber: v.number(),
   },
   handler: async (ctx, { courseId, userId, chatId, reason, weekNumber }) => {
+    
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
 
     const instructions =

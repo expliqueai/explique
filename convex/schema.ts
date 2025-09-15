@@ -269,6 +269,32 @@ export default defineSchema(
       .index("by_week", ["week"])
       .index("by_name", ["name"]),
 
+    problemSets: defineTable({
+      courseId: v.id("courses"),
+      weekId: v.id("weeks"),
+      storageId: v.id("_storage"),                     
+      storageIds: v.optional(v.array(v.id("_storage"))),
+      name: v.string(),
+      status: v.union(
+        v.literal("UPLOADED"),
+        v.literal("PROCESSING"),
+        v.literal("READY"),
+        v.literal("VALIDATED")
+      ),
+      createdAt: v.number(),
+      })
+      .index("by_course", ["courseId"])
+      .index("by_week", ["weekId"]),
+
+    problems: defineTable({
+      problemSetId: v.id("problemSets"),
+      pageNumber: v.number(),
+      rawExtraction: v.string(),
+      number: v.optional(v.string()),
+      validatedContent: v.optional(v.string()),
+      validated: v.optional(v.boolean()),
+    }).index("by_problemSet", ["problemSetId"]),
+
     reports: defineTable({
       attemptId: v.id("attempts"),
       messageId: v.id("messages"),

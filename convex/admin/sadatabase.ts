@@ -173,6 +173,7 @@ export const generateUploadUrl = mutationWithAuth({
   },
 });
 
+
 export const getUrl = queryWithAuth({
   args: {
     courseSlug: v.string(),
@@ -228,7 +229,7 @@ export const getUrls = internalQuery({
         }
       }
     }
-
+    console.log("getUrls returning:", urls);
     return urls;
   },
 });

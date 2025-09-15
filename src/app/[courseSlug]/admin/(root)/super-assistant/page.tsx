@@ -181,44 +181,51 @@ function UploadFile() {
   async function handleUploadFile() {
     const storageIds: { pageNumber: number; storageId: string }[] = []
 
-    if (file !== null) {
-      const uploaded = await startUpload([file])
-      const storageId = (uploaded[0].response as { storageId: string })
-        .storageId
-      storageIds.push({
+    if (!file) return storageIds
+    console.log("Uploading original PDF:", file.name)
+
+    const uploaded = await startUpload([file])
+    console.log("Original PDF uploaded:", uploaded)
+    storageIds.push({
         pageNumber: 0,
-        storageId,
-      })
+        storageId: (uploaded[0].response as { storageId: string }).storageId,
+    })
 
-      const filename = file.name.split(".")[0]
-      const url = URL.createObjectURL(file)
-      const pages = await PdfToImg(url, {
-        imgType: "jpg",
+    const filenameBase = file.name.replace(/\.[^/.]+$/, "")
+    const url = URL.createObjectURL(file)
+    console.log("Created blob URL for PDF:", url)
+    const pages = await PdfToImg(url, {
+        imgType: "png",
         pages: "all",
-        returnType: "buffer",
-      })
-      URL.revokeObjectURL(url)
+    })
+    URL.revokeObjectURL(url)
+    console.log("PdfToImg pages:", pages.length, pages[0]);
 
-      for (let index = 0; index < pages.length; index++) {
-        const pageFile = new File(
-            [pages[index]],
-            `${filename}_page${index}.jpg`,
-            { type: "image/jpg" }
-        )
-        const pageUploaded = await startUpload([pageFile])
-        const pageStorageId = (
-          pageUploaded[0].response as { storageId: string }
-        ).storageId
-        storageIds.push({
-          pageNumber: index + 1,
-          storageId: pageStorageId,
-        })
-      }
+    if (!pages || pages.length === 0) {
+        toast.error("No pages found in PDF")
+        return storageIds
     }
 
-    return storageIds
-  }
+    for (let i = 0; i < pages.length; i++) {
+        const base64Data = pages[i].replace(/^data:image\/\w+;base64,/, "");
+        const byteArray = Uint8Array.from(atob(base64Data), (c) =>
+            c.charCodeAt(0)
+        );
 
+        const pageFile = new File([byteArray], `${filenameBase}_page${i + 1}.png`, {
+            type: "image/png",
+        });
+
+        const pageUploaded = await startUpload([pageFile]);
+        storageIds.push({
+            pageNumber: i + 1,
+            storageId: (pageUploaded[0].response as { storageId: string }).storageId,
+        });
+        }
+
+    console.log("Final storageIds:", storageIds)
+    return storageIds
+}
   return (
     <>
       <Button
@@ -278,6 +285,8 @@ function UploadFile() {
         <form
           onSubmit={async (e) => {
             e.preventDefault()
+            console.log("🚀 Form submitted with file:", file)
+
             if (file === null) return
             if (get === true) {
               toast.error("A file with this name already exists.")
