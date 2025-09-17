@@ -1,13 +1,24 @@
 import { useMutation, useQuery } from "@/usingSession"
-import { ArrowRightIcon, SparklesIcon } from "@heroicons/react/16/solid"
-import React, { useEffect } from "react"
+import {
+  ArrowRightIcon,
+  ArrowUpIcon,
+  SparklesIcon,
+  StopIcon,
+} from "@heroicons/react/16/solid"
+import React, { useEffect, useState } from "react"
 import { api } from "../../../convex/_generated/api"
 import { Id } from "../../../convex/_generated/dataModel"
 import ChatBubble from "../ChatBubble"
 import Instruction from "../Instruction"
 import Markdown from "../Markdown"
-import MessageInput from "../MessageInput"
 import { PrimaryButton } from "../PrimaryButton"
+import { Button } from "../ui/button"
+import {
+  PromptInput,
+  PromptInputAction,
+  PromptInputActions,
+  PromptInputTextarea,
+} from "../ui/prompt-input"
 
 export default function ExplainExercise({
   hasQuiz,
@@ -32,7 +43,7 @@ export default function ExplainExercise({
 
   return (
     <>
-      <div className="flex flex-col gap-6">
+      <div className="mb-28 flex flex-col gap-6">
         {chat?.map((message) => (
           <ChatMessage
             key={message.id}
@@ -190,13 +201,48 @@ const ChatMessage = React.memo(function ChatMessage({
 
 function NewMessage({ attemptId }: { attemptId: Id<"attempts"> }) {
   const sendMessage = useMutation(api.chat.sendMessage)
+  const [input, setInput] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = () => {
+    if (!input.trim() || isLoading) return
+
+    setIsLoading(true)
+    setInput("")
+    sendMessage({ attemptId, message: input }).finally(() => {
+      setIsLoading(false)
+    })
+  }
 
   return (
-    <MessageInput
-      onSend={(message) => {
-        sendMessage({ attemptId, message })
-      }}
-      scroll="body"
-    />
+    <>
+      <div className="fixed bottom-4 left-1/2 w-full max-w-2xl -translate-x-1/2 px-6">
+        <PromptInput
+          value={input}
+          onValueChange={(value) => setInput(value)}
+          onSubmit={handleSubmit}
+          className="w-full rounded-xl shadow-xl"
+        >
+          <PromptInputTextarea placeholder="Explain the concept in your own words" />
+          <PromptInputActions className="justify-end pt-2">
+            <PromptInputAction tooltip="Send message">
+              <Button
+                variant="default"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={handleSubmit}
+                disabled={isLoading || !input.trim()}
+              >
+                {isLoading ? (
+                  <StopIcon className="size-5 fill-current" />
+                ) : (
+                  <ArrowUpIcon className="size-5" />
+                )}
+              </Button>
+            </PromptInputAction>
+          </PromptInputActions>
+        </PromptInput>
+      </div>
+    </>
   )
 }
