@@ -26,6 +26,7 @@ variables:
   - sed -i "s%APPLICATION-NAME%$APPLICATION_NAME%g" $CI_PROJECT_DIR/k8s/ingress.yaml
   - sed -i "s%APPLICATION-NAME%$APPLICATION_NAME%g" $CI_PROJECT_DIR/k8s/service.yaml
   - sed -i "s%PVC_NAME%$PVC_NAME%g" $CI_PROJECT_DIR/k8s/deployment.yaml
+  - sed -i "s%RESOURCE-BLOCK%$RESOURCE_BLOCK%g" $CI_PROJECT_DIR/k8s/deployment.yaml
   - kubectl apply -f $CI_PROJECT_DIR/k8s/ingress.yaml -n thl2
   - kubectl apply -f $CI_PROJECT_DIR/k8s/service.yaml -n thl2
   - kubectl delete -f $CI_PROJECT_DIR/k8s/deployment.yaml --ignore-not-found -n thl2
@@ -69,6 +70,10 @@ deploy-to-prod:
     APPLICATION_NAME: "explique"
     TAG: "prod"
     FQDN: "explique.epfl.ch"
+    RESOURCE_BLOCK: |
+      requests:
+            cpu: "2"
+            memory: "256Mi"
   image:
     name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
     entrypoint: [""]
@@ -90,6 +95,7 @@ deploy-branch:
     APPLICATION_NAME: "explique-${CI_COMMIT_REF_SLUG}"
     TAG: "${CI_COMMIT_REF_SLUG}"
     FQDN: "explique-${CI_COMMIT_REF_SLUG}.${BASE_DOMAIN}"
+    RESOURCE_BLOCK: "{}"
   image:
     name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
     entrypoint: [""]

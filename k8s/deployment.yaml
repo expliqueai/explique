@@ -26,7 +26,5 @@ spec:
         - name: EXAMPLE
           value: "Your example value"
         resources:
-          requests:
-            cpu: "2"
-            memory: "256Mi"
+          RESOURCE-BLOCK # Defined in .gitlab-ci.yml
       restartPolicy: Always
