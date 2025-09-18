@@ -39,8 +39,6 @@ build-a-docker:
     refs:
       - main
       - nightly
-      - /^feat\/.*$/
-      - /^fix\/.*$/
 
   image:
     name: gcr.io/kaniko-project/executor:debug
@@ -86,8 +84,6 @@ deploy-branch:
   stage: deploy
   only:
     refs:
-      - /^feat\/.*$/
-      - /^fix\/.*$/
       - nightly
   environment:
     name: staging/$CI_COMMIT_REF_SLUG
@@ -109,8 +105,6 @@ stop-staging:
   when: on_failure
   only:
     refs:
-      - /^feat\/.*$/
-      - /^fix\/.*$/
       - nightly
   variables:
     APPLICATION_NAME: "explique-${CI_COMMIT_REF_SLUG}"
@@ -130,8 +124,6 @@ cleanup-staging:
   when: manual
   only:
     refs:
-      - /^feat\/.*$/
-      - /^fix\/.*$/
       - nightly
   environment:
     name: staging/$CI_COMMIT_REF_SLUG
