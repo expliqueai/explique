@@ -52,10 +52,12 @@ build-a-docker:
     - |
       if [ "$CI_COMMIT_REF_NAME" = "main" ]; then
         export BUILD_TAG="prod"
+        export BUILD_BASE_URL="https://explique.epfl.ch"
       else
         export BUILD_TAG="$CI_COMMIT_REF_SLUG"
+        export BUILD_BASE_URL="https://explique-${CI_COMMIT_REF_SLUG}.${BASE_DOMAIN}"
       fi
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE_PATH --destination $HARBOR_REGISTRY/$REPO_NAME/$IMAGE_NAME:$BUILD_TAG --build-arg CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg BASE_URL=$BASE_URL --build-arg "JWT_KEY='$JWT_KEY'" --build-arg "ADMIN_API_PUBLIC_KEY='$ADMIN_API_PUBLIC_KEY'" --build-arg IDENTIFIER_SALT=$IDENTIFIER_SALT 
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE_PATH --destination $HARBOR_REGISTRY/$REPO_NAME/$IMAGE_NAME:$BUILD_TAG --build-arg CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg BASE_URL=$BUILD_BASE_URL --build-arg "JWT_KEY='$JWT_KEY'" --build-arg "ADMIN_API_PUBLIC_KEY='$ADMIN_API_PUBLIC_KEY'" --build-arg IDENTIFIER_SALT=$IDENTIFIER_SALT 
 
 deploy-to-prod:
   stage: deploy
