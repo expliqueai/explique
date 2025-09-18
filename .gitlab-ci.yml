@@ -4,18 +4,16 @@ stages:
 
 variables:
   HARBOR_REGISTRY: "ic-registry.epfl.ch"
-  APPLICATION_NAME: "explique" 
   REPO_NAME: "explique"
   IMAGE_NAME: "explique"
-  TAG: "test"
   REGISTRY_ROBOT: 'robot$$explique+cicd'
   DOCKERFILE_PATH: "prod.Dockerfile"
   DOCKER_AUTH_CONFIG: "{\"auths\":{\"$HARBOR_REGISTRY\":{\"username\":\"$REGISTRY_ROBOT\",\"password\":\"$HARBOR_PASSWORD\"}}}"
-  FQDN: explique.epfl.ch
   PVC_NAME: explique
   PVC_NSPACE: thl2
   PVC_SERVER: ic1files.epfl.ch
   PVC_PATH: /u10394_ic_icit_003_files_nfs/explique.epfl.ch
+  BASE_DOMAIN: "explique.ai"
 
 .EXEC_SCRIPT: &EXEC_SCRIPT
   - mkdir -p ~/.kube
@@ -40,6 +38,8 @@ build-a-docker:
     refs:
       - main
       - nightly
+      - /^feat\/.*$/
+      - /^fix\/.*$/
 
   image:
     name: gcr.io/kaniko-project/executor:debug
@@ -48,14 +48,95 @@ build-a-docker:
     - mkdir -p /kaniko/.docker
     - echo $DOCKER_AUTH_CONFIG > /kaniko/.docker/config.json
     - cat /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE_PATH --destination $HARBOR_REGISTRY/$REPO_NAME/$APPLICATION_NAME:$TAG --build-arg CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg BASE_URL=$BASE_URL --build-arg "JWT_KEY='$JWT_KEY'" --build-arg "ADMIN_API_PUBLIC_KEY='$ADMIN_API_PUBLIC_KEY'" --build-arg IDENTIFIER_SALT=$IDENTIFIER_SALT 
+    - |
+      if [ "$CI_COMMIT_REF_NAME" = "main" ]; then
+        export BUILD_TAG="prod"
+      else
+        export BUILD_TAG="$CI_COMMIT_REF_SLUG"
+      fi
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE_PATH --destination $HARBOR_REGISTRY/$REPO_NAME/$IMAGE_NAME:$BUILD_TAG --build-arg CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg BASE_URL=$BASE_URL --build-arg "JWT_KEY='$JWT_KEY'" --build-arg "ADMIN_API_PUBLIC_KEY='$ADMIN_API_PUBLIC_KEY'" --build-arg IDENTIFIER_SALT=$IDENTIFIER_SALT 
 
 deploy-to-prod:
   stage: deploy
   when: manual
-
+  only:
+    refs:
+      - main
+  environment:
+    name: production
+    url: https://explique.epfl.ch
+  variables:
+    APPLICATION_NAME: "explique"
+    TAG: "prod"
+    FQDN: "explique.epfl.ch"
   image:
     name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
     entrypoint: [""]
   script:
     - *EXEC_SCRIPT
+
+deploy-branch:
+  stage: deploy
+  only:
+    refs:
+      - /^feat\/.*$/
+      - /^fix\/.*$/
+      - nightly
+  environment:
+    name: staging/$CI_COMMIT_REF_SLUG
+    url: https://explique-$CI_COMMIT_REF_SLUG.$BASE_DOMAIN
+    on_stop: cleanup-staging
+  variables:
+    APPLICATION_NAME: "explique-${CI_COMMIT_REF_SLUG}"
+    TAG: "${CI_COMMIT_REF_SLUG}"
+    FQDN: "explique-${CI_COMMIT_REF_SLUG}.${BASE_DOMAIN}"
+  image:
+    name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
+    entrypoint: [""]
+  script:
+    - *EXEC_SCRIPT
+
+stop-staging:
+  stage: deploy
+  when: on_failure
+  only:
+    refs:
+      - /^feat\/.*$/
+      - /^fix\/.*$/
+      - nightly
+  variables:
+    APPLICATION_NAME: "explique-${CI_COMMIT_REF_SLUG}"
+  image:
+    name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
+    entrypoint: [""]
+  script:
+    - mkdir -p ~/.kube
+    - echo "$KUBERNETESCONFIG" > ~/.kube/config
+    - kubectl delete deployment $APPLICATION_NAME --ignore-not-found -n thl2
+    - kubectl delete service $APPLICATION_NAME --ignore-not-found -n thl2
+    - kubectl delete ingress $APPLICATION_NAME --ignore-not-found -n thl2
+    - kubectl delete secret $APPLICATION_NAME-regcred --ignore-not-found -n thl2
+
+cleanup-staging:
+  stage: deploy
+  when: manual
+  only:
+    refs:
+      - /^feat\/.*$/
+      - /^fix\/.*$/
+      - nightly
+  environment:
+    name: staging/$CI_COMMIT_REF_SLUG
+    action: stop
+  variables:
+    APPLICATION_NAME: "explique-${CI_COMMIT_REF_SLUG}"
+  image:
+    name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
+    entrypoint: [""]
+  script:
+    - mkdir -p ~/.kube
+    - echo "$KUBERNETESCONFIG" > ~/.kube/config
+    - kubectl delete deployment $APPLICATION_NAME --ignore-not-found -n thl2
+    - kubectl delete service $APPLICATION_NAME --ignore-not-found -n thl2
+    - kubectl delete ingress $APPLICATION_NAME --ignore-not-found -n thl2
+    - kubectl delete secret $APPLICATION_NAME-regcred --ignore-not-found -n thl2
