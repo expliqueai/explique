@@ -103,7 +103,7 @@ deploy-branch:
       - nightly
   environment:
     name: staging/$CI_COMMIT_REF_SLUG
-    url: https://explique-$CI_COMMIT_REF_SLUG.$BASE_DOMAIN
+    url: https://$CI_COMMIT_REF_SLUG.$BASE_DOMAIN
     on_stop: cleanup-staging
   variables:
     APPLICATION_NAME: "explique-${CI_COMMIT_REF_SLUG}"
