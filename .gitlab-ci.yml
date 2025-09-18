@@ -96,7 +96,7 @@ deploy-branch:
   variables:
     APPLICATION_NAME: "explique-${CI_COMMIT_REF_SLUG}"
     TAG: "${CI_COMMIT_REF_SLUG}"
-    FQDN: "explique-${CI_COMMIT_REF_SLUG}.${BASE_DOMAIN}"
+    FQDN: "${CI_COMMIT_REF_SLUG}.${BASE_DOMAIN}"
     HAS_RESOURCES: "false"
   image:
     name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
