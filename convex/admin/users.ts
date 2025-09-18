@@ -94,9 +94,15 @@ async function findOrCreateUserByEmail(
     .query("users")
     .withIndex("by_email", (q) => q.eq("email", email))
     .first()
+
+  const normalizedEmail = email.trim().toLowerCase()
   return user
     ? user._id
-    : await db.insert("users", { id: generateUserId(), email, name: null })
+    : await db.insert("users", {
+        id: generateUserId(),
+        email: normalizedEmail,
+        name: null,
+      })
 }
 
 async function getUserCourseData(
@@ -172,7 +178,6 @@ export const register = mutationWithAuth({
     )
 
     const userIds = []
-
     if ("emails" in users) {
       for (const email of users.emails) {
         userIds.push(await findOrCreateUserByEmail(db, email))
