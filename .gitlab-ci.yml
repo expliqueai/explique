@@ -38,13 +38,13 @@ variables:
   - kubectl apply -f $CI_PROJECT_DIR/k8s/deployment.yaml -n thl2
 
 
-build-a-docker:
+build-prod:
   stage: build
   only:
     refs:
       - main
-      - nightly
-
+  environment:
+    name: production
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -52,14 +52,26 @@ build-a-docker:
     - mkdir -p /kaniko/.docker
     - echo $DOCKER_AUTH_CONFIG > /kaniko/.docker/config.json
     - cat /kaniko/.docker/config.json
-    - |
-      if [ "$CI_COMMIT_REF_NAME" = "main" ]; then
-        export BUILD_TAG="prod"
-        export BUILD_BASE_URL="https://explique.epfl.ch"
-      else
-        export BUILD_TAG="$CI_COMMIT_REF_SLUG"
-        export BUILD_BASE_URL="https://explique-${CI_COMMIT_REF_SLUG}.${BASE_DOMAIN}"
-      fi
+    - export BUILD_TAG="prod"
+    - export BUILD_BASE_URL="https://explique.epfl.ch"
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE_PATH --destination $HARBOR_REGISTRY/$REPO_NAME/$IMAGE_NAME:$BUILD_TAG --build-arg CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg BASE_URL=$BUILD_BASE_URL --build-arg "JWT_KEY='$JWT_KEY'" --build-arg "ADMIN_API_PUBLIC_KEY='$ADMIN_API_PUBLIC_KEY'" --build-arg IDENTIFIER_SALT=$IDENTIFIER_SALT
+
+build-staging:
+  stage: build
+  only:
+    refs:
+      - nightly
+  environment:
+    name: staging/$CI_COMMIT_REF_SLUG
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo $DOCKER_AUTH_CONFIG > /kaniko/.docker/config.json
+    - cat /kaniko/.docker/config.json
+    - export BUILD_TAG="$CI_COMMIT_REF_SLUG"
+    - export BUILD_BASE_URL="https://explique-${CI_COMMIT_REF_SLUG}.${BASE_DOMAIN}"
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE_PATH --destination $HARBOR_REGISTRY/$REPO_NAME/$IMAGE_NAME:$BUILD_TAG --build-arg CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg BASE_URL=$BUILD_BASE_URL --build-arg "JWT_KEY='$JWT_KEY'" --build-arg "ADMIN_API_PUBLIC_KEY='$ADMIN_API_PUBLIC_KEY'" --build-arg IDENTIFIER_SALT=$IDENTIFIER_SALT 
 
 deploy-to-prod:
