@@ -103,12 +103,12 @@ deploy-branch:
       - nightly
   environment:
     name: staging/$CI_COMMIT_REF_SLUG
-    url: https://$CI_COMMIT_REF_SLUG.$BASE_DOMAIN
+    url: https://$CI_COMMIT_REF_SLUG.previews.$BASE_DOMAIN
     on_stop: cleanup-staging
   variables:
     APPLICATION_NAME: "explique-${CI_COMMIT_REF_SLUG}"
     TAG: "${CI_COMMIT_REF_SLUG}"
-    FQDN: "${CI_COMMIT_REF_SLUG}.${BASE_DOMAIN}"
+    FQDN: "${CI_COMMIT_REF_SLUG}.previews.${BASE_DOMAIN}"
     HAS_RESOURCES: "false"
   image:
     name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
