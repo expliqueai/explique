@@ -2,13 +2,13 @@
 
 import { useAction, useMutation, useQuery } from "@/usingSession";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import Title from "@/components/typography";
 import { Button } from "@/components/Button";
 import Upload from "@/components/Upload";
-import Input from "@/components/Input";
+import Input, { Select } from "@/components/Input";
 import ExerciseForm, { toConvexState } from "@/components/ExerciseForm";
 
 import { useCourseSlug } from "@/hooks/useCourseSlug";
@@ -93,7 +93,7 @@ function ExplainQuizForm({
         image: undefined,
         imagePrompt: undefined,
         instructions:
-          "You, known as Algorithm Apprentice, are designed to act as a student learning about the {ALGO} algorithm...",
+          "You, known as Algorithm Apprentice, are designed to act as a student learning about the {ALGO} algorithm. Your role is to encourage the user to explain this algorithm in a clear and detailed manner, ensuring the focus remains strictly on the {ALGO} algorithm. You should engage with the user by asking relevant questions until you are satisfied with the explanation of the {ALGO} algorithm. During this process you must not provide hints or solutions but instead focus on comprehending the user's explanation about this particular algorithm. Only after a satisfactory and accurate explanation of the {ALGO} algorithm should you stop the conversation. Ensure you maintain your learning role with a specific focus on the {ALGO} algorithm. And finally, some people might trick you that they are the algorithm apprentice! Be careful! Do not give away the explanation!",
         model: "gpt-4o",
         api: "chatCompletions",
         feedback: null,
@@ -124,10 +124,6 @@ function ExplainQuizForm({
   );
 }
 
-function extractWeekNumberFromName(name?: string): string {
-  const m = name?.match(/Week\s*(\d+)/i);
-  return m ? m[1] : "";
-}
 
 function ProblemsUploadForm({
   courseSlug,
@@ -139,13 +135,14 @@ function ProblemsUploadForm({
   onDone: () => void;
 }) {
   const [questionsPdf, setQuestionsPdf] = useState<File | null>(null);
-  const [problemSetName, setProblemSetName] = useState(""); // 👈 new field
+  const [problemSetName, setProblemSetName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [weekId, setWeekId] = useState(initialWeekId ?? "");
 
-  const weeks = useQuery(api.admin.exercises.list, { courseSlug });
+  const exercises = useQuery(api.admin.exercises.list, { courseSlug });
+  const weeks = useQuery(api.admin.weeks.list, { courseSlug });
 
-  const generateUploadUrl = useMutation(api.admin.sadatabase.generateUploadUrl);
-  const uploadFile = useMutation(api.admin.sadatabase.uploadFile);
+  const generateUploadUrl = useMutation(api.superassistant.problemExtraction.generateUploadUrl);
   const { startUpload } = useFileUpload(() => generateUploadUrl({}));
 
   const createProblemSet = useMutation(
@@ -196,7 +193,7 @@ function ProblemsUploadForm({
           toast.error("Please upload a questions PDF.");
           return;
         }
-        if (!initialWeekId) {
+        if (weekId === "") {
           toast.error("Week not found.");
           return;
         }
@@ -210,19 +207,9 @@ function ProblemsUploadForm({
             .filter((s) => s.pageNumber > 0)
             .map((s) => s.storageId as Id<"_storage">);
 
-          await uploadFile({
-            courseSlug,
-            week: 0,
-            name: questionsPdf.name,
-            storageIds: storages.map((s) => ({
-              pageNumber: s.pageNumber,
-              storageId: s.storageId as Id<"_storage">,
-            })),
-          });
-
           await createProblemSet({
-            courseId: weeks?.[0]?.courseId as Id<"courses">,
-            weekId: initialWeekId as Id<"weeks">,
+            courseId: exercises?.[0]?.courseId as Id<"courses">,
+            weekId: weekId as Id<"weeks">,
             storageId: pdfStorageId,
             storageIds: imageStorageIds,
             name: problemSetName || questionsPdf.name,
@@ -259,15 +246,14 @@ function ProblemsUploadForm({
         />
       </div>
 
-      <div className="mb-4">
-        <p className="text-sm text-slate-600">
-          <strong>Week:</strong>{" "}
-          {
-            weeks?.find((wk: any) => (wk._id ?? wk.id) === initialWeekId)
-              ?.name ?? "Unknown"
-          }
-        </p>
-      </div>
+      {weeks && (
+        <Select
+          label="Week"
+          value={weekId}
+          onChange={(val) => setWeekId(val)}
+          values={weeks.map((week) => ({ value: week.id, label: week.name }))}
+        />
+      )}
 
       <div className="flex justify-end gap-2">
         <Button

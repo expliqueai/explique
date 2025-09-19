@@ -14,12 +14,6 @@ import { ImageLink } from "@/components/ImageLink";
 import ProblemSolvingColumn from "@/components/super-assistant/ProblemSolvingcolumn";
 
 
-function extractWeekNumber(name: string, index: number): number {
-  const m = name.match(/Week\s+(\d+)/i);
-  return m ? Number(m[1]) : index + 1;
-}
-
-
 
 export default function ExercisesPage() {
   const courseSlug = useCourseSlug();
@@ -96,46 +90,39 @@ function ProjectGrid() {
                 </div>
               )}
             </div>
-            <div className="grid gap-8 lg:grid-cols-[1fr_auto_1fr]">
-              <div className="grid gap-6 md:grid-cols-2">
-                {week.exercises.map((exercise) => (
-                  <div
-                    key={exercise.id}
-                    className="relative h-[210px] sm:h-[240px] rounded-3xl overflow-hidden"
-                  >
-                    <ImageLink
-                      href={`/e/${exercise.id}`}
-                      name={exercise.name}
-                      image={exercise.image}
-                      corner={
-                        <div
-                          className={clsx(
-                            "w-24 h-24 tr-corner flex text-white rounded-tr-3xl",
-                            exercise.completed
-                              ? "bg-linear-to-b from-green-500 to-green-600"
-                              : "bg-gray-500"
-                          )}
-                        >
-                          {exercise.completed ? (
-                            <CheckIcon className="absolute top-4 right-4 w-6 h-6" />
-                          ) : (
-                            <XMarkIcon className="absolute top-4 right-4 w-6 h-6" />
-                          )}
-                        </div>
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-
-
-              <div className="hidden lg:block w-px bg-slate-200 mx-2" />
-
-              <div>
-                <ProblemSolvingColumn
-                  weekNumber={extractWeekNumber(week.name, weeks.indexOf(week))}
+            <div className="grid gap-6 md:grid-cols-2">
+              {week.exercises.map((exercise) => (
+                <ImageLink
+                  key={exercise.id}
+                  href={`/e/${exercise.id}`}
+                  name={exercise.name}
+                  image={exercise.image}
+                  corner={
+                    <div
+                      className={clsx(
+                        "w-24 h-24 tr-corner flex text-white rounded-tr-3xl",
+                        exercise.completed &&
+                          "bg-gradient-to-b from-green-500 to-green-600",
+                        !exercise.completed && "bg-gray-500",
+                      )}
+                    >
+                      {exercise.completed && (
+                        <CheckIcon className="absolute top-4 right-4 w-6 h-6" />
+                      )}
+                      {!exercise.completed && (
+                        <XMarkIcon className="absolute top-4 right-4 w-6 h-6" />
+                      )}
+                    </div>
+                  }
                 />
-              </div>
+              ))}
+            </div>
+
+            <div className="inline-flex items-center rounded-full bg-[#B68585] px-3 py-1 text-xs font-semibold text-white my-4">
+              Open-Ended Problems
+            </div>
+            <div className="grid gap-6 md:grid-cols-4">
+              <ProblemSolvingColumn week={week.id} />
             </div>
           </div>
         );

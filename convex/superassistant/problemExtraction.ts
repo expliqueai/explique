@@ -1,4 +1,3 @@
-
 import {
   internalAction,
   internalMutation,
@@ -6,12 +5,15 @@ import {
   query,
   mutation,
 } from "../_generated/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { Id } from "../_generated/dataModel";
 import OpenAI from "openai";
 import { internal } from "../_generated/api";
 import { queryWithAuth, mutationWithAuth } from "../auth/withAuth";
+import { getCourseRegistration } from "../courses";
 
+export type Problem = { id: Id<"problems">; name: string; statement: string; status: Status; attemptId: Id<"saAttempts"> | null };
+export type Status = "NOT STARTED" | "IN PROGRESS" | "COMPLETED";
 
 export const listProblemSets = queryWithAuth({
   args: { courseId: v.id("courses") },
@@ -56,6 +58,53 @@ export const listProblemsForSet = queryWithAuth({
   },
 });
 
+export const problemsOfSet = queryWithAuth({
+  args: { problemSetId: v.id("problemSets") },
+  handler: async ({ db, session }, { problemSetId }) => {
+    if (!session) throw new ConvexError("Not logged in");
+
+    const problems = await db
+      .query("problems")
+      .withIndex("by_problemSet", (q) => q.eq("problemSetId", problemSetId))
+      .collect();
+
+    const sortedProblems = problems.sort((a, b) => {
+      const [aNum, aSuffix] = parseExerciseNumber(a.number);
+      const [bNum, bSuffix] = parseExerciseNumber(b.number);
+
+      if (aNum !== bNum) return aNum - bNum;
+
+      if (aSuffix === "" && bSuffix !== "") return -1;
+      if (aSuffix !== "" && bSuffix === "") return 1;
+
+      return aSuffix.localeCompare(bSuffix);
+    });
+    
+    const result : Problem[] = [];
+    for (const problem of sortedProblems) {
+      const extraction = JSON.parse(problem.rawExtraction);
+      const attempts = await db
+        .query("saAttempts")
+        .withIndex("by_key", (q) => q.eq("userId", session.user._id).eq("problemId", problem._id))
+        .collect();
+
+      const status = attempts.length === 0 ? "NOT STARTED"
+                   : attempts[0].validated ? "COMPLETED"
+                                           : "IN PROGRESS";
+
+      result.push({
+        id: problem._id,
+        name: problem.number ? "Exercise " + problem.number : "Unnamed exercise",
+        statement: extraction.statement,
+        status: status,
+        attemptId: attempts.length === 0 ? null : attempts[0]._id,
+      });
+    }
+
+    return result;
+  },
+});
+
 export const listProblemSetsByWeek = queryWithAuth({
   args: { weekId: v.id("weeks") },
   handler: async (ctx, { weekId }) => {
@@ -68,6 +117,16 @@ export const listProblemSetsByWeek = queryWithAuth({
       .collect();
 
     return inCourse.filter(ps => ps.weekId === weekId && ps.status === "READY");
+  },
+});
+
+export const getProblemSetName = queryWithAuth({
+  args: { problemSetId: v.id("problemSets") },
+  handler: async (ctx, { problemSetId }) => {
+    const problemSet = await ctx.db.get(problemSetId);
+    if (!problemSet) throw new ConvexError("Invalid problem set ID");
+    
+    return problemSet.name;
   },
 });
 
@@ -114,7 +173,6 @@ export const validateProblem = mutationWithAuth({
     });
   },
 });
-
 
 
 export const getProblemSet2 = internalQuery({
@@ -189,7 +247,7 @@ export const startExtraction = internalAction({
             messages: [
               {
                 role: "system",
-                content: `You are an assistant that extracts ALL exercises from the given assignment page. You should always extract the full the porblem even if part is in bullet points.
+                content: `You are an assistant that extracts ALL exercises from the given assignment page. You should always extract the full the problem even if part is in bullet points.
                     Return strict JSON with either:
                     - an array of problems: [ { "number": string, "statement": string, ... } ]
                     - OR { "problems": [ ... ] }`,
@@ -263,16 +321,6 @@ export const getProblemSet1 = internalQuery({
   args: { problemSetId: v.id("problemSets") },
   handler: async ({ db }, { problemSetId }) => {
     return await db.get(problemSetId);
-  },
-});
-
-export const getSaDatabase = internalQuery({
-  args: { courseId: v.id("courses") },
-  handler: async ({ db }, { courseId }) => {
-    return await db
-      .query("saDatabase")
-      .withIndex("by_course", (q) => q.eq("courseId", courseId))
-      .first();
   },
 });
 
@@ -371,5 +419,12 @@ export const deleteProblemSet = mutationWithAuth({
     }
 
     await ctx.db.delete(problemSetId);
+  },
+});
+
+export const generateUploadUrl = mutationWithAuth({
+  args: {},
+  handler: async (ctx, {}) => {
+    return await ctx.storage.generateUploadUrl();
   },
 });

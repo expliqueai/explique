@@ -11,7 +11,6 @@ import "katex/dist/katex.min.css";
 import { ArrowLeft, Star, Trash2, Pencil } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { useState } from "react";
-import { GripVertical } from "lucide-react"; // 👈 add this
 
 export default function ProblemSetPage({
   params,

@@ -4,27 +4,27 @@ import Chat from "@/components/super-assistant/Chat"
 import { useQuery } from "@/usingSession"
 import { ArrowLeftIcon } from "@heroicons/react/24/outline"
 import Link from "next/link"
-import { api } from "../../../../../../convex/_generated/api"
-import { Id } from "../../../../../../convex/_generated/dataModel"
+import { api } from "../../../../../convex/_generated/api"
+import { Id } from "../../../../../convex/_generated/dataModel"
 
-type ChatProps = {
+type AttemptProps = {
   params: {
-    courseSlug: string
-    chatId: Id<"chats">
+    id: Id<"problemSets">
+    attemptId: Id<"saAttempts">
   }
 }
 
-export default function ChatPage({ params }: ChatProps) {
-  const { courseSlug, chatId } = params
+export default function ChatPage({ params }: AttemptProps) {
+  const { id , attemptId } = params
 
-  const chatName = useQuery(api.superassistant.chat.getName, { chatId })
+  const chatName = useQuery(api.superassistant.attempt.getName, { attemptId })
 
   return (
     <div className="p-6">
       <div className="mx-auto max-w-xl">
         <header className="bg-opacity-90 fixed top-0 left-0 z-10 flex h-14 w-full items-center justify-center bg-white p-4 shadow-lg backdrop-blur-lg sm:h-16">
           <Link
-            href={`/${courseSlug}/super-assistant`}
+            href={`/p/${id}`}
             title="Back"
             className="absolute top-0 left-0 flex h-14 w-14 items-center justify-center sm:h-16 sm:w-16"
           >
@@ -38,7 +38,7 @@ export default function ChatPage({ params }: ChatProps) {
 
         <div className="h-14"></div>
 
-        <Chat chatId={chatId} />
+        <Chat chatId={attemptId} />
       </div>
     </div>
   )

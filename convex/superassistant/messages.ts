@@ -4,29 +4,29 @@ import {
   MutationCtx,
   internalAction,
   internalQuery,
-} from "./_generated/server";
+} from "../_generated/server";
 import { ConvexError, v } from "convex/values";
-import { Session, queryWithAuth, mutationWithAuth } from "./auth/withAuth";
-import { Id } from "./_generated/dataModel";
-import { internal } from "./_generated/api";
+import { Session, queryWithAuth, mutationWithAuth } from "../auth/withAuth";
+import { Id } from "../_generated/dataModel";
+import { internal } from "../_generated/api";
 import OpenAI from "openai";
 
 async function getAttemptIfAuthorized(
   db: DatabaseReader,
   session: Session | null,
-  feedbackId: Id<"feedbacks">,
+  attemptId: Id<"saAttempts">,
 ) {
   if (!session) {
     throw new ConvexError("Logged out");
   }
 
-  const attempt = await db.get(feedbackId);
+  const attempt = await db.get(attemptId);
   if (attempt === null) throw new ConvexError("Unknown attempt");
 
   const registration = await db
     .query("registrations")
     .withIndex("by_user_and_course", (q) =>
-      q.eq("userId", session.user._id).eq("courseId", attempt.courseId),
+      q.eq("userId", session.user._id),
     )
     .first();
   if (!registration) throw new Error("User not enrolled in the course.");
@@ -40,21 +40,21 @@ async function getAttemptIfAuthorized(
 
 export const list = queryWithAuth({
   args: {
-    feedbackId: v.id("feedbacks"),
+    attemptId: v.id("saAttempts"),
   },
-  handler: async (ctx, { feedbackId }) => {
-    await getAttemptIfAuthorized(ctx.db, ctx.session, feedbackId);
+  handler: async (ctx, { attemptId }) => {
+    await getAttemptIfAuthorized(ctx.db, ctx.session, attemptId);
 
     const rows = await ctx.db
-      .query("feedbackMessages")
-      .withIndex("by_feedback", (x) => x.eq("feedbackId", feedbackId))
+      .query("saMessages")
+      .withIndex("by_attempt", (x) => x.eq("attemptId", attemptId))
       .collect();
     rows.shift();
     rows.shift();
 
     const reportedMessages = await ctx.db
-      .query("feedbackReports")
-      .withIndex("by_feedback", (x) => x.eq("feedbackId", feedbackId))
+      .query("saReports")
+      .withIndex("by_attempt", (x) => x.eq("attemptId", attemptId))
       .collect();
 
     const result = [];
@@ -78,24 +78,30 @@ export const list = queryWithAuth({
 
 export const reportMessage = mutationWithAuth({
   args: {
-    messageId: v.id("feedbackMessages"),
+    messageId: v.id("saMessages"),
     reason: v.string(),
   },
   handler: async (ctx, { messageId, reason }) => {
     const message = await ctx.db.get(messageId);
     if (message === null) throw new ConvexError("Message not found");
 
-    const feedback = await getAttemptIfAuthorized(
+    const attempt = await getAttemptIfAuthorized(
       ctx.db,
       ctx.session,
-      message.feedbackId,
+      message.attemptId,
     );
-    if (feedback === null) throw new ConvexError("Feedback not found");
+    if (attempt === null) throw new ConvexError("Feedback not found");
 
-    await ctx.db.insert("feedbackReports", {
-      feedbackId: message.feedbackId,
+    const problem = await ctx.db.get(attempt.problemId);
+    if (!problem) throw new ConvexError("Invalid problemId field");
+    const problemSet = await ctx.db.get(problem.problemSetId);
+    if (!problemSet) throw new ConvexError("Invalid problemSetId field");
+    const courseId = problemSet.courseId;
+
+    await ctx.db.insert("saReports", {
+      attemptId: message.attemptId,
       messageId: messageId,
-      courseId: feedback.courseId,
+      courseId: courseId,
       reason: reason,
     });
   },
@@ -103,16 +109,16 @@ export const reportMessage = mutationWithAuth({
 
 export const unreportMessage = mutationWithAuth({
   args: {
-    messageId: v.id("feedbackMessages"),
+    messageId: v.id("saMessages"),
   },
   handler: async (ctx, { messageId }) => {
     const message = await ctx.db.get(messageId);
     if (message === null) throw new ConvexError("Message not found");
 
-    await getAttemptIfAuthorized(ctx.db, ctx.session, message.feedbackId);
+    await getAttemptIfAuthorized(ctx.db, ctx.session, message.attemptId);
 
     const report = await ctx.db
-      .query("feedbackReports")
+      .query("saReports")
       .withIndex("by_message", (x) => x.eq("messageId", messageId))
       .first();
     if (report === null) throw new ConvexError("No report");
@@ -123,7 +129,7 @@ export const unreportMessage = mutationWithAuth({
 
 export const insertMessage = internalMutation({
   args: {
-    feedbackId: v.id("feedbacks"),
+    attemptId: v.id("saAttempts"),
     role: v.union(
       v.literal("user"),
       v.literal("system"),
@@ -156,10 +162,10 @@ export const insertMessage = internalMutation({
   },
   handler: async (
     { db },
-    { feedbackId, role, content, appearance, streaming },
+    { attemptId, role, content, appearance, streaming },
   ) => {
-    return await db.insert("feedbackMessages", {
-      feedbackId,
+    return await db.insert("saMessages", {
+      attemptId,
       content,
       role,
       appearance,
@@ -170,7 +176,7 @@ export const insertMessage = internalMutation({
 
 export const addChunk = internalMutation({
   args: {
-    messageId: v.id("feedbackMessages"),
+    messageId: v.id("saMessages"),
     chunk: v.string(),
   },
   handler: async ({ db }, { messageId, chunk }) => {
@@ -185,7 +191,7 @@ export const addChunk = internalMutation({
 
 export const streamingDone = internalMutation({
   args: {
-    messageId: v.id("feedbackMessages"),
+    messageId: v.id("saMessages"),
   },
   handler: async ({ db }, { messageId }) => {
     await db.patch(messageId, {
@@ -194,23 +200,23 @@ export const streamingDone = internalMutation({
   },
 });
 
-export const getFeedback = queryWithAuth({
+export const getAttempt = queryWithAuth({
   args: {
-    feedbackId: v.id("feedbacks"),
+    attemptId: v.id("saAttempts"),
   },
-  handler: async (ctx, { feedbackId }) => {
-    const feedback = await ctx.db
-      .query("feedbackMessages")
-      .withIndex("by_feedback", (x) => x.eq("feedbackId", feedbackId))
+  handler: async (ctx, { attemptId }) => {
+    const attempt = await ctx.db
+      .query("saMessages")
+      .withIndex("by_attempt", (x) => x.eq("attemptId", attemptId))
       .filter((x) => x.eq(x.field("role"), "assistant"))
       .order("desc")
       .first();
 
-    if (feedback === null || typeof feedback.content !== "string")
+    if (attempt === null || typeof attempt.content !== "string")
       return undefined;
     return {
-      content: feedback.content,
-      streaming: feedback.streaming,
+      content: attempt.content,
+      streaming: attempt.streaming,
     };
   },
 });
@@ -219,23 +225,23 @@ async function sendMessageController(
   ctx: Omit<MutationCtx, "auth">,
   {
     message,
-    feedbackId,
+    attemptId,
   }: {
-    feedbackId: Id<"feedbacks">;
+    attemptId: Id<"saAttempts">;
     message: string;
   },
 ) {
-  const feedback = await ctx.db.get(feedbackId);
-  if (!feedback) throw new Error(`Feedback ${feedbackId} not found`);
+  const attempt = await ctx.db.get(attemptId);
+  if (!attempt) throw new Error(`Attempt ${attemptId} not found`);
 
-  const userMessageId = await ctx.db.insert("feedbackMessages", {
-    feedbackId,
+  const userMessageId = await ctx.db.insert("saMessages", {
+    attemptId,
     role: "user",
     content: message,
   });
 
-  const assistantMessageId = await ctx.db.insert("feedbackMessages", {
-    feedbackId,
+  const assistantMessageId = await ctx.db.insert("saMessages", {
+    attemptId,
     role: "assistant",
     appearance: "typing",
     content: "",
@@ -243,9 +249,9 @@ async function sendMessageController(
 
   ctx.scheduler.runAfter(
     0,
-    internal.feedbackmessages.answerChatCompletionsApi,
+    internal.superassistant.messages.answerChatCompletionsApi,
     {
-      feedbackId,
+      attemptId,
       userMessageId,
       assistantMessageId,
     },
@@ -254,12 +260,12 @@ async function sendMessageController(
 
 export const generateTranscriptMessages = internalQuery({
   args: {
-    feedbackId: v.id("feedbacks"),
+    attemptId: v.id("saAttempts"),
   },
-  handler: async ({ db }, { feedbackId }) => {
+  handler: async ({ db }, { attemptId }) => {
     const feedbackMessages = await db
-      .query("feedbackMessages")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", feedbackId))
+      .query("saMessages")
+      .withIndex("by_attempt", (q) => q.eq("attemptId", attemptId))
       .collect();
 
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
@@ -319,18 +325,18 @@ export const generateTranscriptMessages = internalQuery({
 
 export const writeSystemResponse = internalMutation({
   args: {
-    feedbackId: v.id("feedbacks"),
-    userMessageId: v.id("feedbackMessages"),
-    assistantMessageId: v.id("feedbackMessages"),
+    attemptId: v.id("saAttempts"),
+    userMessageId: v.id("saMessages"),
+    assistantMessageId: v.id("saMessages"),
     content: v.string(),
     appearance: v.optional(v.union(v.literal("finished"), v.literal("error"))),
   },
   handler: async (
     { db },
-    { feedbackId, userMessageId, assistantMessageId, content, appearance },
+    { attemptId, userMessageId, assistantMessageId, content, appearance },
   ) => {
-    const feedback = await db.get(feedbackId);
-    if (!feedback) {
+    const attempt = await db.get(attemptId);
+    if (!attempt) {
       throw new Error("Can’t find the attempt");
     }
 
@@ -340,17 +346,17 @@ export const writeSystemResponse = internalMutation({
 
 export const answerChatCompletionsApi = internalAction({
   args: {
-    feedbackId: v.id("feedbacks"),
-    userMessageId: v.id("feedbackMessages"),
-    assistantMessageId: v.id("feedbackMessages"),
+    attemptId: v.id("saAttempts"),
+    userMessageId: v.id("saMessages"),
+    assistantMessageId: v.id("saMessages"),
   },
-  handler: async (ctx, { feedbackId, userMessageId, assistantMessageId }) => {
+  handler: async (ctx, { attemptId, userMessageId, assistantMessageId }) => {
     const openai = new OpenAI();
 
     const messages = await ctx.runQuery(
-      internal.feedbackmessages.generateTranscriptMessages,
+      internal.superassistant.messages.generateTranscriptMessages,
       {
-        feedbackId,
+        attemptId,
       },
     );
 
@@ -369,8 +375,8 @@ export const answerChatCompletionsApi = internalAction({
       );
     } catch (err) {
       console.error("Can’t create a completion", err);
-      await ctx.runMutation(internal.feedbackmessages.writeSystemResponse, {
-        feedbackId,
+      await ctx.runMutation(internal.superassistant.messages.writeSystemResponse, {
+        attemptId,
         userMessageId,
         assistantMessageId,
         appearance: "error",
@@ -382,16 +388,16 @@ export const answerChatCompletionsApi = internalAction({
     const message = response.choices[0].message;
     if (!message.content) {
       console.error("No content in the response", message);
-      await ctx.runMutation(internal.feedbackmessages.writeSystemResponse, {
-        feedbackId,
+      await ctx.runMutation(internal.superassistant.messages.writeSystemResponse, {
+        attemptId,
         userMessageId,
         assistantMessageId,
         appearance: "error",
         content: "",
       });
     } else {
-      await ctx.runMutation(internal.feedbackmessages.writeSystemResponse, {
-        feedbackId,
+      await ctx.runMutation(internal.superassistant.messages.writeSystemResponse, {
+        attemptId,
         userMessageId,
         assistantMessageId,
         appearance: undefined,
@@ -403,25 +409,18 @@ export const answerChatCompletionsApi = internalAction({
 
 export const sendMessage = mutationWithAuth({
   args: {
-    feedbackId: v.id("feedbacks"),
+    attemptId: v.id("saAttempts"),
     message: v.string(),
   },
-  handler: async (ctx, { feedbackId, message }) => {
-    const attempt = await getAttemptIfAuthorized(
-      ctx.db,
-      ctx.session,
-      feedbackId,
-    );
-    if (attempt.status === "feedback")
-      throw new ConvexError("Not in the chat part");
+  handler: async (ctx, { attemptId, message }) => {
 
     await sendMessageController(ctx, {
       message,
-      feedbackId,
+      attemptId,
     });
 
     const timestamp = Date.now();
-    await ctx.db.patch(feedbackId, {
+    await ctx.db.patch(attemptId, {
       lastModified: timestamp,
     });
   },
@@ -429,12 +428,12 @@ export const sendMessage = mutationWithAuth({
 
 export const deleteMessages = internalMutation({
   args: {
-    feedbackId: v.id("feedbacks"),
+    attemptId: v.id("saAttempts"),
   },
-  handler: async (ctx, { feedbackId }) => {
+  handler: async (ctx, { attemptId }) => {
     const messages = await ctx.db
-      .query("feedbackMessages")
-      .withIndex("by_feedback", (x) => x.eq("feedbackId", feedbackId))
+      .query("saMessages")
+      .withIndex("by_attempt", (x) => x.eq("attemptId", attemptId))
       .collect();
 
     const ids = messages.map(({ _id }) => _id);

@@ -39,7 +39,7 @@ export default function UploadWithImage({
   }
 
   return (
-    <div className="mt-10 mb-6 flex flex-col items-center justify-items-center">
+    <div className="mt-4 mb-6 flex flex-col items-center justify-items-center">
       {!value ? (
         <div
           {...getRootProps()}

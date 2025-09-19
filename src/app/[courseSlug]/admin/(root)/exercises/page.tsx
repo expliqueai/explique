@@ -16,25 +16,29 @@ export default function AdminExercisesPage() {
   return (
     <WeekList
       title="Exercises"
-      weeks={weeks?.map((week) => ({
-        ...week,
-        items: week.exercises.map((ex: any) => ({ ...ex, weekId: week._id })),
-      }))}
+      weeks={weeks}
       onDeleteWeek={async (weekId) => {
         await deleteWeek({ id: weekId, courseSlug });
         toast.success("Week deleted successfully");
       }}
-      renderItem={(exercise: any) => (
-        <>
-          <ExerciseLinkWithMenu key={exercise.id} exercise={exercise} />
-          <div className="flex-1">
-            <ExtractedProblemsList
-              courseSlug={courseSlug}
-              weekId={exercise.weekId}
-            />
-          </div>
-        </>
-      )}
+      renderItem={(item: any) => {
+        if (item.type === "exercise") {
+          return <ExerciseLinkWithMenu key={item.id} exercise={item} />;
+        }
+        if (item.type === "problemSet") {
+          return (
+            <div key={item.id} className="col-span-full">
+            <div className="flex-1 mt-3">
+              <ExtractedProblemsList
+                courseSlug={courseSlug}
+                weekId={item.weekId}
+              />
+            </div>
+            </div>
+          );
+        }
+        return null;
+      }}
       newItemPath="/admin/exercises/new"
       weekType="weeks"
     />

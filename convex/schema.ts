@@ -179,17 +179,16 @@ export default defineSchema(
       ),
     }).index("by_attempt", ["attemptId"]),
 
-     feedbacks: defineTable({
-      status: v.union(v.literal("feedback"), v.literal("chat")),
-      courseId: v.id("courses"),
+    saAttempts: defineTable({
+      problemId: v.id("problems"),
       userId: v.id("users"),
+      name: v.string(),
       images: v.array(v.id("_storage")),
-      name: v.optional(v.string()),
       lastModified: v.number(),
-      weekNumber: v.number(),
-    }).index("by_key", ["userId", "courseId"]),
-    feedbackMessages: defineTable({
-      feedbackId: v.id("feedbacks"),
+      validated: v.boolean(),
+    }).index("by_key", ["userId", "problemId"]),
+    saMessages: defineTable({
+      attemptId: v.id("saAttempts"),
       role: v.union(
         v.literal("user"),
         v.literal("system"),
@@ -219,41 +218,7 @@ export default defineSchema(
         ),
       ),
       streaming: v.optional(v.boolean()),
-    }).index("by_feedback", ["feedbackId"]),
-    chats: defineTable({
-      courseId: v.id("courses"),
-      userId: v.id("users"),
-      name: v.optional(v.string()),
-      lastModified: v.number(),
-      weekNumber: v.number(),
-    }).index("by_key", ["userId", "courseId"]),
-    chatMessages: defineTable({
-      chatId: v.id("chats"),
-      assistant: v.boolean(),
-      content: v.union(
-        v.string(),
-        v.array(
-          v.union(
-            v.object({
-              type: v.literal("text"),
-              text: v.string(),
-            }),
-            v.object({
-              type: v.literal("image_url"),
-              image_url: v.object({ url: v.string() }),
-            }),
-          ),
-           ),
-      ),
-      appearance: v.optional(
-        v.union(
-          v.literal("finished"),
-          v.literal("feedback"),
-          v.literal("typing"),
-          v.literal("error"),
-        ),
-      ),
-    }).index("by_chat", ["chatId"]),
+    }).index("by_attempt", ["attemptId"]),
     saDatabase: defineTable({
       storageIds: v.array(
         v.object({
@@ -268,7 +233,6 @@ export default defineSchema(
       .index("by_course", ["courseId"])
       .index("by_week", ["week"])
       .index("by_name", ["name"]),
-
     problemSets: defineTable({
       courseId: v.id("courses"),
       weekId: v.id("weeks"),
@@ -285,7 +249,6 @@ export default defineSchema(
       })
       .index("by_course", ["courseId"])
       .index("by_week", ["weekId"]),
-
     problems: defineTable({
       problemSetId: v.id("problemSets"),
       pageNumber: v.number(),
@@ -294,9 +257,7 @@ export default defineSchema(
       validatedContent: v.optional(v.string()),
       validated: v.optional(v.boolean()),
       starred: v.optional(v.boolean()), 
-      //order: v.optional(v.number()), 
     }).index("by_problemSet", ["problemSetId"]),
-
     reports: defineTable({
       attemptId: v.id("attempts"),
       messageId: v.id("messages"),
@@ -307,22 +268,13 @@ export default defineSchema(
       .index("by_message", ["messageId"])
       .index("by_course", ["courseId"]),
 
-    chatReports: defineTable({
-      chatId: v.id("chats"),
-      messageId: v.id("chatMessages"),
+    saReports: defineTable({
+      attemptId: v.id("saAttempts"),
+      messageId: v.id("saMessages"),
       courseId: v.id("courses"),
       reason: v.string(),
     })
-      .index("by_chat", ["chatId"])
-      .index("by_message", ["messageId"])
-      .index("by_course", ["courseId"]),
-    feedbackReports: defineTable({
-      feedbackId: v.id("feedbacks"),
-      messageId: v.id("feedbackMessages"),
-      courseId: v.id("courses"),
-      reason: v.string(),
-    })
-      .index("by_feedback", ["feedbackId"])
+      .index("by_attempt", ["attemptId"])
       .index("by_message", ["messageId"])
       .index("by_course", ["courseId"]),
 
