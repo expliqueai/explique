@@ -10,7 +10,7 @@ import { Id } from "../../../../convex/_generated/dataModel"
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const attemptId = params.id as Id<"saAttempts">;
-  const courseSlug = "bio109";
+  const courseSlug = useQuery(api.superassistant.attempt.getCourseSlug, { attemptId });
   const chatName = useQuery(api.superassistant.attempt.getName, { attemptId })
 
   return (

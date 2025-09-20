@@ -85,6 +85,27 @@ export const getAttemptId = mutationWithAuth({
   }
 });
 
+export const getCourseSlug = queryWithAuth({
+  args: {
+    attemptId: v.id("saAttempts"),
+  },
+  handler: async (ctx, { attemptId }) => {
+    const attempt = await ctx.db.get(attemptId);
+    if (!attempt) throw new ConvexError("Wrong attempt ID");
+
+    const problem = await ctx.db.get(attempt.problemId);
+    if (!problem) throw new ConvexError("Wrong problem ID field");
+
+    const week = await ctx.db.get(problem.weekId);
+    if (!week) throw new ConvexError("Wrong week ID field");
+
+    const course = await ctx.db.get(week.courseId);
+    if (!course) throw new ConvexError("Wrong course ID field");
+
+    return course.slug;
+  }
+});
+
 export const generateAttempt = mutationWithAuth({
   args: {
     problemId: v.id("problems"),

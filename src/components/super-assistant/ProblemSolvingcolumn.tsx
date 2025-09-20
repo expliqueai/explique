@@ -62,7 +62,7 @@ function ExerciseBlob({
           <div
             className={clsx(
               "mt-1 text-sm text-slate-200/85",
-              "line-clamp-2 overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]"
+              "line-clamp-4 overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-line-clamp:4] [-webkit-box-orient:vertical]"
             )}
           >
             {snippet}
