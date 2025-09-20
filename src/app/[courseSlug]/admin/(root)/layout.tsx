@@ -48,10 +48,6 @@ export default function AdminRootLayout({ children }: { children: ReactNode }) {
           <VideoCameraIcon />
           Lectures
         </NavLink>
-        <NavLink href={`/${courseSlug}/admin/super-assistant`}>
-          <DocumentIcon />
-          Uploaded Files
-          </NavLink>
         <NavLink href={`/${courseSlug}/admin/users`}>
           <UserIcon />
           Users
