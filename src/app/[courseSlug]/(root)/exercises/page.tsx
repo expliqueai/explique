@@ -90,7 +90,7 @@ function ProjectGrid() {
                 </div>
               )}
             </div>
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-4">
               {week.exercises.map((exercise) => (
                 <ImageLink
                   key={exercise.id}
@@ -118,12 +118,7 @@ function ProjectGrid() {
               ))}
             </div>
 
-            <div className="inline-flex items-center rounded-full bg-[#B68585] px-3 py-1 text-xs font-semibold text-white my-4">
-              Open-Ended Problems
-            </div>
-            <div className="grid gap-6 md:grid-cols-4">
-              <ProblemSolvingColumn week={week.id} />
-            </div>
+            <ProblemSolvingColumn week={week.id} />
           </div>
         );
       })}
