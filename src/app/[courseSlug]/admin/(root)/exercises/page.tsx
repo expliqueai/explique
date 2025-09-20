@@ -10,8 +10,21 @@ import ExtractedProblemsList from "@/components/ExtractedProblemsList";
 
 export default function AdminExercisesPage() {
   const courseSlug = useCourseSlug();
-  const weeks = useQuery(api.admin.exercises.list, { courseSlug });
+  const weeksRaw = useQuery(api.admin.exercises.list, { courseSlug });
   const deleteWeek = useMutation(api.admin.weeks.remove);
+
+  // Build per-week items: exercises + ONE footer that renders problems for that week
+  const weeks =
+    weeksRaw?.map((week: any) => {
+      const exercises = (week.items ?? []).filter((it: any) => it.type === "exercise");
+      return {
+        ...week,
+        items: [
+          ...exercises,
+          { type: "problemsFooter", id: `problems-${week._id}`, weekId: week._id },
+        ],
+      };
+    }) ?? [];
 
   return (
     <WeekList
@@ -25,15 +38,12 @@ export default function AdminExercisesPage() {
         if (item.type === "exercise") {
           return <ExerciseLinkWithMenu key={item.id} exercise={item} />;
         }
-        if (item.type === "problemSet") {
+        if (item.type === "problemsFooter") {
           return (
             <div key={item.id} className="col-span-full">
-            <div className="flex-1 mt-3">
-              <ExtractedProblemsList
-                courseSlug={courseSlug}
-                weekId={item.weekId}
-              />
-            </div>
+              <div className="mt-3">
+                <ExtractedProblemsList courseSlug={courseSlug} weekId={item.weekId} />
+              </div>
             </div>
           );
         }

@@ -428,3 +428,34 @@ export const generateUploadUrl = mutationWithAuth({
     return await ctx.storage.generateUploadUrl();
   },
 });
+
+
+export const listProblemsByWeek = queryWithAuth({
+  args: { weekId: v.id("weeks") },
+  handler: async (ctx, { weekId }) => {
+    const week = await ctx.db.get(weekId);
+    if (!week) return [];
+
+    const problemSets = await ctx.db
+      .query("problemSets")
+      .withIndex("by_course", (q) => q.eq("courseId", week.courseId))
+      .collect();
+
+    const psIds = problemSets
+      .filter((ps) => ps.weekId === weekId && ps.status === "READY")
+      .map((ps) => ps._id);
+
+    let problems: any[] = [];
+    for (const psId of psIds) {
+      const psProblems = await ctx.db
+        .query("problems")
+        .withIndex("by_problemSet", (q) => q.eq("problemSetId", psId))
+        .collect();
+
+      problems.push(...psProblems);
+    }
+
+    const unique = new Map(problems.map((p) => [p._id, p]));
+    return Array.from(unique.values());
+  },
+});
