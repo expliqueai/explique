@@ -7,15 +7,10 @@ import { toast } from "sonner";
 
 import Title from "@/components/typography";
 import { Button } from "@/components/Button";
-import Upload from "@/components/Upload";
 import Input, { Select } from "@/components/Input";
 import ExerciseForm, { toConvexState } from "@/components/ExerciseForm";
 
 import { useCourseSlug } from "@/hooks/useCourseSlug";
-import { useFileUpload } from "@/hooks/useFileUpload";
-
-import { pdfToImg as PdfToImg } from "pdftoimg-js/browser";
-
 
 import { Id } from "../../../../../../../convex/_generated/dataModel";
 import { api } from "../../../../../../../convex/_generated/api";
@@ -134,18 +129,18 @@ function ProblemForm({
   initialWeekId?: Id<"weeks">;
   onDone: () => void;
 }) {
-  const [number, setNumber] = useState("");
-  const [statement, setStatement] = useState("");
-  const [solution, setSolution] = useState("");
+  const [name, setName] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [solutions, setSolution] = useState("");
   const [mandatory, setMandatory] = useState(false);
   const [weekId, setWeekId] = useState(initialWeekId ?? "");
 
   const weeks = useQuery(api.admin.weeks.list, { courseSlug });
-  const createProblem = useMutation(api.superassistant.problems.createProblem);
+  const createProblem = useMutation(api.superassistant.problem.createProblem);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!weekId || !number || !statement) {
+    if (!weekId || !name || !instructions) {
       toast.error("Please fill required fields (week, number, statement).");
       return;
     }
@@ -153,9 +148,9 @@ function ProblemForm({
     try {
       await createProblem({
         weekId: weekId as Id<"weeks">,
-        number,
-        statement,
-        solution: solution || undefined,
+        name,
+        instructions,
+        solutions: solutions || undefined,
         mandatory,
       });
       toast.success("Problem created!");
@@ -177,7 +172,7 @@ function ProblemForm({
         />
       )}
 
-      <Input label="Problem Number" value={number} onChange={setNumber} />
+      <Input label="Problem Name" value={name} onChange={setName} />
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">
           Statement
@@ -185,8 +180,8 @@ function ProblemForm({
         <textarea
           className="w-full border rounded p-2"
           rows={5}
-          value={statement}
-          onChange={(e) => setStatement(e.target.value)}
+          value={instructions}
+          onChange={(e) => setInstructions(e.target.value)}
           required
         />
       </div>
@@ -197,7 +192,7 @@ function ProblemForm({
         <textarea
           className="w-full border rounded p-2"
           rows={5}
-          value={solution}
+          value={solutions}
           onChange={(e) => setSolution(e.target.value)}
         />
        </div>

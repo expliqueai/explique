@@ -81,9 +81,9 @@ export const list = queryWithAuth({
         .map((p) => ({
           type: "problem" as const,
           id: p._id,
-          number: p.number,
+          number: p.name,
           mandatory: p.mandatory ?? false,
-          statement: p.statement,
+          instructions: p.instructions,
         }));
 
       result.push({

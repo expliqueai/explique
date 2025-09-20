@@ -6,14 +6,13 @@ import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { WeekList } from "@/components/admin/WeekList";
 import { toast } from "sonner";
 import { ExerciseLinkWithMenu } from "@/components/admin/ExerciseLinkWithMenu";
-import ExtractedProblemsList from "@/components/ExtractedProblemsList";
+import Problems from "@/components/super-assistant/Problems";
 
 export default function AdminExercisesPage() {
   const courseSlug = useCourseSlug();
   const weeksRaw = useQuery(api.admin.exercises.list, { courseSlug });
   const deleteWeek = useMutation(api.admin.weeks.remove);
 
-  // Build per-week items: exercises + ONE footer that renders problems for that week
   const weeks =
     weeksRaw?.map((week: any) => {
       const exercises = (week.items ?? []).filter((it: any) => it.type === "exercise");
@@ -42,7 +41,7 @@ export default function AdminExercisesPage() {
           return (
             <div key={item.id} className="col-span-full">
               <div className="mt-3">
-                <ExtractedProblemsList courseSlug={courseSlug} weekId={item.weekId} />
+                <Problems courseSlug={courseSlug} weekId={item.weekId} />
               </div>
             </div>
           );
