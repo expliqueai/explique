@@ -31,10 +31,9 @@ export const getStatement = queryWithAuth({
     const problem = await db.get(attempt.problemId);
     if (!problem) throw new ConvexError("Attempt without problem");
 
-    const extraction = JSON.parse(problem.rawExtraction);
-    return extraction.statement;
+    return problem.instructions;
   }
-})
+});
 
 export const getCreationTime = queryWithAuth({
   args: {
@@ -43,34 +42,6 @@ export const getCreationTime = queryWithAuth({
   handler: async ({ db }, { attemptId }) => {
     const attempt = await db.get(attemptId);
     return attempt?._creationTime;
-  },
-});
-
-export const getUrls = internalQuery({
-  args: {
-    attemptId: v.id("saAttempts"),
-  },
-  handler: async (ctx, { attemptId }) => {
-    const attempt = await ctx.db.get(attemptId);
-    if (!attempt) throw new ConvexError("Invalid attempt ID");
-
-    const problem = await ctx.db.get(attempt.problemId);
-    if (!problem) throw new ConvexError("Invalid problemId field of the attempt");
-
-    const problemSet = await ctx.db.get(problem.problemSetId);
-    if (!problemSet) throw new ConvexError("Invalid problemSetId field of the problem");
-    const storageIds = problemSet.storageIds;
-
-    const urls = [];
-    if (storageIds) {
-      for (const storageId of storageIds) {
-        const url = await ctx.storage.getUrl(storageId);
-        if (url === null) continue;
-        urls.push(url);
-      }
-    }
-
-    return urls;
   },
 });
 
@@ -112,7 +83,7 @@ export const getAttemptId = mutationWithAuth({
 
     return attempt._id;
   }
-})
+});
 
 export const generateAttempt = mutationWithAuth({
   args: {
@@ -140,12 +111,14 @@ export const generateAttempt = mutationWithAuth({
     })
 
     const fileUrl = await ctx.storage.getUrl(storageId);
+    const problem = await ctx.db.get(problemId);
+    if (!problem) throw new ConvexError("Missing problem");
 
     if (fileUrl) {      // schedule the action to generate feedback
       await ctx.scheduler.runAfter(0, internal.superassistant.attempt.generateFirstMessages, {
         fileUrl: fileUrl,
-        userId: userId,
-        storageId: storageId,
+        problemInstructions: problem.instructions,
+        solutions: problem.solutions,
         attemptId: attemptId,
       });
     };
@@ -157,11 +130,11 @@ export const generateAttempt = mutationWithAuth({
 export const generateFirstMessages = internalAction({
   args: {
     fileUrl: v.string(),
-    userId: v.id("users"),
-    storageId: v.id("_storage"),
+    problemInstructions: v.string(),
+    solutions: v.optional(v.string()),
     attemptId: v.id("saAttempts"),
   },
-  handler: async (ctx, { fileUrl, userId, storageId, attemptId }) => {
+  handler: async (ctx, { fileUrl, problemInstructions, solutions, attemptId }) => {
 
     const messages : OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
 
@@ -188,20 +161,19 @@ export const generateFirstMessages = internalAction({
       content:instructions,
     });
 
-    const urls = await ctx.runQuery(internal.superassistant.attempt.getUrls, { attemptId: attemptId });
     const message1 : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
     message1.push({
       type:"text",
-      text:"Here is the solution to the exercises. If I ask for the solution but my tentative solution is not perfect, tell me \"I cannot give you the solution.\" and don't give me the solution.",
+      text:`Here are the instructions of the exercise: ${problemInstructions}`,
     });
-    for (const url of urls) {
-      message1.push({
-        type:"image_url",
-        image_url:{
-          url:url,
-        },
-      });
-    };
+    message1.push({
+      type:"text",
+      text:`Here is the solution to the exercises: ${solutions}`,
+    });
+    message1.push({
+      type:"text",
+      text:"If I ask for the solution but my tentative solution is not perfect, tell me \"I cannot give you the solution.\" and don't give me the solution.",
+    });
 
     await ctx.runMutation(
       internal.superassistant.messages.insertMessage,
@@ -219,7 +191,7 @@ export const generateFirstMessages = internalAction({
     const message2 : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
     message2.push({
       type:"text",
-      text:"Here is my tentative solution. Tell me what exercise I am working on. And then, please give me feedback.",
+      text:"Here is my tentative solution. Give me feedback.",
     });
     message2.push({
       type:"image_url",
@@ -327,33 +299,6 @@ export const generateUpdateMessages = internalAction({
       userMessageId,
       assistantMessageId,
     });
-  },
-});
-
-export const updateAttemptInFeedback = mutationWithAuth({
-  args: {
-    storageId: v.id("_storage"),
-    attemptId: v.id("saAttempts"),
-  }, 
-  handler: async (ctx, { storageId, attemptId }) => {
-    if (!ctx.session) throw new ConvexError("Not logged in");
-
-    const fileUrl = await ctx.storage.getUrl(storageId);
-    if (fileUrl) {      // schedule the action to generate feedback
-      await ctx.scheduler.runAfter(0, internal.superassistant.attempt.generateUpdateMessages, {
-        fileUrl: fileUrl,
-        attemptId: attemptId,
-      });
-    };
-
-    const attempt = await ctx.db.get(attemptId);
-    if (attempt) {
-      const timestamp = Date.now();
-      await ctx.db.patch(attemptId, {
-        lastModified: timestamp,
-        images: [storageId].concat(attempt.images)
-      });
-    };
   },
 });
 

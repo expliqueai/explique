@@ -94,14 +94,13 @@ export const reportMessage = mutationWithAuth({
 
     const problem = await ctx.db.get(attempt.problemId);
     if (!problem) throw new ConvexError("Invalid problemId field");
-    const problemSet = await ctx.db.get(problem.problemSetId);
-    if (!problemSet) throw new ConvexError("Invalid problemSetId field");
-    const courseId = problemSet.courseId;
+    const week = await ctx.db.get(problem.weekId);
+    if (!week) throw new ConvexError("Invalid weekId field");
 
     await ctx.db.insert("saReports", {
       attemptId: message.attemptId,
       messageId: messageId,
-      courseId: courseId,
+      courseId: week.courseId,
       reason: reason,
     });
   },

@@ -219,45 +219,13 @@ export default defineSchema(
       ),
       streaming: v.optional(v.boolean()),
     }).index("by_attempt", ["attemptId"]),
-    saDatabase: defineTable({
-      storageIds: v.array(
-        v.object({
-          pageNumber: v.number(),
-          storageId: v.id("_storage"),
-        }),
-      ),
-      courseId: v.id("courses"),
-      name: v.string(),
-      week: v.number(),
-    })
-      .index("by_course", ["courseId"])
-      .index("by_week", ["week"])
-      .index("by_name", ["name"]),
-    problemSets: defineTable({
-      courseId: v.id("courses"),
-      weekId: v.id("weeks"),
-      storageId: v.id("_storage"),                     
-      storageIds: v.optional(v.array(v.id("_storage"))),
-      name: v.string(),
-      status: v.union(
-        v.literal("UPLOADED"),
-        v.literal("PROCESSING"),
-        v.literal("READY"),
-        v.literal("VALIDATED")
-      ),
-      createdAt: v.number(),
-      })
-      .index("by_course", ["courseId"])
-      .index("by_week", ["weekId"]),
     problems: defineTable({
-      problemSetId: v.id("problemSets"),
-      pageNumber: v.number(),
-      rawExtraction: v.string(),
-      number: v.optional(v.string()),
-      validatedContent: v.optional(v.string()),
-      validated: v.optional(v.boolean()),
-      starred: v.optional(v.boolean()), 
-    }).index("by_problemSet", ["problemSetId"]),
+      weekId: v.id("weeks"),
+      name: v.string(),
+            instructions: v.string(),
+      solutions: v.optional(v.string()),
+      mandatory: v.boolean(),
+    }).index("by_week", ["weekId"]),
     reports: defineTable({
       attemptId: v.id("attempts"),
       messageId: v.id("messages"),
