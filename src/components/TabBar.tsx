@@ -9,7 +9,7 @@ function TabBarLink({ href, label }: { href: string; label: React.ReactNode }) {
     <Link
       href={href}
       className={clsx(
-        "flex items-center justify-center px-4 py-1 relative font-medium text-lg tracking-tight text-slate-700 rounded-full focus:ring-4 focus:outline-none",
+        "flex items-center justify-center px-4 py-1 relative font-medium text-lg tracking-tight text-slate-700 rounded-full  focus:outline-none",
       )}
       aria-selected={isActive}
     >
@@ -41,7 +41,7 @@ export function TabBar({
 
   return (
     <div className="mb-7 flex justify-center">
-      <nav className="bg-slate-200 p-[0.375rem] rounded-full overflow-hidden">
+      <nav className="bg-slate-200 p-1.5 rounded-full overflow-hidden">
         <div className="relative grid grid-flow-col auto-cols-fr">
           {selectedIndex !== -1 && (
             <span

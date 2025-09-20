@@ -1,52 +1,46 @@
-import React, { useId, useState } from "react";
-import Input, { Select, Textarea } from "@/components/Input";
-import {
-  EllipsisHorizontalIcon,
-  ExclamationCircleIcon,
-  PlusIcon,
-} from "@heroicons/react/16/solid";
-import { PlusIcon as PlusIconLarge } from "@heroicons/react/24/outline";
-import { XMarkIcon } from "@heroicons/react/20/solid";
-import { QuizContents } from "@/components/exercises/QuizExercise";
-import Markdown from "@/components/Markdown";
-import { Id } from "../../convex/_generated/dataModel";
-import { api as convexApi } from "../../convex/_generated/api";
-import { useAction, useQuery } from "@/usingSession";
-import clsx from "clsx";
-import { toast } from "sonner";
-import { useCourseSlug } from "@/hooks/useCourseSlug";
-import { PrimaryButton } from "./PrimaryButton";
-import { Button } from "./Button";
-import ChatBubble from "./ChatBubble";
+import { QuizContents } from "@/components/exercises/QuizExercise"
+import Input, { Select, Textarea } from "@/components/Input"
+import Markdown from "@/components/Markdown"
+import { useCourseSlug } from "@/hooks/useCourseSlug"
+import { useAction, useQuery } from "@/usingSession"
+import { EllipsisHorizontalIcon, PlusIcon } from "@heroicons/react/16/solid"
+import { XMarkIcon } from "@heroicons/react/20/solid"
+import { PlusIcon as PlusIconLarge } from "@heroicons/react/24/outline"
+import clsx from "clsx"
+import React, { useId, useState } from "react"
+import { toast } from "sonner"
+import { api as convexApi } from "../../convex/_generated/api"
+import { Id } from "../../convex/_generated/dataModel"
+import { Button } from "./Button"
+import ChatBubble from "./ChatBubble"
+import { PrimaryButton } from "./PrimaryButton"
 
 type Question = {
-  question: string;
-  answers: string[];
-  correctAnswerIndex: number | null;
-};
+  question: string
+  answers: string[]
+  correctAnswerIndex: number | null
+}
 
-export type Batch = { questions: Question[]; randomize: boolean };
+export type Batch = { questions: Question[]; randomize: boolean }
 
 export type State = {
-  weekId: Id<"weeks">;
-  name: string;
-  instructions: string;
-  model: string;
-  api: "chatCompletions" | "assistants";
-  text: string;
-  image?: Id<"images">;
-  imagePrompt?: string;
+  weekId: Id<"weeks">
+  name: string
+  instructions: string
+  model: string | undefined
+  text: string
+  image?: Id<"images">
+  imagePrompt?: string
 
-  quizBatches: Batch[] | null;
+  quizBatches: Batch[] | null
   feedback: {
-    model: string;
-    prompt: string;
-  } | null;
+    prompt: string
+  } | null
 
-  firstMessage: string;
-  controlGroup: "A" | "B" | "all" | "none";
-  completionFunctionDescription: string;
-};
+  firstMessage: string
+  controlGroup: "A" | "B" | "all" | "none"
+  completionFunctionDescription: string
+}
 
 export function toConvexState(state: State) {
   return {
@@ -57,8 +51,6 @@ export function toConvexState(state: State) {
     model: state.model,
     text: state.text,
     weekId: state.weekId,
-    chatCompletionsApi:
-      state.api === "chatCompletions" ? (true as const) : undefined,
 
     feedback: state.feedback ?? undefined,
 
@@ -75,7 +67,7 @@ export function toConvexState(state: State) {
                     text,
                     correct: index === correctAnswerIndex,
                   })),
-                }),
+                })
               ),
             })),
           },
@@ -83,14 +75,14 @@ export function toConvexState(state: State) {
     firstMessage: state.firstMessage,
     controlGroup: state.controlGroup,
     completionFunctionDescription: state.completionFunctionDescription,
-  };
+  }
 }
 
 function MarkdownTip() {
   return (
     <>
       <a
-        className="underline font-semibold"
+        className="font-semibold underline"
         href="https://www.markdownguide.org/basic-syntax/"
         target="_blank"
       >
@@ -101,7 +93,7 @@ function MarkdownTip() {
       LaTeX is syntax is supported (e.g.{" "}
       <code className="font-mono text-gray-700">$\sqrt m$</code>).
     </>
-  );
+  )
 }
 
 export default function ExerciseForm({
@@ -110,42 +102,39 @@ export default function ExerciseForm({
   onSubmit,
   submitLabel,
 }: {
-  exerciseId?: Id<"exercises">;
-  initialState: State;
-  onSubmit: (state: State) => void;
-  submitLabel: string;
+  exerciseId?: Id<"exercises">
+  initialState: State
+  onSubmit: (state: State) => void
+  submitLabel: string
 }) {
-  const [name, setName] = useState(initialState.name);
-  const [weekId, setWeekId] = useState(initialState.weekId);
+  const [name, setName] = useState(initialState.name)
+  const [weekId, setWeekId] = useState(initialState.weekId)
 
-  const [instructions, setInstructions] = useState(initialState.instructions);
-  const [model, setModel] = useState(initialState.model);
-  const [api, setApi] = useState(initialState.api);
-  const [text, setText] = useState(initialState.text);
-  const [image, setImage] = useState(initialState.image);
+  const [instructions, setInstructions] = useState(initialState.instructions)
+  const [text, setText] = useState(initialState.text)
+  const [image, setImage] = useState(initialState.image)
 
-  const [quizBatches, setQuizBatches] = useState(initialState.quizBatches);
+  const [quizBatches, setQuizBatches] = useState(initialState.quizBatches)
 
-  const [firstMessage, setFirstMessage] = useState(initialState.firstMessage);
-  const [controlGroup, setControlGroup] = useState(initialState.controlGroup);
+  const [firstMessage, setFirstMessage] = useState(initialState.firstMessage)
+  const [controlGroup, setControlGroup] = useState(initialState.controlGroup)
   const [completionFunctionDescription, setCompletionFunctionDescription] =
-    useState(initialState.completionFunctionDescription);
+    useState(initialState.completionFunctionDescription)
 
-  const courseSlug = useCourseSlug();
-  const weeks = useQuery(convexApi.admin.weeks.list, { courseSlug });
+  const courseSlug = useCourseSlug()
+  const weeks = useQuery(convexApi.admin.weeks.list, { courseSlug })
 
-  const [feedback, setFeedback] = useState(initialState.feedback);
+  const [feedback, setFeedback] = useState(initialState.feedback)
 
   return (
     <form
       onSubmit={async (e) => {
-        e.preventDefault();
+        e.preventDefault()
         onSubmit({
           name,
           instructions,
-          api,
+          model: initialState.model,
           image,
-          model,
           text,
           weekId,
           quizBatches,
@@ -153,7 +142,7 @@ export default function ExerciseForm({
           controlGroup,
           completionFunctionDescription,
           feedback,
-        });
+        })
       }}
     >
       <Input
@@ -203,10 +192,10 @@ export default function ExerciseForm({
       />
 
       <section>
-        <h2 className="text-2xl font-medium mt-8 mb-4 border-t py-4 border-slate-300">
+        <h2 className="mt-8 mb-4 border-t border-slate-300 py-4 text-2xl font-medium">
           Explanation Exercise
         </h2>
-        <div className="grid md:grid-cols-2 gap-x-12">
+        <div className="grid gap-x-12 md:grid-cols-2">
           <Textarea
             label="First message"
             value={firstMessage}
@@ -220,7 +209,7 @@ export default function ExerciseForm({
               </>
             }
           />
-          <div className="mt-6 flex justify-end items-start">
+          <div className="mt-6 flex items-start justify-end">
             {firstMessage.trim() && (
               <ChatBubble
                 author="user"
@@ -232,64 +221,6 @@ export default function ExerciseForm({
             )}
           </div>
         </div>
-        <Select
-          label="Model"
-          value={model}
-          onChange={setModel}
-          values={[
-            "gpt-4o",
-            "gpt-4",
-            "gpt-4-turbo-preview",
-            "gpt-4-0125-preview",
-            "gpt-4-1106-preview",
-            "gpt-4-0613",
-            "gpt-3.5-turbo",
-            "gpt-3.5-turbo-0125",
-            "gpt-3.5-turbo-1106",
-            "gpt-3.5-turbo-0613",
-          ].map((value) => ({ value, label: value }))}
-          hint={
-            <>
-              More information about the models can be found in the{" "}
-              <a
-                className="underline font-semibold"
-                href="https://platform.openai.com/docs/models/overview"
-                target="_blank"
-              >
-                OpenAI documentation
-              </a>
-              .
-            </>
-          }
-        />
-
-        <Select
-          label="API"
-          value={api}
-          onChange={setApi}
-          values={[
-            { value: "chatCompletions", label: "Chat Completion API" },
-            { value: "assistants", label: "Assistants API" },
-          ]}
-          hint={
-            <>
-              The Assistants API is less expensive but is rate-limited to 60
-              requests per minute.
-              {api === "assistants" &&
-                initialState.api === "chatCompletions" && (
-                  <>
-                    <span className="block mt-1 text-red-600">
-                      <ExclamationCircleIcon className="w-4 h-4 inline mr-1" />
-                      Students that started an attempt when the Chat Completions
-                      API was used will continue their attempt with the
-                      Assistants API, but the Assistants API won’t be able to
-                      read the previous messages of the conversation.
-                    </span>
-                  </>
-                )}
-            </>
-          }
-        />
 
         <Textarea
           label="Model instructions"
@@ -306,7 +237,7 @@ export default function ExerciseForm({
           hint={
             <>
               <a
-                className="underline font-semibold"
+                className="font-semibold underline"
                 href="https://platform.openai.com/docs/guides/function-calling"
                 target="_blank"
               >
@@ -317,7 +248,7 @@ export default function ExerciseForm({
           }
         />
 
-        <label className="block mb-3 text-sm font-medium text-slate-800">
+        <label className="mb-3 block text-sm font-medium text-slate-800">
           <input
             type="checkbox"
             className="mr-2"
@@ -325,12 +256,11 @@ export default function ExerciseForm({
             onChange={(e) => {
               if (e.target.checked) {
                 setFeedback({
-                  model: "gpt-3.5-turbo",
                   prompt:
                     "You will be provided a conversation between a student and a chatbot, where the student had to explain the {ALGO} algorithm. Provide feedback to the student on whether their explanation is correct. Please address the student directly (e.g. “You have understood correctly the algorithm” and not “The student has understood correctly the algorithm”). The messages are delimited by XML tags. Do not include XML tags in your response. Keep your answer somewhat concise.",
-                });
+                })
               } else {
-                setFeedback(null);
+                setFeedback(null)
               }
             }}
           />
@@ -338,45 +268,9 @@ export default function ExerciseForm({
         </label>
         {feedback && (
           <div className="pl-6">
-            <div className="grid md:grid-cols-2 gap-x-12">
+            <div className="grid gap-x-12 md:grid-cols-2">
               <div>
-                <Select
-                  label="Model"
-                  value={feedback.model}
-                  onChange={(m) => setFeedback({ ...feedback, model: m })}
-                  values={[
-                    "gpt-4o",
-                    "gpt-4-1106-preview",
-                    "gpt-4",
-                    "gpt-4-0314",
-                    "gpt-4-0613",
-                    "gpt-4-32k",
-                    "gpt-4-32k-0314",
-                    "gpt-4-32k-0613",
-                    "gpt-3.5-turbo",
-                    "gpt-3.5-turbo-16k",
-                    "gpt-3.5-turbo-0301",
-                    "gpt-3.5-turbo-0613",
-                    "gpt-3.5-turbo-1106",
-                    "gpt-3.5-turbo-16k-0613",
-                  ].map((value) => ({
-                    value,
-                    label: value,
-                  }))}
-                  hint={
-                    <>
-                      More information about the models can be found in the{" "}
-                      <a
-                        className="underline font-semibold"
-                        href="https://platform.openai.com/docs/models/overview"
-                        target="_blank"
-                      >
-                        OpenAI documentation
-                      </a>
-                      .
-                    </>
-                  }
-                />
+                {/* Model selection removed - always uses gemini-2.0-flash */}
                 <Textarea
                   label="System prompt"
                   value={feedback.prompt}
@@ -386,22 +280,22 @@ export default function ExerciseForm({
               </div>
 
               <div className="prose">
-                <h4 className="text-xs uppercase tracking-wide text-slate-600">
+                <h4 className="text-xs tracking-wide text-slate-600 uppercase">
                   System instructions
                 </h4>
                 <pre className="whitespace-pre-wrap">{feedback.prompt}</pre>
-                <h4 className="text-xs uppercase tracking-wide text-slate-600">
+                <h4 className="text-xs tracking-wide text-slate-600 uppercase">
                   Query
                 </h4>
                 <pre className="whitespace-pre-wrap">
                   {`<message from="student">${firstMessage}</message>\n\n`}
                   {`<message from="chatbot">`}
-                  <div className="inline-flex items-center justify-center w-7 h-5 rounded bg-slate-600 text-slate-400 align-middle">
-                    <EllipsisHorizontalIcon className="w-5 h-5" />
+                  <div className="inline-flex h-5 w-7 items-center justify-center rounded bg-slate-600 align-middle text-slate-400">
+                    <EllipsisHorizontalIcon className="h-5 w-5" />
                   </div>
                   {`</message>\n\n`}
-                  <div className="inline-flex items-center justify-center w-7 h-5 rounded bg-slate-600 text-slate-400 align-middle">
-                    <EllipsisHorizontalIcon className="w-5 h-5" />
+                  <div className="inline-flex h-5 w-7 items-center justify-center rounded bg-slate-600 align-middle text-slate-400">
+                    <EllipsisHorizontalIcon className="h-5 w-5" />
                   </div>
                 </pre>
               </div>
@@ -411,10 +305,10 @@ export default function ExerciseForm({
       </section>
 
       <section>
-        <h2 className="text-2xl font-medium mt-8 mb-4 border-t py-4 border-slate-300">
+        <h2 className="mt-8 mb-4 border-t border-slate-300 py-4 text-2xl font-medium">
           Reading Exercise
         </h2>
-        <div className="grid md:grid-cols-2 gap-x-12">
+        <div className="grid gap-x-12 md:grid-cols-2">
           <Textarea
             label="Text"
             value={text}
@@ -430,11 +324,11 @@ export default function ExerciseForm({
       </section>
 
       <section>
-        <header className="flex flex-wrap justify-between items-center mt-8 mb-4 border-t py-4 border-slate-300">
-          <label className="flex text-sm font-medium text-slate-800 items-center">
+        <header className="mt-8 mb-4 flex flex-wrap items-center justify-between border-t border-slate-300 py-4">
+          <label className="flex items-center text-sm font-medium text-slate-800">
             <input
               type="checkbox"
-              className="w-6 h-6 mr-1"
+              className="mr-1 h-6 w-6"
               checked={quizBatches !== null}
               onChange={(e) => {
                 setQuizBatches(
@@ -456,8 +350,8 @@ export default function ExerciseForm({
                           ],
                         },
                       ]
-                    : null,
-                );
+                    : null
+                )
               }}
             />
             <h2 className="text-2xl font-medium">Validation Quiz</h2>
@@ -484,10 +378,10 @@ export default function ExerciseForm({
                       },
                     ],
                   },
-                ]);
+                ])
               }}
             >
-              <PlusIcon className="w-5 h-5" />
+              <PlusIcon className="h-5 w-5" />
               New Batch
             </Button>
           )}
@@ -502,33 +396,31 @@ export default function ExerciseForm({
               onChange={(newBatch) => {
                 setQuizBatches((quizBatches) =>
                   (quizBatches ?? []).map((b, index) =>
-                    index === batchIndex ? newBatch : b,
-                  ),
-                );
+                    index === batchIndex ? newBatch : b
+                  )
+                )
               }}
               canDelete={quizBatches.length > 1}
               onDelete={() => {
                 setQuizBatches((quizBatches) =>
-                  (quizBatches ?? []).filter(
-                    (_, index) => index !== batchIndex,
-                  ),
-                );
+                  (quizBatches ?? []).filter((_, index) => index !== batchIndex)
+                )
               }}
             />
           ))}
 
-        <p className="text-slate-500 mb-6 text-sm flex-1 gap-2">
+        <p className="mb-6 flex-1 gap-2 text-sm text-slate-500">
           <MarkdownTip />
         </p>
       </section>
 
       <div className="h-36"></div>
 
-      <div className="p-8 bg-white/60 backdrop-blur-xl fixed bottom-0 left-0 w-full flex justify-end shadow-2xl">
+      <div className="fixed bottom-0 left-0 flex w-full justify-end bg-white/60 p-8 shadow-2xl backdrop-blur-xl">
         <PrimaryButton type="submit">{submitLabel}</PrimaryButton>
       </div>
     </form>
-  );
+  )
 }
 
 function QuizBatch({
@@ -538,33 +430,33 @@ function QuizBatch({
   canDelete,
   onDelete,
 }: {
-  batch: Batch;
-  batchIndex: number;
-  onChange: (batch: Batch) => void;
-  canDelete: boolean;
-  onDelete: () => void;
+  batch: Batch
+  batchIndex: number
+  onChange: (batch: Batch) => void
+  canDelete: boolean
+  onDelete: () => void
 }) {
-  const { questions, randomize } = batch;
+  const { questions, randomize } = batch
 
   return (
-    <div className="bg-gray-50 shadow-xl p-6 rounded-xl mb-8">
-      <div className="flex flex-wrap items-center gap-4 mb-2">
-        <div className="flex-1 flex flex-col gap-1">
+    <div className="mb-8 rounded-xl bg-gray-50 p-6 shadow-xl">
+      <div className="mb-2 flex flex-wrap items-center gap-4">
+        <div className="flex flex-1 flex-col gap-1">
           <h3 className="font-regular text-2xl text-gray-700">
             Batch #{batchIndex + 1}
             {canDelete && (
               <button
                 type="button"
-                className="ml-3 text-gray-500 hover:text-gray-700 transition-colors"
+                className="ml-3 text-gray-500 transition-colors hover:text-gray-700"
                 onClick={() => {
-                  onDelete();
+                  onDelete()
                 }}
               >
-                <XMarkIcon className="w-5 h-5" />
+                <XMarkIcon className="h-5 w-5" />
               </button>
             )}
           </h3>
-          <label className="py-1 flex items-center gap-2 text-gray-700">
+          <label className="flex items-center gap-2 py-1 text-gray-700">
             <input
               type="checkbox"
               checked={randomize}
@@ -572,7 +464,7 @@ function QuizBatch({
                 onChange({
                   randomize: e.target.checked,
                   questions,
-                });
+                })
               }}
             />{" "}
             Randomize the questions order
@@ -592,10 +484,10 @@ function QuizBatch({
                   correctAnswerIndex: null,
                 },
               ],
-            });
+            })
           }}
         >
-          <PlusIcon className="w-5 h-5" />
+          <PlusIcon className="h-5 w-5" />
           New Question
         </Button>
       </div>
@@ -609,26 +501,24 @@ function QuizBatch({
               onChange({
                 randomize,
                 questions: questions.map((q, index) =>
-                  index === questionIndex ? question : q,
+                  index === questionIndex ? question : q
                 ),
-              });
+              })
             }}
             showDeleteButton={questions.length > 1}
             onDelete={() => {
               onChange({
                 randomize,
                 questions: questions.filter(
-                  (_, index) => index !== questionIndex,
+                  (_, index) => index !== questionIndex
                 ),
-              });
+              })
             }}
-            batchNumber={batchIndex}
-            questionNumber={questionIndex}
           />
         ))}
       </div>
     </div>
-  );
+  )
 }
 
 function QuizQuestion({
@@ -636,17 +526,13 @@ function QuizQuestion({
   onChange,
   showDeleteButton,
   onDelete,
-  batchNumber,
-  questionNumber,
 }: {
-  question: Question;
-  onChange: (question: Question) => void;
-  showDeleteButton: boolean;
-  onDelete: () => void;
-  batchNumber: number;
-  questionNumber: number;
+  question: Question
+  onChange: (question: Question) => void
+  showDeleteButton: boolean
+  onDelete: () => void
 }) {
-  const correctAnswerName = useId();
+  const correctAnswerName = useId()
 
   // Answers shuffling disabled
   //   const chance = new Chance(`${batchNumber} ${questionNumber} example order`);
@@ -654,15 +540,15 @@ function QuizQuestion({
 
   return (
     <div>
-      <hr className="my-4 -mx-6 border-slate-200" />
+      <hr className="-mx-6 my-4 border-slate-200" />
 
-      <div className="grid md:grid-cols-2 gap-x-12">
+      <div className="grid gap-x-12 md:grid-cols-2">
         <div>
-          <label className="block mb-6 text-sm font-medium text-slate-800">
+          <label className="mb-6 block text-sm font-medium text-slate-800">
             Question
             <div className="flex">
               <textarea
-                className="mt-1 p-2 w-full border border-slate-300 rounded-md text-base disabled:bg-slate-200 disabled:cursor-not-allowed resize-y"
+                className="mt-1 w-full resize-y rounded-md border border-slate-300 p-2 text-base disabled:cursor-not-allowed disabled:bg-slate-200"
                 value={question.question}
                 onChange={(e) =>
                   onChange({ ...question, question: e.target.value })
@@ -672,12 +558,12 @@ function QuizQuestion({
               {showDeleteButton && (
                 <button
                   type="button"
-                  className="ml-3 text-gray-500 hover:text-gray-700 transition-colors"
+                  className="ml-3 text-gray-500 transition-colors hover:text-gray-700"
                   onClick={() => {
-                    onDelete();
+                    onDelete()
                   }}
                 >
-                  <XMarkIcon className="w-5 h-5" />
+                  <XMarkIcon className="h-5 w-5" />
                 </button>
               )}
             </div>
@@ -689,7 +575,7 @@ function QuizQuestion({
             </legend>
             {question.answers.map((answer, answerIndex) => (
               <div key={answerIndex} className="mb-1 flex">
-                <label className="flex items-center w-8 px-2">
+                <label className="flex w-8 items-center px-2">
                   <input
                     type="radio"
                     name={correctAnswerName}
@@ -699,22 +585,22 @@ function QuizQuestion({
                       onChange({
                         ...question,
                         correctAnswerIndex: answerIndex,
-                      });
+                      })
                     }}
                     required
                   />
                 </label>
 
                 <textarea
-                  className="mt-1 p-2 w-full border border-slate-300 rounded-md text-base disabled:bg-slate-200 disabled:cursor-not-allowed flex-1 resize-y"
+                  className="mt-1 w-full flex-1 resize-y rounded-md border border-slate-300 p-2 text-base disabled:cursor-not-allowed disabled:bg-slate-200"
                   value={answer}
                   onChange={(e) => {
                     onChange({
                       ...question,
                       answers: question.answers.map((a, index) =>
-                        index === answerIndex ? e.target.value : a,
+                        index === answerIndex ? e.target.value : a
                       ),
-                    });
+                    })
                   }}
                   required
                 />
@@ -722,33 +608,33 @@ function QuizQuestion({
                 {question.answers.length > 1 && (
                   <button
                     type="button"
-                    className="ml-3 text-gray-500 hover:text-gray-700 transition-colors"
+                    className="ml-3 text-gray-500 transition-colors hover:text-gray-700"
                     onClick={() => {
                       onChange({
                         ...question,
                         answers: question.answers.filter(
-                          (_, index) => index !== answerIndex,
+                          (_, index) => index !== answerIndex
                         ),
-                      });
+                      })
                     }}
                   >
-                    <XMarkIcon className="w-5 h-5" />
+                    <XMarkIcon className="h-5 w-5" />
                   </button>
                 )}
               </div>
             ))}
             <button
               type="button"
-              className="font-medium text-blue-800 flex items-center py-2"
+              className="flex items-center py-2 font-medium text-blue-800"
               onClick={() => {
                 onChange({
                   ...question,
                   answers: [...question.answers, ""],
-                });
+                })
               }}
             >
-              <div className="w-8 flex justify-center">
-                <PlusIcon className="w-5 h-5" />
+              <div className="flex w-8 justify-center">
+                <PlusIcon className="h-5 w-5" />
               </div>
               Add Answer
             </button>
@@ -770,7 +656,7 @@ function QuizQuestion({
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function ThumbnailPicker({
@@ -779,28 +665,28 @@ function ThumbnailPicker({
   exerciseId,
   name,
 }: {
-  image: Id<"images"> | undefined;
-  setImage: (value: Id<"images"> | undefined) => void;
-  exerciseId: Id<"exercises">;
-  name: string;
+  image: Id<"images"> | undefined
+  setImage: (value: Id<"images"> | undefined) => void
+  exerciseId: Id<"exercises">
+  name: string
 }) {
-  const courseSlug = useCourseSlug();
+  const courseSlug = useCourseSlug()
   const images = useQuery(convexApi.admin.image.list, {
     courseSlug,
     exerciseId,
-  });
-  const generateImage = useAction(convexApi.admin.imageGeneration.default);
+  })
+  const generateImage = useAction(convexApi.admin.imageGeneration.default)
 
   return (
     <div className="mb-6">
-      <div className="block mb-1 text-sm font-medium text-slate-800">Image</div>
+      <div className="mb-1 block text-sm font-medium text-slate-800">Image</div>
 
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex flex-wrap gap-4">
         <button
           type="button"
           className={clsx(
-            "w-40 h-28 p-2 rounded-xl bg-slate-200 cursor-pointer hover:bg-slate-300 text-xl font-light transition-colors",
-            image === undefined && "ring-4 ring-purple-500",
+            "h-28 w-40 cursor-pointer rounded-xl bg-slate-200 p-2 text-xl font-light transition-colors hover:bg-slate-300",
+            image === undefined && "ring-4 ring-purple-500"
           )}
           onClick={() => setImage(undefined)}
         >
@@ -812,8 +698,8 @@ function ThumbnailPicker({
             key={i._id}
             type="button"
             className={clsx(
-              "w-40 h-28 p-2 rounded-xl bg-slate-200 cursor-pointer hover:bg-slate-300 transition-colors",
-              i._id === image && "ring-4 ring-purple-500",
+              "h-28 w-40 cursor-pointer rounded-xl bg-slate-200 p-2 transition-colors hover:bg-slate-300",
+              i._id === image && "ring-4 ring-purple-500"
             )}
             onClick={() => setImage(i._id)}
           >
@@ -827,7 +713,7 @@ function ThumbnailPicker({
                 />
               ))}
               <img
-                className="w-full h-full rounded-lg object-cover"
+                className="h-full w-full rounded-lg object-cover"
                 src={
                   i.thumbnails.find((t) => t.type === "image/avif")?.src ??
                   i.src
@@ -842,16 +728,16 @@ function ThumbnailPicker({
         <button
           type="button"
           className={clsx(
-            "w-40 h-28 p-2 flex items-center justify-center rounded-xl bg-slate-200 cursor-pointer hover:bg-slate-300 text-xl font-light transition-colors",
+            "flex h-28 w-40 cursor-pointer items-center justify-center rounded-xl bg-slate-200 p-2 text-xl font-light transition-colors hover:bg-slate-300"
           )}
           onClick={async () => {
             const answer = prompt(
               "Which prompt to use to generate the image?",
               (images ?? []).find((i) => i._id === image)?.prompt ??
-                `Generate a cartoon-style image representing ${name}`,
-            );
+                `Generate a cartoon-style image representing ${name}`
+            )
             if (!answer) {
-              return;
+              return
             }
 
             async function generate(prompt: string) {
@@ -859,20 +745,20 @@ function ThumbnailPicker({
                 prompt,
                 exerciseId,
                 courseSlug,
-              });
+              })
 
-              setImage(imageId);
+              setImage(imageId)
             }
 
             toast.promise(generate(answer), {
               loading: "Generating image…",
               success: "Image generated",
-            });
+            })
           }}
         >
-          <PlusIconLarge className="w-6 h-6" />
+          <PlusIconLarge className="h-6 w-6" />
         </button>
       </div>
     </div>
-  );
+  )
 }

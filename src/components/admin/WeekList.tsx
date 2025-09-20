@@ -12,7 +12,7 @@ import { useCourseSlug } from "@/hooks/useCourseSlug";
 import Link from "next/link";
 
 interface BaseItem {
-  id: Id<any>;
+  id: Id<"weeks"> | Id<"lectureWeeks"> | Id<"exercises"> | Id<"lectures">;
   name: string;
 }
 

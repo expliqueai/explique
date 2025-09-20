@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import { api } from "../../../../../convex/_generated/api";
-import { useQuery } from "@/usingSession";
-import { formatTimestampHumanFormat } from "@/util/date";
-import { useCourseSlug } from "@/hooks/useCourseSlug";
-import { ImageLink } from "@/components/ImageLink";
+import { ImageLink } from "@/components/ImageLink"
+import { useCourseSlug } from "@/hooks/useCourseSlug"
+import { useQuery } from "@/usingSession"
+import { formatTimestampHumanFormat } from "@/util/date"
+import { api } from "../../../../../convex/_generated/api"
 
 export default function LecturesPage() {
-  const courseSlug = useCourseSlug();
-  const user = useQuery(api.courses.getRegistration, { courseSlug });
+  const courseSlug = useCourseSlug()
+  const user = useQuery(api.courses.getRegistration, { courseSlug })
 
-  return user ? <ProjectGrid /> : <ProjectGridSkeleton />;
+  return user ? <ProjectGrid /> : <ProjectGridSkeleton />
 }
 
 function ProjectGrid() {
-  const courseSlug = useCourseSlug();
-  const weeks = useQuery(api.lectures.list, { courseSlug });
+  const courseSlug = useCourseSlug()
+  const weeks = useQuery(api.lectures.list, { courseSlug })
 
   if (!weeks) {
-    return <ProjectGridSkeleton />;
+    return <ProjectGridSkeleton />
   }
 
   return (
@@ -26,20 +26,17 @@ function ProjectGrid() {
       {weeks.map((week) => {
         return (
           <div key={week.id}>
-            <header className="flex gap-4 flex-wrap items-center justify-between">
-              <h2 className="font-medium text-3xl tracking-tight mb-4">
+            <header className="flex flex-wrap items-center justify-between gap-4">
+              <h2 className="mb-4 text-3xl font-medium tracking-tight">
                 {week.name}
               </h2>
             </header>
             {week.lectures.length == 0 && (
-              <p className="text-gray-700 mb-4">
-                <span className="inline-block bg-amber-200 px-2 py-1 rounded-lg mr-2 text-amber-900 uppercase tracking-wider font-semibold">
-                  Preview
+              <p className="mb-4 text-gray-700">
+                <span className="mr-2 inline-block rounded-lg bg-amber-200 px-2 py-1 font-semibold text-amber-900 uppercase">
+                  No lectures uploaded yet
                 </span>
-                Will be visible starting{" "}
-                <strong className="font-medium text-gray-800">
-                  {formatTimestampHumanFormat(week.startDate)}
-                </strong>
+                Your instructor(s) will upload the lectures soon.
               </p>
             )}
             <div className="grid gap-6 md:grid-cols-2">
@@ -53,10 +50,10 @@ function ProjectGrid() {
               ))}
             </div>
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 }
 
 function ProjectGridSkeleton() {
@@ -64,20 +61,20 @@ function ProjectGridSkeleton() {
     <div className="grid gap-12">
       {Array.from({ length: 3 }).map((_, i) => (
         <div className="animate-pulse" key={i}>
-          <div className="flex flex-wrap h-9">
-            <div className="bg-slate-200 rounded flex-1 mr-[20%]" />
-            <div className="bg-slate-200 rounded-full w-36" />
+          <div className="flex h-9 flex-wrap">
+            <div className="mr-[20%] flex-1 rounded bg-slate-200" />
+            <div className="w-36 rounded-full bg-slate-200" />
           </div>
 
-          <div className="h-6 my-4 bg-slate-200 rounded w-72" />
+          <div className="my-4 h-6 w-72 rounded bg-slate-200" />
 
           <div className="grid gap-6 md:grid-cols-2">
             {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="pb-[57.14%] bg-slate-200 rounded-3xl" />
+              <div key={i} className="rounded-3xl bg-slate-200 pb-[57.14%]" />
             ))}
           </div>
         </div>
       ))}
     </div>
-  );
+  )
 }

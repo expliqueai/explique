@@ -1,14 +1,12 @@
-import { ConvexError, v } from "convex/values";
-import { queryWithAuth } from "./auth/withAuth";
+import { StorageReader } from "convex/server"
+import { ConvexError, v } from "convex/values"
+import { Doc } from "./_generated/dataModel"
 import {
   DatabaseReader,
   internalQuery,
-  mutation,
-  query,
-} from "./_generated/server";
-import { getCourseRegistration } from "./courses";
-import { Doc, Id } from "./_generated/dataModel";
-import { StorageReader } from "convex/server";
+} from "./_generated/server"
+import { queryWithAuth } from "./auth/withAuth"
+import { getCourseRegistration } from "./courses"
 
 export const getMetadata = queryWithAuth({
   args: {
@@ -16,62 +14,62 @@ export const getMetadata = queryWithAuth({
   },
   handler: async ({ db, session }, { lectureId }) => {
     if (!session) {
-      throw new ConvexError("Not logged in");
+      throw new ConvexError("Not logged in")
     }
 
-    const lecture = await db.get(lectureId);
+    const lecture = await db.get(lectureId)
     if (!lecture) {
-      throw new ConvexError("Lecture not found");
+      throw new ConvexError("Lecture not found")
     }
 
     return {
       name: lecture.name,
       url: lecture.url,
-    };
+    }
   },
-});
+})
 
 export const get = internalQuery({
   args: {
     id: v.id("lectures"),
   },
   handler: async ({ db }, { id }) => {
-    return await db.get(id);
+    return await db.get(id)
   },
-});
+})
 
 export async function getImageForLecture(
   db: DatabaseReader,
   storage: StorageReader,
-  lecture: Doc<"lectures">,
+  lecture: Doc<"lectures">
 ) {
   if (!lecture.image) {
-    return null;
+    return null
   }
 
-  const imageRow = await db.get(lecture.image);
+  const imageRow = await db.get(lecture.image)
   if (!imageRow) {
-    console.warn("Image not found for lecture", lecture._id);
-    return null;
+    console.warn("Image not found for lecture", lecture._id)
+    return null
   }
 
-  const thumbnails = [];
+  const thumbnails = []
   for (const thumbnail of imageRow.thumbnails) {
-    const thumbnailUrl = await storage.getUrl(thumbnail.storageId);
+    const thumbnailUrl = await storage.getUrl(thumbnail.storageId)
     if (!thumbnailUrl) {
-      continue;
+      continue
     }
 
     thumbnails.push({
       type: thumbnail.type,
       sizes: thumbnail.sizes,
       src: thumbnailUrl,
-    });
+    })
   }
 
   return {
     thumbnails,
-  };
+  }
 }
 
 export const list = queryWithAuth({
@@ -79,16 +77,14 @@ export const list = queryWithAuth({
     courseSlug: v.string(),
   },
   handler: async ({ db, session, storage }, { courseSlug }) => {
-    if (!session) throw new ConvexError("Not logged in");
+    if (!session) throw new ConvexError("Not logged in")
     const { course, registration } = await getCourseRegistration(
       db,
       session,
-      courseSlug,
-    );
+      courseSlug
+    )
 
-    const { user } = session;
-
-    const now = +new Date();
+    const now = +new Date()
 
     // Get lecture weeks first
     const lectureWeeks = await db
@@ -100,52 +96,52 @@ export const list = queryWithAuth({
             "startDate",
             registration.role === "admin" || registration.role === "ta"
               ? Number.MAX_VALUE
-              : now,
-          ),
+              : now
+          )
       )
       .order("desc")
-      .collect();
+      .collect()
 
     // Get week IDs to filter lectures
-    const weekIds = lectureWeeks.map((week) => week._id);
+    const weekIds = lectureWeeks.map((week) => week._id)
 
     // Only query lectures for the current course weeks and with READY status
     // Use a more efficient query by filtering on the weekId index
-    const lecturesForCourse = [];
+    const lecturesForCourse = []
     for (const weekId of weekIds) {
       const weekLectures = await db
         .query("lectures")
         .withIndex("by_week_id", (q) => q.eq("weekId", weekId))
         .filter((q) => q.eq(q.field("status"), "READY"))
-        .collect();
-      lecturesForCourse.push(...weekLectures);
+        .collect()
+      lecturesForCourse.push(...weekLectures)
     }
 
     // Filter lectures that have chunks
-    const lecturesWithChunks = [];
+    const lecturesWithChunks = []
     for (const lecture of lecturesForCourse) {
       const hasChunks = await db
         .query("lectureChunks")
         .withIndex("by_lecture_id", (q) => q.eq("lectureId", lecture._id))
-        .first();
+        .first()
 
       if (hasChunks) {
-        lecturesWithChunks.push(lecture);
+        lecturesWithChunks.push(lecture)
       }
     }
 
-    const result = [];
+    const result = []
     for (const week of lectureWeeks) {
-      const lecturesResult = [];
+      const lecturesResult = []
       for (const lecture of lecturesWithChunks.filter(
-        (x) => x.weekId === week._id,
+        (x) => x.weekId === week._id
       )) {
         lecturesResult.push({
           id: lecture._id,
           name: lecture.name,
           url: lecture.url,
           image: await getImageForLecture(db, storage, lecture),
-        });
+        })
       }
 
       result.push({
@@ -153,8 +149,8 @@ export const list = queryWithAuth({
         name: week.name,
         startDate: week.startDate,
         lectures: lecturesResult,
-      });
+      })
     }
-    return result;
+    return result
   },
-});
+})

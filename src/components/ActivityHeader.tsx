@@ -1,6 +1,6 @@
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
-import clsx from "clsx";
-import Link from "next/link";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline"
+import clsx from "clsx"
+import Link from "next/link"
 
 export default function ActivityHeader({
   goBackTo,
@@ -8,32 +8,32 @@ export default function ActivityHeader({
   action,
   isSolid = false,
 }: {
-  goBackTo: string | undefined;
-  title: string | undefined;
-  action?: React.ReactNode;
-  isSolid?: boolean;
+  goBackTo: string | undefined
+  title: string | undefined
+  action?: React.ReactNode
+  isSolid?: boolean
 }) {
   return (
     <>
       <header
         className={clsx(
-          "h-14 sm:h-16 top-0 left-0 w-full bg-white bg-opacity-90 backdrop-blur-lg p-4 shadow-lg flex items-center justify-center z-10",
-          isSolid ? "block" : "fixed",
+          "bg-opacity-90 top-0 left-0 z-10 flex h-14 w-full items-center justify-center bg-white p-4 shadow-lg backdrop-blur-lg sm:h-16",
+          isSolid ? "block" : "fixed"
         )}
       >
         {goBackTo && (
           <Link
             href={goBackTo}
             title="Back"
-            className="absolute top-0 left-0 sm:w-16 sm:h-16 w-14 h-14 flex items-center justify-center"
+            className="absolute top-0 left-0 flex h-14 w-14 items-center justify-center sm:h-16 sm:w-16"
           >
-            <ArrowLeftIcon className="w-6 h-6" />
+            <ArrowLeftIcon className="h-6 w-6" />
           </Link>
         )}
 
-        <h1 className="text-lg sm:text-xl font-medium text-center">
+        <h1 className="w-[calc(100%-4rem)] truncate text-center text-lg font-medium sm:text-xl">
           {title ?? (
-            <div className="animate-pulse h-7 bg-slate-200 rounded w-56" />
+            <div className="h-7 w-56 animate-pulse rounded bg-slate-200" />
           )}
         </h1>
 
@@ -41,5 +41,5 @@ export default function ActivityHeader({
       </header>
       {!isSolid && <div className="h-14 sm:h-16" />}
     </>
-  );
+  )
 }

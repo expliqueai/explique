@@ -13,8 +13,15 @@ import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
 import ActivityHeader from "@/components/ActivityHeader";
 
-export default function Page({ params }: { params: { attemptId: string } }) {
-  const attemptId = params.attemptId as Id<"attempts">;
+import { use } from "react";
+
+export default function Page({
+  params,
+}: {
+  params: Promise<{ attemptId: string }>;
+}) {
+  const resolvedParams = use(params);
+  const attemptId = resolvedParams.attemptId as Id<"attempts">;
   const metadata = useQuery(api.attempts.get, { id: attemptId });
 
   return (

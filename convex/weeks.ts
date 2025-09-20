@@ -75,7 +75,7 @@ export const validateDueDateFromActionQuery = internalMutation({
     exerciseId: v.id("exercises"),
     userId: v.id("users"),
   },
-  handler: async ({ db }, { id, exerciseId, userId }) => {
+  handler: async ({ db }, { exerciseId, userId }) => {
     const exercise = await db.get(exerciseId);
     if (exercise === null) {
       throw new Error("Exercise not found");

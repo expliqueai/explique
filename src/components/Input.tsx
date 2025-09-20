@@ -26,7 +26,7 @@ export default function Input({
         {...fields}
         type={type}
         id={id}
-        className="mt-1 p-2 w-full border border-slate-300 rounded-md text-base disabled:bg-slate-200 disabled:cursor-not-allowed focus:ring-2 focus:outline-none"
+        className="mt-1 p-2 w-full border border-slate-300 rounded-md text-base bg-white disabled:bg-slate-200 disabled:cursor-not-allowed  focus:outline-none"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -81,7 +81,7 @@ export function InputWithCheckbox({
           {...fields}
           type={type}
           id={idInput}
-          className="mt-1 p-2 w-full border border-slate-300 rounded-md text-base disabled:bg-slate-200 disabled:cursor-not-allowed focus:ring-2 focus:outline-none"
+          className="mt-1 p-2 w-full border border-slate-300 rounded-md text-base bg-white disabled:bg-slate-200 disabled:cursor-not-allowed  focus:outline-none"
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value)}
           disabled={value === null}
@@ -119,7 +119,7 @@ export function Textarea({
 
       <textarea
         id={id}
-        className="mt-1 p-2 w-full border border-slate-300 rounded-md resize-none h-52 text-base focus:ring-2 focus:ring-inherit focus:border-inherit focus:outline-none"
+        className="mt-1 p-2 w-full border border-slate-300 rounded-md resize-none h-52 text-base bg-white  focus:ring-inherit focus:border-inherit focus:outline-none"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
@@ -160,7 +160,7 @@ export function Select<T extends string>({
 
       <select
         id={id}
-        className="mt-1 p-2 w-full border border-slate-300 rounded-md font-sans h-10 form-select focus:ring-2 focus:ring-inherit focus:border-inherit focus:outline-none"
+        className="mt-1 p-2 w-full border border-slate-300 rounded-md font-sans h-10 form-select bg-white  focus:ring-inherit focus:border-inherit focus:outline-none"
         value={value ?? undefined}
         onChange={(e) => onChange(e.target.value as T)}
       >

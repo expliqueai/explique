@@ -15,13 +15,14 @@ export default function Markdown({
   components?: Partial<Components> | null;
 }) {
   return (
-    <SrcMarkdown
-      className={clsx("prose prose-sm sm:prose-base", className)}
-      remarkPlugins={[remarkMath, remarkGfm]}
-      rehypePlugins={[rehypeKatex]}
-      components={components}
-    >
-      {text}
-    </SrcMarkdown>
+    <div className={clsx("prose prose-sm sm:prose-base", className)}>
+      <SrcMarkdown
+        remarkPlugins={[remarkMath, remarkGfm]}
+        rehypePlugins={[rehypeKatex]}
+        components={components}
+      >
+        {text}
+      </SrcMarkdown>
+    </div>
   );
 }

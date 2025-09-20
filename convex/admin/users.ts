@@ -1,10 +1,10 @@
-import { ConvexError, v } from "convex/values";
-import { getCourseRegistration } from "../courses";
-import { mutationWithAuth, queryWithAuth } from "../auth/withAuth";
-import { Doc, Id } from "../_generated/dataModel";
-import { DatabaseReader, DatabaseWriter } from "../_generated/server";
-import { generateUserId } from "../auth/lucia";
-import { paginationOptsValidator } from "convex/server";
+import { paginationOptsValidator } from "convex/server"
+import { ConvexError, v } from "convex/values"
+import { Doc, Id } from "../_generated/dataModel"
+import { DatabaseReader, DatabaseWriter } from "../_generated/server"
+import { generateUserId } from "../auth/lucia"
+import { mutationWithAuth, queryWithAuth } from "../auth/withAuth"
+import { getCourseRegistration } from "../courses"
 
 export const listExercisesForTable = queryWithAuth({
   args: {
@@ -15,16 +15,16 @@ export const listExercisesForTable = queryWithAuth({
       db,
       session,
       courseSlug,
-      "admin",
-    );
+      "admin"
+    )
 
-    const exercises = await db.query("exercises").collect();
+    const exercises = await db.query("exercises").collect()
 
     const weeks = (
       await db
         .query("weeks")
         .withIndex("by_course_and_start_date", (q) =>
-          q.eq("courseId", course._id),
+          q.eq("courseId", course._id)
         )
         .collect()
     ).map((week) => ({
@@ -36,25 +36,24 @@ export const listExercisesForTable = queryWithAuth({
           id: e._id,
           name: e.name,
         })),
-    }));
+    }))
 
-    return weeks;
+    return weeks
   },
-});
+})
 
 async function formatListElement(
   db: DatabaseReader,
-  registration: Doc<"registrations">,
+  registration: Doc<"registrations">
 ) {
-  const user = await db.get(registration.userId);
-  if (!user) throw new Error("User of registration not found");
+  const user = await db.get(registration.userId)
+  if (!user) throw new Error("User of registration not found")
   return {
     id: registration.userId,
     email: user.email,
-    identifier: user.identifier,
     completedExercises: registration.completedExercises,
     role: registration.role,
-  };
+  }
 }
 
 export const list = queryWithAuth({
@@ -67,55 +66,95 @@ export const list = queryWithAuth({
       db,
       session,
       courseSlug,
-      "admin",
-    );
+      "admin"
+    )
 
     const registrations = await db
       .query("registrations")
       .withIndex("by_course_and_role", (q) => q.eq("courseId", course._id))
       .order("desc")
-      .paginate(paginationOpts);
+      .paginate(paginationOpts)
 
     return {
       ...registrations,
       page: await Promise.all(
         registrations.page.map((registration) =>
-          formatListElement(db, registration),
-        ),
+          formatListElement(db, registration)
+        )
       ),
-    };
+    }
   },
-});
+})
 
 async function findOrCreateUserByEmail(
   db: DatabaseWriter,
-  email: string,
+  email: string
 ): Promise<Id<"users">> {
   const user = await db
     .query("users")
     .withIndex("by_email", (q) => q.eq("email", email))
-    .first();
-  return user
-    ? user._id
-    : await db.insert("users", { id: generateUserId(), email, name: null });
-}
+    .first()
 
-async function findOrCreateUserByIdentifier(
-  db: DatabaseWriter,
-  identifier: string,
-): Promise<Id<"users">> {
-  const user = await db
-    .query("users")
-    .withIndex("byIdentifier", (q) => q.eq("identifier", identifier))
-    .first();
+  const normalizedEmail = email.trim().toLowerCase()
   return user
     ? user._id
     : await db.insert("users", {
         id: generateUserId(),
-        identifier,
-        email: null,
+        email: normalizedEmail,
         name: null,
-      });
+      })
+}
+
+async function getUserCourseData(
+  db: DatabaseReader,
+  userId: Id<"users">,
+  courseId: Id<"courses">
+) {
+  // Get all exercises for this course
+  const weeks = await db
+    .query("weeks")
+    .withIndex("by_course_and_start_date", (q) => q.eq("courseId", courseId))
+    .collect()
+
+  const exerciseIds: Id<"exercises">[] = []
+  for (const week of weeks) {
+    const exercises = await db
+      .query("exercises")
+      .withIndex("by_week_id", (q) => q.eq("weekId", week._id))
+      .collect()
+
+    exerciseIds.push(...exercises.map((e) => e._id))
+  }
+
+  // Find attempts for these exercises by this user
+  const attempts = []
+  for (const exerciseId of exerciseIds) {
+    const attempt = await db
+      .query("attempts")
+      .withIndex("by_key", (q) =>
+        q.eq("userId", userId).eq("exerciseId", exerciseId)
+      )
+      .first()
+
+    if (attempt) {
+      attempts.push(attempt)
+    }
+  }
+
+  // Get completed exercises from attempts
+  const completedExercises = attempts
+    .filter(
+      (attempt) =>
+        attempt.status === "exerciseCompleted" ||
+        attempt.status === "quizCompleted"
+    )
+    .map((attempt) => attempt.exerciseId)
+
+  return {
+    hasData: attempts.length > 0,
+    completedExercises: [...new Set(completedExercises)], // Remove duplicates
+    totalAttempts: attempts.length,
+  }
 }
 
 export const register = mutationWithAuth({
@@ -127,7 +166,7 @@ export const register = mutationWithAuth({
       }),
       v.object({
         identifiers: v.array(v.string()),
-      }),
+      })
     ),
   },
   handler: async ({ db, session }, { courseSlug, users }) => {
@@ -135,48 +174,54 @@ export const register = mutationWithAuth({
       db,
       session,
       courseSlug,
-      "admin",
-    );
+      "admin"
+    )
 
-    const userIds = [];
-
+    const userIds = []
     if ("emails" in users) {
       for (const email of users.emails) {
-        userIds.push(await findOrCreateUserByEmail(db, email));
-      }
-    }
-    if ("identifiers" in users) {
-      for (const identifier of users.identifiers) {
-        userIds.push(await findOrCreateUserByIdentifier(db, identifier));
+        userIds.push(await findOrCreateUserByEmail(db, email))
       }
     }
 
-    let added = 0;
-    let ignored = 0;
+    let added = 0
+    let ignored = 0
+    let restored = 0
 
     for (const userId of userIds) {
       const existing = await db
         .query("registrations")
         .withIndex("by_user_and_course", (q) =>
-          q.eq("userId", userId).eq("courseId", course._id),
+          q.eq("userId", userId).eq("courseId", course._id)
         )
-        .first();
+        .first()
+
       if (!existing) {
+        // Check if user has existing course data
+        const courseData = await getUserCourseData(db, userId, course._id)
+
         await db.insert("registrations", {
           userId,
           courseId: course._id,
           role: null,
-          completedExercises: [],
-        });
-        added++;
+          completedExercises: courseData.hasData
+            ? courseData.completedExercises
+            : [],
+        })
+
+        if (courseData.hasData) {
+          restored++
+        } else {
+          added++
+        }
       } else {
-        ignored++;
+        ignored++
       }
     }
 
-    return { added, ignored };
+    return { added, ignored, restored }
   },
-});
+})
 
 export const setRole = mutationWithAuth({
   args: {
@@ -189,29 +234,61 @@ export const setRole = mutationWithAuth({
       db,
       session,
       courseSlug,
-      "admin",
-    );
+      "admin"
+    )
 
     const registration = await db
       .query("registrations")
       .withIndex("by_user_and_course", (q) =>
-        q.eq("userId", userId).eq("courseId", course._id),
+        q.eq("userId", userId).eq("courseId", course._id)
       )
-      .first();
+      .first()
     if (!registration) {
-      throw new ConvexError("This user is not enrolled in this course.");
+      throw new ConvexError("This user is not enrolled in this course.")
     }
 
     if (registration.role === role) {
-      return;
+      return
     }
 
     if (userId === session?.user._id) {
-      throw new ConvexError("You cannot remove your own admin privileges.");
+      throw new ConvexError("You cannot remove your own admin privileges.")
     }
 
     await db.patch(registration._id, {
       role,
-    });
+    })
   },
-});
+})
+
+export const unregisterFromCourse = mutationWithAuth({
+  args: {
+    courseSlug: v.string(),
+    userId: v.id("users"),
+  },
+  handler: async ({ db, session }, { courseSlug, userId }) => {
+    const { course } = await getCourseRegistration(
+      db,
+      session,
+      courseSlug,
+      "admin"
+    )
+
+    const registration = await db
+      .query("registrations")
+      .withIndex("by_user_and_course", (q) =>
+        q.eq("userId", userId).eq("courseId", course._id)
+      )
+      .first()
+
+    if (!registration) {
+      throw new ConvexError("This user is not enrolled in this course.")
+    }
+
+    if (userId === session?.user._id) {
+      throw new ConvexError("You cannot remove yourself from the course.")
+    }
+
+    await db.delete(registration._id)
+  },
+})

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ObjectType, PropertyValidators, v } from "convex/values";
 import { Adapter, User } from "lucia";
 import {
@@ -107,7 +108,7 @@ async function getValidExistingSession(
     const { user } = await lucia.validateSession(sessionId);
     if (user === null) return null;
     return { user };
-  } catch (error) {
+  } catch {
     return null;
   }
 }

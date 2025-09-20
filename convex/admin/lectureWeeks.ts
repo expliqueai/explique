@@ -1,6 +1,5 @@
 import { ConvexError, v } from "convex/values";
 import { mutationWithAuth, queryWithAuth } from "../auth/withAuth";
-import { Id } from "../_generated/dataModel";
 import { internalQuery } from "../_generated/server";
 import { getCourseRegistration } from "../courses";
 

@@ -1,8 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
-import OpenAI from "openai";
 import { internal } from "./_generated/api";
-import { Doc, Id } from "./_generated/dataModel";
+import { Id } from "./_generated/dataModel";
 import {
   actionWithAuth,
   mutationWithAuth,
@@ -76,8 +75,6 @@ export const get = queryWithAuth({
         attempt.status === "quizCompleted" ||
         isSolutionShown)
     ) {
-      const { identifier } = session.user;
-
       quiz = shownQuestions(
         exercise.quiz,
         attempt.userId,
@@ -195,11 +192,11 @@ export const start = actionWithAuth({
         userId,
       },
     );
+    // threadId is kept for backward compatibility but set to a placeholder for explain variant
+    // and null for reading variant (no threads are created anymore)
     let threadId = null;
-    const openai = new OpenAI();
     if (isUsingExplainVariant) {
-      const thread = await openai.beta.threads.create();
-      threadId = thread.id;
+      threadId = "explain-variant"; // Placeholder since we no longer create OpenAI threads
     }
 
     const attemptId: Id<"attempts"> = await ctx.runMutation(

@@ -1,12 +1,12 @@
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { defineSchema, defineTable } from "convex/server"
+import { v } from "convex/values"
 
 export const LECTURE_STATUS = v.union(
   v.literal("NOT_STARTED"),
   v.literal("PROCESSING"),
   v.literal("READY"),
-  v.literal("FAILED"),
-);
+  v.literal("FAILED")
+)
 
 export const lectureAdminSchema = {
   name: v.string(),
@@ -14,27 +14,29 @@ export const lectureAdminSchema = {
   image: v.optional(v.id("images")),
   url: v.string(),
   firstMessage: v.optional(v.string()),
-};
+}
 
 export const lectureSchema = {
   ...lectureAdminSchema,
   status: LECTURE_STATUS,
   modelName: v.optional(v.string()),
-};
+}
 
 export const exerciseAdminSchema = {
   name: v.string(),
   weekId: v.union(v.id("weeks"), v.null()), // null = soft-deleted exercise
 
+  assistantId: v.optional(v.string()),
+  chatCompletionsApi: v.optional(v.boolean()),
+
   instructions: v.string(), // instructions for the chatbot in the explanation part
-  chatCompletionsApi: v.optional(v.literal(true)), // whether to use the chat completions API instead of the assistants API
-  model: v.string(), // OpenAI model used for the chatbot
+  model: v.optional(v.string()),
   feedback: v.optional(
     // whether to provide some feedback after the explanation
     v.object({
-      model: v.string(), // the OpenAI model used for the feedback
+      model: v.optional(v.string()),
       prompt: v.string(), // the system prompt of the feedback part
-    }),
+    })
   ),
 
   text: v.string(), // the text the users need to read for the reading exercise
@@ -51,26 +53,26 @@ export const exerciseAdminSchema = {
                 v.object({
                   text: v.string(),
                   correct: v.boolean(),
-                }),
+                })
               ),
-            }),
+            })
           ),
-        }),
+        })
       ),
     }),
-    v.null(),
+    v.null()
   ),
   firstMessage: v.optional(v.string()),
   controlGroup: v.union(
     v.literal("A"),
     v.literal("B"),
     v.literal("none"),
-    v.literal("all"),
+    v.literal("all")
   ),
   completionFunctionDescription: v.string(),
   image: v.optional(v.id("images")),
   imagePrompt: v.optional(v.string()),
-};
+}
 
 export default defineSchema(
   {
@@ -85,7 +87,7 @@ export default defineSchema(
         v.literal("exercise"),
         v.literal("exerciseCompleted"),
         v.literal("quiz"),
-        v.literal("quizCompleted"),
+        v.literal("quizCompleted")
       ),
       exerciseId: v.id("exercises"),
       userId: v.id("users"),
@@ -122,7 +124,6 @@ export default defineSchema(
 
     exercises: defineTable({
       ...exerciseAdminSchema,
-      assistantId: v.string(),
     }).index("by_week_id", ["weekId"]),
 
     lectures: defineTable(lectureSchema).index("by_week_id", ["weekId"]),
@@ -153,7 +154,7 @@ export default defineSchema(
           type: v.string(),
           storageId: v.id("_storage"),
           sizes: v.optional(v.string()),
-        }),
+        })
       ),
       model: v.string(),
       size: v.string(),
@@ -174,8 +175,8 @@ export default defineSchema(
           v.literal("finished"),
           v.literal("feedback"),
           v.literal("typing"),
-          v.literal("error"),
-        ),
+          v.literal("error")
+        )
       ),
     }).index("by_attempt", ["attemptId"]),
 
@@ -254,7 +255,7 @@ export default defineSchema(
         v.literal("exerciseCompleted"),
         v.literal("feedbackGiven"),
         v.literal("quizStarted"),
-        v.literal("quizSubmission"),
+        v.literal("quizSubmission")
       ),
       userId: v.id("users"),
       attemptId: v.id("attempts"),
@@ -273,7 +274,7 @@ export default defineSchema(
         v.literal("admin"),
         // Can see exercises before they are released
         v.literal("ta"),
-        v.null(),
+        v.null()
       ),
       completedExercises: v.array(v.id("exercises")),
       researchGroup: v.optional(
@@ -281,7 +282,7 @@ export default defineSchema(
           id: v.union(v.literal("A"), v.literal("B")), // ✅
           position: v.optional(v.number()), // ✅
           length: v.optional(v.number()), // ✅
-        }),
+        })
       ),
     })
       .index("by_user", ["userId"])
@@ -296,13 +297,11 @@ export default defineSchema(
       name: v.union(v.string(), v.null()),
       googleId: v.optional(v.string()),
       googleMetadata: v.optional(v.any()),
-      identifier: v.optional(v.string()), // see /docs/identifiers.md
       extraTime: v.optional(v.literal(true)),
       superadmin: v.optional(v.literal(true)),
     })
       .index("by_lucia_id", ["id"])
       .index("by_email", ["email"])
-      .index("byIdentifier", ["identifier"])
       .index("by_google_id", ["googleId"]),
 
     sessions: defineTable({
@@ -316,5 +315,5 @@ export default defineSchema(
   },
   {
     schemaValidation: true,
-  },
-);
+  }
+)

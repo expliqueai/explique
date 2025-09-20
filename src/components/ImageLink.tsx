@@ -1,5 +1,5 @@
-import clsx from "clsx";
-import Link from "next/link";
+import clsx from "clsx"
+import Link from "next/link"
 
 export function ImageLink({
   href,
@@ -7,21 +7,21 @@ export function ImageLink({
   image,
   corner,
 }: {
-  href: string;
-  name: string;
+  href: string
+  name: string
   image: {
-    thumbnails: { type: string; sizes?: string; src: string }[];
-  } | null;
-  corner?: React.ReactNode;
+    thumbnails: { type: string; sizes?: string; src: string }[]
+  } | null
+  corner?: React.ReactNode
 }) {
   return (
-    <div className="block shadow-lg transition hover:scale-105 hover:shadow-2xl group rounded-3xl">
+    <div className="group block rounded-3xl shadow-lg transition hover:scale-105 hover:shadow-2xl">
       <div className="relative pb-[57.14%]">
         <div
           className={clsx(
-            "rounded-3xl overflow-hidden absolute inset-0 focus-within:ring-8",
+            "absolute inset-0 overflow-hidden rounded-3xl",
             image && "bg-slate-500",
-            !image && "bg-slate-600",
+            !image && "bg-slate-600"
           )}
         >
           {image && (
@@ -35,7 +35,7 @@ export function ImageLink({
                 />
               ))}
               <img
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform object-center"
+                className="absolute inset-0 h-full w-full object-cover object-center transition-transform group-hover:scale-105"
                 src={
                   image.thumbnails.find((t) => t.type === "image/avif")?.src ??
                   undefined
@@ -48,22 +48,22 @@ export function ImageLink({
           <Link
             href={href}
             className={clsx(
-              "absolute inset-0 flex p-4 text-white items-end focus:outline-none",
-              image && "bg-gradient-to-t via-black/25 from-black/70",
+              "absolute inset-0 flex items-end p-4 text-white focus:outline-none",
+              image && "bg-gradient-to-t from-black/70 via-black/25"
             )}
           >
-            <h2 className="font-semibold text-2xl text-shadow-lg [text-wrap:balance]">
+            <h2 className="text-2xl font-semibold text-balance text-shadow-lg">
               {name}
             </h2>
           </Link>
         </div>
 
         {corner && (
-          <div className="absolute top-0 right-0 pointer-events-none">
+          <div className="pointer-events-none absolute top-0 right-0">
             {corner}
           </div>
         )}
       </div>
     </div>
-  );
+  )
 }

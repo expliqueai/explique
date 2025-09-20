@@ -1,14 +1,24 @@
-import { useEffect } from "react";
-import { useMutation, useQuery } from "@/usingSession";
-import { api } from "../../../convex/_generated/api";
-import { Id } from "../../../convex/_generated/dataModel";
-import { ArrowRightIcon, SparklesIcon } from "@heroicons/react/16/solid";
-import Markdown from "../Markdown";
-import { PrimaryButton } from "../PrimaryButton";
-import Instruction from "../Instruction";
-import MessageInput from "../MessageInput";
-import ChatBubble from "../ChatBubble";
-import React from "react";
+import { useMutation, useQuery } from "@/usingSession"
+import {
+  ArrowRightIcon,
+  ArrowUpIcon,
+  SparklesIcon,
+  StopIcon,
+} from "@heroicons/react/16/solid"
+import React, { useEffect, useState } from "react"
+import { api } from "../../../convex/_generated/api"
+import { Id } from "../../../convex/_generated/dataModel"
+import ChatBubble from "../ChatBubble"
+import Instruction from "../Instruction"
+import Markdown from "../Markdown"
+import { PrimaryButton } from "../PrimaryButton"
+import { Button } from "../ui/button"
+import {
+  PromptInput,
+  PromptInputAction,
+  PromptInputActions,
+  PromptInputTextarea,
+} from "../ui/prompt-input"
 
 export default function ExplainExercise({
   hasQuiz,
@@ -17,23 +27,23 @@ export default function ExplainExercise({
   nextButton,
   succeeded,
 }: {
-  hasQuiz: boolean;
-  attemptId: Id<"attempts">;
-  writeDisabled: boolean;
-  nextButton: "show" | "hide" | "disable";
-  succeeded: boolean;
+  hasQuiz: boolean
+  attemptId: Id<"attempts">
+  writeDisabled: boolean
+  nextButton: "show" | "hide" | "disable"
+  succeeded: boolean
 }) {
-  const chat = useQuery(api.chat.getMessages, { attemptId });
+  const chat = useQuery(api.chat.getMessages, { attemptId })
 
   useEffect(() => {
     setTimeout(() => {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-    }, 0);
-  }, [chat]);
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })
+    }, 0)
+  }, [chat])
 
   return (
     <>
-      <div className="flex flex-col gap-6">
+      <div className="mb-28 flex flex-col gap-6">
         {chat?.map((message) => (
           <ChatMessage
             key={message.id}
@@ -60,7 +70,7 @@ export default function ExplainExercise({
         </Instruction>
       )}
     </>
-  );
+  )
 }
 
 const ChatMessage = React.memo(function ChatMessage({
@@ -75,20 +85,20 @@ const ChatMessage = React.memo(function ChatMessage({
   nextButton,
   attemptId,
 }: {
-  id: Id<"messages">;
-  system: boolean;
-  content: string;
-  appearance: "error" | "typing" | "feedback" | "finished" | undefined;
-  isReported: boolean;
+  id: Id<"messages">
+  system: boolean
+  content: string
+  appearance: "error" | "typing" | "feedback" | "finished" | undefined
+  isReported: boolean
 
-  hasQuiz: boolean;
-  succeeded: boolean;
-  nextButton: "show" | "hide" | "disable";
-  attemptId: Id<"attempts">;
+  hasQuiz: boolean
+  succeeded: boolean
+  nextButton: "show" | "hide" | "disable"
+  attemptId: Id<"attempts">
 }) {
-  const reportMessage = useMutation(api.chat.reportMessage);
-  const unreportMessage = useMutation(api.chat.unreportMessage);
-  const goToQuiz = useMutation(api.attempts.goToQuiz);
+  const reportMessage = useMutation(api.chat.reportMessage)
+  const unreportMessage = useMutation(api.chat.unreportMessage)
+  const goToQuiz = useMutation(api.attempts.goToQuiz)
 
   if (appearance === "finished") {
     return (
@@ -101,20 +111,20 @@ const ChatMessage = React.memo(function ChatMessage({
         </Instruction>
 
         {!succeeded && nextButton !== "hide" && hasQuiz && (
-          <div className="flex flex-col gap-2 items-center">
+          <div className="flex flex-col items-center gap-2">
             <PrimaryButton
               onClick={async () => {
-                await goToQuiz({ attemptId });
+                await goToQuiz({ attemptId })
               }}
               disabled={nextButton === "disable"}
             >
               Continue to the quiz
-              <ArrowRightIcon className="w-5 h-5" />
+              <ArrowRightIcon className="h-5 w-5" />
             </PrimaryButton>
           </div>
         )}
       </div>
-    );
+    )
   }
 
   if (appearance === "feedback") {
@@ -127,41 +137,41 @@ const ChatMessage = React.memo(function ChatMessage({
           </Instruction>
 
           {content === "" ? (
-            <div className="flex gap-2 my-4" aria-label="Loading">
-              <div className="w-3 h-3 rounded-full bg-slate-400 animate-pulse"></div>
-              <div className="w-3 h-3 rounded-full bg-slate-400 animate-pulse animation-delay-1-3"></div>
-              <div className="w-3 h-3 rounded-full bg-slate-400 animate-pulse animation-delay-2-3"></div>
+            <div className="my-4 flex gap-2" aria-label="Loading">
+              <div className="h-3 w-3 animate-pulse rounded-full bg-slate-400"></div>
+              <div className="animation-delay-1-3 h-3 w-3 animate-pulse rounded-full bg-slate-400"></div>
+              <div className="animation-delay-2-3 h-3 w-3 animate-pulse rounded-full bg-slate-400"></div>
             </div>
           ) : content === "error" ? (
             <Instruction variant="error">An error occurred.</Instruction>
           ) : (
             <div>
-              <div className="border-l-4 border-slate-300 pl-4 py-1">
+              <div className="border-l-4 border-slate-300 py-1 pl-4">
                 <Markdown text={content} />
               </div>
-              <p className="text-slate-500 flex items-center gap-2 w-full my-2">
-                <SparklesIcon className="w-4 h-4" />
+              <p className="my-2 flex w-full items-center gap-2 text-slate-500">
+                <SparklesIcon className="h-4 w-4" />
                 This feedback is AI-generated and may be inaccurate.
               </p>
             </div>
           )}
 
           {!succeeded && nextButton !== "hide" && content !== "" && (
-            <div className="flex flex-col gap-2 items-center">
+            <div className="flex flex-col items-center gap-2">
               <PrimaryButton
                 onClick={async () => {
-                  await goToQuiz({ attemptId });
+                  await goToQuiz({ attemptId })
                 }}
                 disabled={nextButton === "disable"}
               >
                 Continue to the quiz
-                <ArrowRightIcon className="w-5 h-5" />
+                <ArrowRightIcon className="h-5 w-5" />
               </PrimaryButton>
             </div>
           )}
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -183,19 +193,56 @@ const ChatMessage = React.memo(function ChatMessage({
             }
           : undefined
       }
+      // Disable copying to make cheating with other LLMs harder
+      disableCopy={true}
     />
-  );
-});
+  )
+})
 
 function NewMessage({ attemptId }: { attemptId: Id<"attempts"> }) {
-  const sendMessage = useMutation(api.chat.sendMessage);
+  const sendMessage = useMutation(api.chat.sendMessage)
+  const [input, setInput] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = () => {
+    if (!input.trim() || isLoading) return
+
+    setIsLoading(true)
+    setInput("")
+    sendMessage({ attemptId, message: input }).finally(() => {
+      setIsLoading(false)
+    })
+  }
 
   return (
-    <MessageInput
-      onSend={(message) => {
-        sendMessage({ attemptId, message });
-      }}
-      scroll="body"
-    />
-  );
+    <>
+      <div className="fixed bottom-4 left-1/2 w-full max-w-2xl -translate-x-1/2 px-6">
+        <PromptInput
+          value={input}
+          onValueChange={(value) => setInput(value)}
+          onSubmit={handleSubmit}
+          className="w-full rounded-xl shadow-xl"
+        >
+          <PromptInputTextarea placeholder="Explain the concept in your own words" />
+          <PromptInputActions className="justify-end pt-2">
+            <PromptInputAction tooltip="Send message">
+              <Button
+                variant="default"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={handleSubmit}
+                disabled={isLoading || !input.trim()}
+              >
+                {isLoading ? (
+                  <StopIcon className="size-5 fill-current" />
+                ) : (
+                  <ArrowUpIcon className="size-5" />
+                )}
+              </Button>
+            </PromptInputAction>
+          </PromptInputActions>
+        </PromptInput>
+      </div>
+    </>
+  )
 }

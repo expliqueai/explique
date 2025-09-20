@@ -1,16 +1,15 @@
 // Tool to export/import courses between Explique deployments
 
-import { v } from "convex/values";
+import { StorageActionWriter } from "convex/server"
+import { v } from "convex/values"
+import { internal } from "../_generated/api"
+import { Id } from "../_generated/dataModel"
 import {
   internalAction,
   internalMutation,
   internalQuery,
-} from "../_generated/server";
-import { exerciseAdminSchema } from "../schema";
-import { internal } from "../_generated/api";
-import { createAssistant } from "../admin/exercises";
-import { Id } from "../_generated/dataModel";
-import { StorageActionWriter } from "convex/server";
+} from "../_generated/server"
+import { exerciseAdminSchema } from "../schema"
 
 const exportSchema = v.array(
   v.object({
@@ -23,13 +22,10 @@ const exportSchema = v.array(
       v.object({
         name: v.string(),
         instructions: v.string(),
-        model: v.string(),
-        chatCompletionsApi: v.optional(v.literal(true)),
         feedback: v.optional(
           v.object({
-            model: v.string(),
             prompt: v.string(),
-          }),
+          })
         ),
         text: v.string(),
         quiz: v.union(
@@ -44,21 +40,21 @@ const exportSchema = v.array(
                       v.object({
                         text: v.string(),
                         correct: v.boolean(),
-                      }),
+                      })
                     ),
-                  }),
+                  })
                 ),
-              }),
+              })
             ),
           }),
-          v.null(),
+          v.null()
         ),
         firstMessage: v.optional(v.string()),
         controlGroup: v.union(
           v.literal("A"),
           v.literal("B"),
           v.literal("none"),
-          v.literal("all"),
+          v.literal("all")
         ),
         completionFunctionDescription: v.string(),
         imagePrompt: v.optional(v.string()),
@@ -71,18 +67,18 @@ const exportSchema = v.array(
                 type: v.string(),
                 sourceUrl: v.string(),
                 sizes: v.optional(v.string()),
-              }),
+              })
             ),
             model: v.string(),
             size: v.string(),
             prompt: v.string(),
             quality: v.union(v.literal("standard"), v.literal("hd")),
-          }),
+          })
         ),
-      }),
+      })
     ),
-  }),
-);
+  })
+)
 
 export const exportCourse = internalQuery({
   args: {
@@ -90,9 +86,9 @@ export const exportCourse = internalQuery({
   },
   returns: exportSchema,
   handler: async ({ db, storage }) => {
-    const weeks = await db.query("weeks").collect(); // assumes there is only one course
-    const exercises = await db.query("exercises").collect();
-    const images = await db.query("images").collect();
+    const weeks = await db.query("weeks").collect() // assumes there is only one course
+    const exercises = await db.query("exercises").collect()
+    const images = await db.query("images").collect()
 
     return await Promise.all(
       weeks.map(async (week) => ({
@@ -107,41 +103,39 @@ export const exportCourse = internalQuery({
               const imageSrc =
                 exercise.image === undefined
                   ? undefined
-                  : images.find((image) => image._id === exercise.image);
-              let image;
+                  : images.find((image) => image._id === exercise.image)
+              let image
               if (imageSrc) {
-                const sourceUrl = await storage.getUrl(imageSrc.storageId);
-                if (!sourceUrl) throw new Error("Can’t find full image");
+                const sourceUrl = await storage.getUrl(imageSrc.storageId)
+                if (!sourceUrl) throw new Error("Can’t find full image")
 
                 image = {
                   sourceUrl,
                   thumbnails: await Promise.all(
                     imageSrc.thumbnails.map(async (thumbnail) => {
                       const sourceUrlThumbnail = await storage.getUrl(
-                        imageSrc.storageId,
-                      );
+                        imageSrc.storageId
+                      )
                       if (!sourceUrlThumbnail) {
-                        throw new Error("Can’t find thumbnail");
+                        throw new Error("Can’t find thumbnail")
                       }
                       return {
                         type: thumbnail.type,
                         sizes: thumbnail.sizes,
                         sourceUrl: sourceUrlThumbnail,
-                      };
-                    }),
+                      }
+                    })
                   ),
                   model: imageSrc.model,
                   size: imageSrc.size,
                   prompt: imageSrc.prompt,
                   quality: imageSrc.quality,
-                };
+                }
               }
 
               return {
                 name: exercise.name,
                 instructions: exercise.instructions,
-                model: exercise.model,
-                chatCompletionsApi: exercise.chatCompletionsApi,
                 feedback: exercise.feedback,
                 text: exercise.text,
                 quiz: exercise.quiz,
@@ -151,21 +145,21 @@ export const exportCourse = internalQuery({
                   exercise.completionFunctionDescription,
                 imagePrompt: exercise.imagePrompt,
                 image,
-              };
-            }),
+              }
+            })
         ),
-      })),
-    );
+      }))
+    )
   },
-});
+})
 
 async function downloadContents(
   url: string,
-  storage: StorageActionWriter,
+  storage: StorageActionWriter
 ): Promise<Id<"_storage">> {
-  const blob = await (await fetch(url)).blob();
-  const id = await storage.store(blob);
-  return id;
+  const blob = await (await fetch(url)).blob()
+  const id = await storage.store(blob)
+  return id
 }
 
 export const importCourse = internalAction({
@@ -187,30 +181,24 @@ export const importCourse = internalAction({
           exercises: await Promise.all(
             week.exercises.map(async (exercise) => ({
               object: {
-                assistantId: (
-                  await createAssistant(
-                    exercise.instructions,
-                    exercise.model,
-                    exercise.completionFunctionDescription,
-                  )
-                ).id,
+                // No longer creating assistants - assistantId removed from schema
                 ...{ ...exercise, image: undefined },
               },
               image: exercise.image
                 ? {
                     storageId: await downloadContents(
                       exercise.image.sourceUrl,
-                      ctx.storage,
+                      ctx.storage
                     ),
                     thumbnails: await Promise.all(
                       exercise.image.thumbnails.map(async (thumbnail) => ({
                         type: thumbnail.type,
                         storageId: await downloadContents(
                           thumbnail.sourceUrl,
-                          ctx.storage,
+                          ctx.storage
                         ),
                         sizes: thumbnail.sizes,
-                      })),
+                      }))
                     ),
                     model: exercise.image.model,
                     size: exercise.image.size,
@@ -218,13 +206,13 @@ export const importCourse = internalAction({
                     quality: exercise.image.quality,
                   }
                 : undefined,
-            })),
+            }))
           ),
-        })),
+        }))
       ),
-    });
+    })
   },
-});
+})
 
 export const saveImportedCoures = internalMutation({
   args: {
@@ -240,7 +228,6 @@ export const saveImportedCoures = internalMutation({
         exercises: v.array(
           v.object({
             object: v.object({
-              assistantId: v.string(),
               ...exerciseAdminSchema,
               weekId: v.optional(v.any()),
             }),
@@ -252,17 +239,17 @@ export const saveImportedCoures = internalMutation({
                     type: v.string(),
                     storageId: v.id("_storage"),
                     sizes: v.optional(v.string()),
-                  }),
+                  })
                 ),
                 model: v.string(),
                 size: v.string(),
                 prompt: v.string(),
                 quality: v.union(v.literal("standard"), v.literal("hd")),
-              }),
+              })
             ),
-          }),
+          })
         ),
-      }),
+      })
     ),
   },
   handler: async ({ db }, { courseId, weeks }) => {
@@ -270,22 +257,22 @@ export const saveImportedCoures = internalMutation({
       const weekId = await db.insert("weeks", {
         ...week.object,
         courseId,
-      });
+      })
       for (const exercise of week.exercises) {
         const exerciseId = await db.insert("exercises", {
           ...exercise.object,
           weekId,
           image: undefined,
-        });
+        })
 
         if (exercise.image) {
           const imageId = await db.insert("images", {
             ...exercise.image,
             exerciseId,
-          });
-          await db.patch(exerciseId, { image: imageId });
+          })
+          await db.patch(exerciseId, { image: imageId })
         }
       }
     }
   },
-});
+})

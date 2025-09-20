@@ -1,14 +1,14 @@
-import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
-import { useEffect, useId, useState } from "react";
-import { ArrowRightIcon } from "@heroicons/react/16/solid";
-import { useMutation } from "@/usingSession";
-import { api } from "../../../convex/_generated/api";
-import { Id } from "../../../convex/_generated/dataModel";
-import Markdown from "../Markdown";
-import { PrimaryButton } from "../PrimaryButton";
-import Instruction from "../Instruction";
+import { useMutation } from "@/usingSession"
+import { ArrowRightIcon } from "@heroicons/react/16/solid"
+import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline"
+import { useEffect, useId, useState } from "react"
+import { api } from "../../../convex/_generated/api"
+import { Id } from "../../../convex/_generated/dataModel"
+import Instruction from "../Instruction"
+import Markdown from "../Markdown"
+import { PrimaryButton } from "../PrimaryButton"
 
-const ATTEMPT_TIMEOUT_MS = 1000 * 60 * 1;
+const ATTEMPT_TIMEOUT_MS = 1000 * 60 * 1
 
 export default function QuizExercise({
   attemptId,
@@ -17,49 +17,47 @@ export default function QuizExercise({
   succeeded,
   isDue,
 }: {
-  attemptId: Id<"attempts">;
+  attemptId: Id<"attempts">
   questions: {
-    question: string;
-    answers: string[];
-    correctAnswer: string | null;
-  }[];
+    question: string
+    answers: string[]
+    correctAnswer: string | null
+  }[]
   lastSubmission: {
-    answers: number[];
-    timestamp: number;
-  } | null;
-  succeeded: boolean;
-  isDue: boolean;
+    answers: number[]
+    timestamp: number
+  } | null
+  succeeded: boolean
+  isDue: boolean
 }) {
-  const submit = useMutation(api.quiz.submit);
+  const submit = useMutation(api.quiz.submit)
 
   const [selectedAnswerIndexes, setSelectedAnswerIndexes] = useState<
     (number | null)[]
   >(
-    questions.map((_, i) =>
-      lastSubmission ? lastSubmission.answers[i] : null,
-    ),
-  );
+    questions.map((_, i) => (lastSubmission ? lastSubmission.answers[i] : null))
+  )
 
-  const [timeoutSeconds, setTimeoutSeconds] = useState<null | number>(67);
-  const disabled = succeeded || timeoutSeconds !== null || isDue;
+  const [timeoutSeconds, setTimeoutSeconds] = useState<null | number>(67)
+  const disabled = succeeded || timeoutSeconds !== null || isDue
 
   // Update the timer
   useEffect(() => {
     if (lastSubmission === null) {
-      setTimeoutSeconds(null);
-      return;
+      setTimeoutSeconds(null)
+      return
     }
 
     const update = () => {
-      const elapsed = Date.now() - lastSubmission.timestamp;
-      const remaining = ATTEMPT_TIMEOUT_MS - elapsed;
-      setTimeoutSeconds(remaining >= 0 ? Math.floor(remaining / 1000) : null);
-    };
+      const elapsed = Date.now() - lastSubmission.timestamp
+      const remaining = ATTEMPT_TIMEOUT_MS - elapsed
+      setTimeoutSeconds(remaining >= 0 ? Math.floor(remaining / 1000) : null)
+    }
 
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [lastSubmission]);
+    update()
+    const interval = setInterval(update, 1000)
+    return () => clearInterval(interval)
+  }, [lastSubmission])
 
   return (
     <>
@@ -81,30 +79,30 @@ export default function QuizExercise({
             selectedAnswerIndex={selectedAnswerIndexes[index]}
             correctAnswer={correctAnswer}
             onChange={(newSelectedIndex) => {
-              const newIndexes = [...selectedAnswerIndexes];
-              newIndexes[index] = newSelectedIndex;
-              setSelectedAnswerIndexes(newIndexes);
+              const newIndexes = [...selectedAnswerIndexes]
+              newIndexes[index] = newSelectedIndex
+              setSelectedAnswerIndexes(newIndexes)
             }}
             disabled={disabled}
           />
         ))}
       </div>
 
-      <footer className="flex flex-col items-center my-8 gap-8">
+      <footer className="my-8 flex flex-col items-center gap-8">
         <PrimaryButton
           disabled={selectedAnswerIndexes.includes(null) || disabled}
           onClick={async () => {
             await submit({
               attemptId,
               answers: selectedAnswerIndexes.map((index) => {
-                if (index === null) throw new Error("No answer selected");
-                return index;
+                if (index === null) throw new Error("No answer selected")
+                return index
               }),
-            });
+            })
           }}
         >
           Submit
-          <ArrowRightIcon className="w-5 h-5" />
+          <ArrowRightIcon className="h-5 w-5" />
         </PrimaryButton>
 
         {!succeeded && !isDue && timeoutSeconds !== null && (
@@ -114,7 +112,7 @@ export default function QuizExercise({
               before trying again.
             </Instruction>
 
-            <p className="text-center mt-2 text-3xl font-extralight tabular-nums text-gray-600">
+            <p className="mt-2 text-center text-3xl font-extralight text-gray-600 tabular-nums">
               {Math.floor(timeoutSeconds / 60)
                 .toString()
                 .padStart(2, "0")}
@@ -136,7 +134,7 @@ export default function QuizExercise({
         )}
       </footer>
     </>
-  );
+  )
 }
 
 export function QuizContents({
@@ -147,20 +145,20 @@ export function QuizContents({
   onChange,
   disabled = false,
 }: {
-  question: string;
-  answers: string[];
-  selectedAnswerIndex: number | null;
-  correctAnswer: string | null;
-  onChange?: (index: number) => void;
-  disabled?: boolean;
+  question: string
+  answers: string[]
+  selectedAnswerIndex: number | null
+  correctAnswer: string | null
+  onChange?: (index: number) => void
+  disabled?: boolean
 }) {
-  const id = useId();
+  const id = useId()
 
   return (
-    <div className="bg-white border rounded-xl p-4">
+    <div className="rounded-xl border bg-white p-4">
       <header>
         <Markdown
-          className="text-xl prose-p:mt-0 prose-p:mb-1"
+          className="prose-p:mt-0 prose-p:mb-1 text-xl select-none"
           text={question}
         />
       </header>
@@ -169,7 +167,7 @@ export function QuizContents({
         {answers.map((answer, index) => (
           <div key={index}>
             <label className="flex py-2">
-              <div className="h-[1em] mr-2 box-content">
+              <div className="mr-2 box-content h-[1em]">
                 <input
                   type="radio"
                   id={`${id}-${index}`}
@@ -181,11 +179,14 @@ export function QuizContents({
                 />
               </div>
 
-              <Markdown text={answer} className="flex-1 prose-p:my-0" />
+              <Markdown
+                text={answer}
+                className="prose-p:my-0 flex-1 select-none"
+              />
 
               {correctAnswer === answer && (
                 <CheckCircleIcon
-                  className="w-6 h-6 text-green-600"
+                  className="h-6 w-6 text-green-600"
                   title="Correct answer"
                 />
               )}
@@ -193,7 +194,7 @@ export function QuizContents({
                 selectedAnswerIndex === index &&
                 correctAnswer !== answer && (
                   <XCircleIcon
-                    className="w-6 h-6 text-red-600"
+                    className="h-6 w-6 text-red-600"
                     title="Incorrect answer"
                   />
                 )}
@@ -202,5 +203,5 @@ export function QuizContents({
         ))}
       </div>
     </div>
-  );
+  )
 }
