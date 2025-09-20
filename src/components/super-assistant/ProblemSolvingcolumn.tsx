@@ -46,7 +46,7 @@ function ExerciseBlob({
       type="button"
       onClick={onClick}
       className={clsx("group relative block w-full rounded-3xl text-left shadow-lg hover:shadow-2xl transition hover:scale-105",
-                    status === "NOT STARTED" && "bg-[#B68585]",
+                    status === "NOT STARTED" && "bg-slate-700/90",
                     status === "IN PROGRESS" && "bg-blue-700/90",
                     status === "COMPLETED" && "bg-green-700/90"
                 )}
