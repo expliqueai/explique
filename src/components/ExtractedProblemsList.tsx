@@ -11,18 +11,15 @@ type Props = {
   weekId: Id<"weeks">;
 };
 
-export default function ExtractedProblemsList({ courseSlug, weekId }: Props) {
-  const problems = useQuery(
-    api.superassistant.problemExtraction.listProblemsByWeek,
-    { weekId }
-  );
-  const deleteProblem = useMutation(api.superassistant.problemExtraction.deleteProblem);
+export default function ProblemsList({ courseSlug, weekId }: Props) {
+  const problems = useQuery(api.superassistant.problems.listByWeek, { weekId });
+  const deleteProblem = useMutation(api.superassistant.problems.deleteProblem);
 
   const [confirmingId, setConfirmingId] = useState<Id<"problems"> | null>(null);
 
   if (problems === undefined) return <div>Loading…</div>;
   if (problems.length === 0)
-    return <div className="text-gray-500">No problems ready for this week.</div>;
+    return <div className="text-gray-500">No problems for this week yet.</div>;
 
   const handleDelete = async (id: Id<"problems">) => {
     await deleteProblem({ problemId: id });
@@ -37,11 +34,10 @@ export default function ExtractedProblemsList({ courseSlug, weekId }: Props) {
           className="relative rounded-2xl bg-slate-700/90 p-6 text-white shadow-lg hover:bg-slate-700 transition"
         >
           <div className="text-lg font-bold">
-            Exercise {p.number ?? "?"}
+            Exercise {p.number ?? "?"}{" "}
+            {p.mandatory && <span className="ml-2 text-yellow-400">(Mandatory)</span>}
           </div>
-          <div className="mt-2 text-slate-300 line-clamp-3">
-            {p.validatedContent ?? p.rawExtraction}
-          </div>
+          <div className="mt-2 text-slate-300 line-clamp-3">{p.statement}</div>
 
           <button
             onClick={() => setConfirmingId(p._id)}

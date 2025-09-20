@@ -43,7 +43,7 @@ import type * as superadmin_relocation from "../superadmin/relocation.js";
 import type * as superadmin_util from "../superadmin/util.js";
 import type * as superassistant_attempt from "../superassistant/attempt.js";
 import type * as superassistant_messages from "../superassistant/messages.js";
-import type * as superassistant_problem from "../superassistant/problem.js";
+import type * as superassistant_problems from "../superassistant/problems.js";
 import type * as video_chat from "../video/chat.js";
 import type * as video_geminiUtils from "../video/geminiUtils.js";
 import type * as weeks from "../weeks.js";
@@ -87,7 +87,7 @@ declare const fullApi: ApiFromModules<{
   "superadmin/util": typeof superadmin_util;
   "superassistant/attempt": typeof superassistant_attempt;
   "superassistant/messages": typeof superassistant_messages;
-  "superassistant/problem": typeof superassistant_problem;
+  "superassistant/problems": typeof superassistant_problems;
   "video/chat": typeof video_chat;
   "video/geminiUtils": typeof video_geminiUtils;
   weeks: typeof weeks;

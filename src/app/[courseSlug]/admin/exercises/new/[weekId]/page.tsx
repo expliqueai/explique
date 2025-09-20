@@ -62,7 +62,7 @@ export default function NewItemPage() {
             onDone={() => router.push(`/${courseSlug}/admin/exercises`)}
           />
         ) : (
-          <ProblemsUploadForm
+          <ProblemForm
             courseSlug={courseSlug}
             initialWeekId={initialWeekId}
             onDone={() => router.push(`/${courseSlug}/admin/exercises`)}
@@ -125,7 +125,7 @@ function ExplainQuizForm({
 }
 
 
-function ProblemsUploadForm({
+function ProblemForm({
   courseSlug,
   initialWeekId,
   onDone,
@@ -134,139 +134,89 @@ function ProblemsUploadForm({
   initialWeekId?: Id<"weeks">;
   onDone: () => void;
 }) {
-  const [questionsPdf, setQuestionsPdf] = useState<File | null>(null);
-  const [problemSetName, setProblemSetName] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [number, setNumber] = useState("");
+  const [statement, setStatement] = useState("");
+  const [solution, setSolution] = useState("");
+  const [mandatory, setMandatory] = useState(false);
   const [weekId, setWeekId] = useState(initialWeekId ?? "");
 
-  const exercises = useQuery(api.admin.exercises.list, { courseSlug });
   const weeks = useQuery(api.admin.weeks.list, { courseSlug });
+  const createProblem = useMutation(api.superassistant.problems.createProblem);
 
-  const generateUploadUrl = useMutation(api.superassistant.problemExtraction.generateUploadUrl);
-  const { startUpload } = useFileUpload(() => generateUploadUrl({}));
-
-  const createProblemSet = useMutation(
-    api.superassistant.problemExtraction.createProblemSet
-  );
-
-  async function handleOnePdf(file: File) {
-    const storageIds: { pageNumber: number; storageId: string }[] = [];
-
-    const uploaded = await startUpload([file]);
-    storageIds.push({
-      pageNumber: 0,
-      storageId: (uploaded[0].response as { storageId: string }).storageId,
-    });
-
-    const filename = file.name.split(".")[0];
-    const pages: string[] = await PdfToImg(URL.createObjectURL(file), {
-      imgType: "png",
-      pages: "all",
-    });
-
-    for (let i = 0; i < pages.length; i++) {
-      const base64Data = pages[i].replace(/^data:image\/\w+;base64,/, "");
-      const byteArray = Uint8Array.from(atob(base64Data), (c) =>
-        c.charCodeAt(0)
-      );
-
-      const pageFile = new File([byteArray], `${filename}_page${i + 1}.png`, {
-        type: "image/png",
-      });
-
-      const pageUploaded = await startUpload([pageFile]);
-      storageIds.push({
-        pageNumber: i + 1,
-        storageId: (pageUploaded[0].response as { storageId: string }).storageId,
-      });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!weekId || !number || !statement) {
+      toast.error("Please fill required fields (week, number, statement).");
+      return;
     }
 
-    return storageIds;
-  }
+    try {
+      await createProblem({
+        weekId: weekId as Id<"weeks">,
+        number,
+        statement,
+        solution: solution || undefined,
+        mandatory,
+      });
+      toast.success("Problem created!");
+      onDone();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to create problem");
+    }
+  };
 
   return (
-    <form
-      className="rounded-xl bg-white p-4 shadow"
-      onSubmit={async (e) => {
-        e.preventDefault();
-        if (!questionsPdf) {
-          toast.error("Please upload a questions PDF.");
-          return;
-        }
-        if (weekId === "") {
-          toast.error("Week not found.");
-          return;
-        }
-
-        try {
-          setSubmitting(true);
-          const storages = await handleOnePdf(questionsPdf);
-          const pdfStorageId = storages.find((s) => s.pageNumber === 0)
-            ?.storageId as Id<"_storage">;
-          const imageStorageIds = storages
-            .filter((s) => s.pageNumber > 0)
-            .map((s) => s.storageId as Id<"_storage">);
-
-          await createProblemSet({
-            courseId: exercises?.[0]?.courseId as Id<"courses">,
-            weekId: weekId as Id<"weeks">,
-            storageId: pdfStorageId,
-            storageIds: imageStorageIds,
-            name: problemSetName || questionsPdf.name,
-          });
-
-          toast.success("Problems uploaded! Extraction will start soon.");
-          onDone();
-        } catch (err) {
-          console.error(err);
-          toast.error("Upload failed.");
-        } finally {
-          setSubmitting(false);
-        }
-      }}
-    >
-      <p className="mb-4 text-slate-700">
-        Upload the <strong>questions PDF</strong> for this week. We’ll
-        extract and process it for the Super-Assistant.
-      </p>
-
-      <div className="mb-4">
-        <label className="mb-2 block text-sm font-medium text-slate-700">
-          Questions PDF
-        </label>
-        <Upload value={questionsPdf} onChange={setQuestionsPdf} />
-      </div>
-
-      <div className="mb-4">
-        <Input
-          label="Problem Set Name (optional)"
-          placeholder="Defaults to PDF filename"
-          value={problemSetName}
-          onChange={setProblemSetName}
-        />
-      </div>
-
+    <form className="rounded-xl bg-white p-4 shadow space-y-4" onSubmit={handleSubmit}>
       {weeks && (
         <Select
           label="Week"
           value={weekId}
           onChange={(val) => setWeekId(val)}
-          values={weeks.map((week) => ({ value: week.id, label: week.name }))}
+          values={weeks.map((w) => ({ value: w.id, label: w.name }))}
         />
       )}
 
+      <Input label="Problem Number" value={number} onChange={setNumber} />
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">
+          Statement
+        </label>
+        <textarea
+          className="w-full border rounded p-2"
+          rows={5}
+          value={statement}
+          onChange={(e) => setStatement(e.target.value)}
+          required
+        />
+      </div>
+      <div>
+      <label className="block text-sm font-medium text-slate-700 mb-1">
+        Solution (optional)
+        </label>
+        <textarea
+          className="w-full border rounded p-2"
+          rows={5}
+          value={solution}
+          onChange={(e) => setSolution(e.target.value)}
+        />
+       </div>
+
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={mandatory}
+          onChange={(e) => setMandatory(e.target.checked)}
+        />
+        Mandatory
+      </label>
+
       <div className="flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={onDone}
-          disabled={submitting}
-        >
+        <Button type="button" variant="secondary" size="sm" onClick={onDone}>
           Cancel
         </Button>
-        <Button type="submit" size="sm" disabled={submitting}>
-          {submitting ? "Uploading…" : "Upload PDF"}
+        <Button type="submit" size="sm">
+          Create Problem
         </Button>
       </div>
     </form>
