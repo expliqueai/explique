@@ -61,7 +61,7 @@ export const list = queryWithAuth({
       .collect();
 
     const exercises = await db.query("exercises").collect();
-    const problemSets = await db.query("problemSets").collect();
+    const problems = await db.query("problems").collect();
 
     const result = [];
     for (const week of weeks) {
@@ -76,18 +76,19 @@ export const list = queryWithAuth({
           }))
       );
 
-      const resultProblemSets = problemSets
-      .filter((ps) => ps.weekId === week._id)
-      .map((ps) => ({
-        type: "problemSet" as const,
-        id: ps._id,
-        weekId: ps.weekId,
-        name: ps.name ?? "Problem set",
-  }));
+      const resultProblems = problems
+        .filter((p) => p.weekId === week._id)
+        .map((p) => ({
+          type: "problem" as const,
+          id: p._id,
+          number: p.name,
+          mandatory: p.mandatory ?? false,
+          instructions: p.instructions,
+        }));
 
       result.push({
         ...week,
-        items: [...resultExercises, ...resultProblemSets],
+        items: [...resultExercises, ...resultProblems],
       });
     }
 
