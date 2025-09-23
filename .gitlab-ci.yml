@@ -21,6 +21,7 @@ variables:
   - kubectl delete secret $APPLICATION_NAME-regcred --ignore-not-found -n thl2
   - kubectl create secret docker-registry $APPLICATION_NAME-regcred --docker-server="$HARBOR_REGISTRY" --docker-username=$REGISTRY_ROBOT --docker-password="$HARBOR_PASSWORD" --docker-email=support-icit@epfl.ch -n thl2
   - sed -i "s%APPLICATION-HOSTS-FQDN%$FQDN%g" $CI_PROJECT_DIR/k8s/ingress.yaml
+  - sed -i "s%TLS-SECRET-NAME%$TLS_SECRET_NAME%g" $CI_PROJECT_DIR/k8s/ingress.yaml
   - sed -i "s%APPLICATION-IMAGE%$HARBOR_REGISTRY/$REPO_NAME/$IMAGE_NAME:$TAG%g" $CI_PROJECT_DIR/k8s/deployment.yaml
   - sed -i "s%APPLICATION-NAME%$APPLICATION_NAME%g" $CI_PROJECT_DIR/k8s/deployment.yaml
   - sed -i "s%APPLICATION-NAME%$APPLICATION_NAME%g" $CI_PROJECT_DIR/k8s/ingress.yaml
@@ -87,6 +88,7 @@ deploy-to-prod:
     APPLICATION_NAME: "explique"
     TAG: "prod"
     FQDN: "explique.epfl.ch"
+    TLS_SECRET_NAME: "explique.epfl.ch-tls"
     HAS_RESOURCES: "true"
     CPU_REQUEST: "2"
     MEMORY_REQUEST: "256Mi"
@@ -109,6 +111,7 @@ deploy-branch:
     APPLICATION_NAME: "explique-${CI_COMMIT_REF_SLUG}"
     TAG: "${CI_COMMIT_REF_SLUG}"
     FQDN: "${CI_COMMIT_REF_SLUG}.previews.${BASE_DOMAIN}"
+    TLS_SECRET_NAME: "previews.explique.ai-tls"
     HAS_RESOURCES: "false"
   image:
     name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
