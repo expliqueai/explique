@@ -34,7 +34,7 @@ ENV CONVEX_DEPLOY_KEY=${CONVEX_DEPLOY_KEY}
 ARG SENTRY_AUTH_TOKEN
 ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
 
-RUN npx convex deploy --cmd 'npm run build'
+RUN npx convex deploy --cmd 'npm run build' --preview-run 'internal/seed'
 
 # Production image, copy all the files and run next
 FROM base AS runner
