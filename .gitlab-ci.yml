@@ -62,6 +62,7 @@ build-staging:
   only:
     refs:
       - nightly
+      - /^feat\/.*/
   environment:
     name: staging/$CI_COMMIT_REF_SLUG
   image:
@@ -103,6 +104,7 @@ deploy-branch:
   only:
     refs:
       - nightly
+      - /^feat\/.*/
   environment:
     name: staging/$CI_COMMIT_REF_SLUG
     url: https://$CI_COMMIT_REF_SLUG.previews.$BASE_DOMAIN
@@ -125,6 +127,7 @@ stop-staging:
   only:
     refs:
       - nightly
+      - /^feat\/.*/
   variables:
     APPLICATION_NAME: "explique-${CI_COMMIT_REF_SLUG}"
   image:
@@ -144,6 +147,7 @@ cleanup-staging:
   only:
     refs:
       - nightly
+      - /^feat\/.*/
   environment:
     name: staging/$CI_COMMIT_REF_SLUG
     action: stop
