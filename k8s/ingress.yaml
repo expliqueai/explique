@@ -6,7 +6,7 @@ spec:
   tls:
     - hosts:
       - APPLICATION-HOSTS-FQDN
-      secretName: APPLICATION-HOSTS-FQDN-tls
+      secretName: TLS-SECRET-NAME
   rules:
   - host: APPLICATION-HOSTS-FQDN
     http:
