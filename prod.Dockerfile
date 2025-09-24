@@ -40,7 +40,7 @@ ENV BASE_URL=${BASE_URL}
 ARG CI_COMMIT_REF_SLUG
 ENV CI_COMMIT_REF_SLUG=${CI_COMMIT_REF_SLUG}
 
-RUN npx convex deploy --cmd 'npm run build' --preview-run 'internal/seed' --preview-create '${CI_COMMIT_REF_SLUG}'
+RUN npx convex deploy --cmd 'npm run build' --preview-run 'internal/seed' --preview-create ${CI_COMMIT_REF_SLUG}
 RUN npx convex env set BASE_URL ${BASE_URL}
 
 # Production image, copy all the files and run next
