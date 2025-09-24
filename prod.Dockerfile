@@ -34,7 +34,11 @@ ENV CONVEX_DEPLOY_KEY=${CONVEX_DEPLOY_KEY}
 ARG SENTRY_AUTH_TOKEN
 ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
 
+ARG BASE_URL
+ENV BASE_URL=${BASE_URL}
+
 RUN npx convex deploy --cmd 'npm run build' --preview-run 'internal/seed'
+RUN npx convex env set BASE_URL ${BASE_URL}
 
 # Production image, copy all the files and run next
 FROM base AS runner
@@ -43,9 +47,6 @@ WORKDIR /app
 ENV NODE_ENV production
 # Uncomment the following line in case you want to disable telemetry during runtime.
 ENV NEXT_TELEMETRY_DISABLED 1
-
-ARG BASE_URL
-ENV BASE_URL=${BASE_URL}
 
 ARG JWT_KEY
 ENV JWT_KEY=${JWT_KEY}
