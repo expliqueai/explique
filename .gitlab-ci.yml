@@ -62,6 +62,7 @@ build-staging:
   only:
     refs:
       - nightly
+      - super-assistant-integration
       - /^feat\/.*/
   environment:
     name: staging/$CI_COMMIT_REF_SLUG
@@ -104,6 +105,7 @@ deploy-branch:
   only:
     refs:
       - nightly
+      - super-assistant-integration
       - /^feat\/.*/
   environment:
     name: staging/$CI_COMMIT_REF_SLUG
@@ -127,6 +129,7 @@ stop-staging:
   only:
     refs:
       - nightly
+      - super-assistant-integration
       - /^feat\/.*/
   variables:
     APPLICATION_NAME: "explique-${CI_COMMIT_REF_SLUG}"
@@ -147,6 +150,7 @@ cleanup-staging:
   only:
     refs:
       - nightly
+      - super-assistant-integration
       - /^feat\/.*/
   environment:
     name: staging/$CI_COMMIT_REF_SLUG
