@@ -42,7 +42,7 @@ export default function Chat({ chatId }: { chatId: Id<"saAttempts"> }) {
         )}
 
         {chat?.map((message, i) => (
-          <Fragment key={(message as any).id ?? (message as any)._id ?? i}>
+          <Fragment key={(message).id ?? (message).id ?? i}>
             {typeof message.content !== "string" &&
               message.role === "user" &&
               message.content[1].type === "image_url" && (

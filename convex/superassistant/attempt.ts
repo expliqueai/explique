@@ -201,6 +201,7 @@ export const generateFirstMessages = internalAction({
       {
         attemptId:attemptId,
         role:"user",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         content:message1 as any,
       }
     );
@@ -226,6 +227,7 @@ export const generateFirstMessages = internalAction({
       {
         attemptId:attemptId,
         role:"user",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         content:message2 as any,
       }
     );
@@ -301,6 +303,7 @@ export const generateUpdateMessages = internalAction({
       {
         attemptId:attemptId,
         role:"user",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         content:message as any,
       }
     );
