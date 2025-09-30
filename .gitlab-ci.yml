@@ -22,21 +22,15 @@ variables:
   - kubectl create secret docker-registry $APPLICATION_NAME-regcred --docker-server="$HARBOR_REGISTRY" --docker-username=$REGISTRY_ROBOT --docker-password="$HARBOR_PASSWORD" --docker-email=support-icit@epfl.ch -n thl2
   - sed -i "s%APPLICATION-HOSTS-FQDN%$FQDN%g" $CI_PROJECT_DIR/k8s/ingress.yaml
   - sed -i "s%TLS-SECRET-NAME%$TLS_SECRET_NAME%g" $CI_PROJECT_DIR/k8s/ingress.yaml
-  - sed -i "s%APPLICATION-IMAGE%$HARBOR_REGISTRY/$REPO_NAME/$IMAGE_NAME:$TAG%g" $CI_PROJECT_DIR/k8s/deployment.yaml
-  - sed -i "s%APPLICATION-NAME%$APPLICATION_NAME%g" $CI_PROJECT_DIR/k8s/deployment.yaml
+  - sed -i "s%APPLICATION-IMAGE%$HARBOR_REGISTRY/$REPO_NAME/$IMAGE_NAME:$TAG%g" $CI_PROJECT_DIR/k8s/$DEPLOYMENT_FILE
+  - sed -i "s%APPLICATION-NAME%$APPLICATION_NAME%g" $CI_PROJECT_DIR/k8s/$DEPLOYMENT_FILE
   - sed -i "s%APPLICATION-NAME%$APPLICATION_NAME%g" $CI_PROJECT_DIR/k8s/ingress.yaml
   - sed -i "s%APPLICATION-NAME%$APPLICATION_NAME%g" $CI_PROJECT_DIR/k8s/service.yaml
-  - sed -i "s%PVC_NAME%$PVC_NAME%g" $CI_PROJECT_DIR/k8s/deployment.yaml
-  - |
-    if [ "$HAS_RESOURCES" = "true" ]; then
-      sed -i "s|RESOURCE-BLOCK|requests:\n            cpu: \"$CPU_REQUEST\"\n            memory: \"$MEMORY_REQUEST\"|g" $CI_PROJECT_DIR/k8s/deployment.yaml
-    else
-      sed -i "s|RESOURCE-BLOCK||g" $CI_PROJECT_DIR/k8s/deployment.yaml
-    fi
+  - sed -i "s%PVC_NAME%$PVC_NAME%g" $CI_PROJECT_DIR/k8s/$DEPLOYMENT_FILE
   - kubectl apply -f $CI_PROJECT_DIR/k8s/ingress.yaml -n thl2
   - kubectl apply -f $CI_PROJECT_DIR/k8s/service.yaml -n thl2
-  - kubectl delete -f $CI_PROJECT_DIR/k8s/deployment.yaml --ignore-not-found -n thl2
-  - kubectl apply -f $CI_PROJECT_DIR/k8s/deployment.yaml -n thl2
+  - kubectl delete -f $CI_PROJECT_DIR/k8s/$DEPLOYMENT_FILE --ignore-not-found -n thl2
+  - kubectl apply -f $CI_PROJECT_DIR/k8s/$DEPLOYMENT_FILE -n thl2
 
 
 build-prod:
@@ -90,9 +84,7 @@ deploy-to-prod:
     TAG: "prod"
     FQDN: "explique.epfl.ch"
     TLS_SECRET_NAME: "explique.epfl.ch-tls"
-    HAS_RESOURCES: "true"
-    CPU_REQUEST: "2"
-    MEMORY_REQUEST: "256Mi"
+    DEPLOYMENT_FILE: "deployment-prod.yaml"
   image:
     name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
     entrypoint: [""]
@@ -114,7 +106,7 @@ deploy-branch:
     TAG: "${CI_COMMIT_REF_SLUG}"
     FQDN: "${CI_COMMIT_REF_SLUG}.previews.${BASE_DOMAIN}"
     TLS_SECRET_NAME: "previews.explique.ai-tls"
-    HAS_RESOURCES: "false"
+    DEPLOYMENT_FILE: "deployment-staging.yaml"
   image:
     name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
     entrypoint: [""]
