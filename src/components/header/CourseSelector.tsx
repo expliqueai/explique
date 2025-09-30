@@ -1,3 +1,4 @@
+import { setSavedLastCourseSlug } from "@/components/SessionProvider"
 import { useCourseSlug } from "@/hooks/useCourseSlug"
 import { useQuery } from "@/usingSession"
 import {
@@ -29,6 +30,7 @@ export default function CourseSelector() {
     <Listbox
       value={courseSlug}
       onChange={(selectedCourseSlug) => {
+        setSavedLastCourseSlug(selectedCourseSlug)
         router.push(`/${selectedCourseSlug}`)
       }}
     >
