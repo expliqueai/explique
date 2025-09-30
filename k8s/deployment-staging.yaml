@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: APPLICATION-NAME-app
+  labels:
+    name: APPLICATION-NAME-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: APPLICATION-NAME-app
+  template:
+    metadata:
+      labels:
+        name: APPLICATION-NAME-app
+    spec:
+      imagePullSecrets:
+      - name: APPLICATION-NAME-regcred
+      containers:
+      - name: APPLICATION-NAME-app
+        imagePullPolicy: Always
+        image: APPLICATION-IMAGE
+        ports:
+        - containerPort: 8000
+        env:
+        - name: EXAMPLE
+          value: "Your example value"
+      restartPolicy: Always
