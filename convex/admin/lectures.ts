@@ -20,28 +20,32 @@ import { LECTURE_STATUS, lectureAdminSchema, lectureSchema } from "../schema"
 const MEDIASPACE_REGEX =
   /^https:\/\/mediaspace\.epfl\.ch\/media\/.*\/(0_[a-zA-Z0-9]+)$/
 
-function validateAndExtractMediaSpaceUrl(url: string): {
+const M3U8_REGEX =
+  /^https:\/\/vod\.kaltura\.switch\.ch\/hls\/.*\/entryId\/(0_[a-zA-Z0-9]+)\/.*\/index\.m3u8$/
+
+function validateAndExtractVideoUrl(url: string): {
   isValid: boolean
   videoId?: string
+  isDirectM3u8?: boolean
   error?: string
 } {
-  if (!url.startsWith("https://mediaspace.epfl.ch")) {
-    return {
-      isValid: false,
-      error: "URL must start with https://mediaspace.epfl.ch",
-    }
+  // Check for MediaSpace URL
+  const mediaSpaceMatch = url.match(MEDIASPACE_REGEX)
+  if (mediaSpaceMatch) {
+    return { isValid: true, videoId: mediaSpaceMatch[1], isDirectM3u8: false }
   }
 
-  const match = url.match(MEDIASPACE_REGEX)
-  if (!match) {
-    return {
-      isValid: false,
-      error:
-        "Please enter a valid EPFL MediaSpace URL ending with a video ID (0_...)",
-    }
+  // Check for direct m3u8 URL
+  const m3u8Match = url.match(M3U8_REGEX)
+  if (m3u8Match) {
+    return { isValid: true, videoId: m3u8Match[1], isDirectM3u8: true }
   }
 
-  return { isValid: true, videoId: match[1] }
+  return {
+    isValid: false,
+    error:
+      "Please enter a valid EPFL MediaSpace URL (https://mediaspace.epfl.ch/media/.../0_...) or direct m3u8 link (https://vod.kaltura.switch.ch/hls/.../entryId/0_.../...index.m3u8)",
+  }
 }
 
 export const get = queryWithAuth({
@@ -211,7 +215,7 @@ export const create = actionWithAuth({
       lecture
     )
 
-    await ctx.scheduler.runAfter(0, internal.admin.lectures.processVideo, {
+    await ctx.runAction(internal.admin.lectures.processVideo, {
       lectureId: id,
       url: lecture.url,
     })
@@ -227,13 +231,24 @@ export const processVideo = internalAction({
   },
   handler: async (ctx, { lectureId, url }) => {
     try {
-      // Validate MediaSpace URL and extract video ID
-      const urlValidation = validateAndExtractMediaSpaceUrl(url)
+      // Validate URL and extract video ID
+      const urlValidation = validateAndExtractVideoUrl(url)
       if (!urlValidation.isValid) {
-        throw new Error(urlValidation.error || "Invalid MediaSpace URL")
+        throw new Error(urlValidation.error || "Invalid video URL")
       }
 
-      // Check for the processing URL environment variable
+      // If it's a direct m3u8 URL, use it as-is without processing
+      if (urlValidation.isDirectM3u8) {
+        // The URL is already a direct m3u8 link, no need to process
+        await ctx.runMutation(api.admin.lectures.setStatus, {
+          lectureId,
+          status: "READY",
+          authToken: process.env.VIDEO_PROCESSING_API_TOKEN!,
+        })
+        return
+      }
+
+      // For MediaSpace URLs, process them through the video processing service
       const processingUrl = process.env.LECTURES_PROCESSING_URL
       if (!processingUrl) {
         throw new Error(

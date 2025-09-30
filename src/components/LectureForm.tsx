@@ -7,11 +7,27 @@ import React, { useMemo, useState } from "react"
 import { toast } from "sonner"
 import { api as convexApi } from "../../convex/_generated/api"
 import { Id } from "../../convex/_generated/dataModel"
-import { Button } from "./Button"
 import { PrimaryButton } from "./PrimaryButton"
 
 const MEDIASPACE_REGEX =
   /^https:\/\/mediaspace\.epfl\.ch\/media\/.*\/(0_[a-zA-Z0-9]+)$/
+
+const M3U8_REGEX =
+  /^https:\/\/vod\.kaltura\.switch\.ch\/hls\/.*\/entryId\/(0_[a-zA-Z0-9]+)\/.*\/index\.m3u8$/
+
+function extractVideoIdFromUrl(url: string): string | null {
+  const mediaSpaceMatch = url.match(MEDIASPACE_REGEX)
+  if (mediaSpaceMatch) {
+    return mediaSpaceMatch[1]
+  }
+
+  const m3u8Match = url.match(M3U8_REGEX)
+  if (m3u8Match) {
+    return m3u8Match[1]
+  }
+
+  return null
+}
 
 export type State = {
   weekId: Id<"lectureWeeks">
@@ -56,7 +72,6 @@ export default function LectureForm({
   const reprocessVideo = useAction(convexApi.admin.lectures.reprocessVideo)
 
   const urlValidation = useMemo(() => {
-    // Skip validation for update forms
     // For now, the URL changes to the direct m3u8 link after creation
     // This means the validation would always fail on update
     // TODO: Properly handle multiple media sources
@@ -66,19 +81,12 @@ export default function LectureForm({
 
     if (!url) return { isValid: true, error: null }
 
-    if (!url.startsWith("https://mediaspace.epfl.ch")) {
-      return {
-        isValid: false,
-        error: "URL must start with https://mediaspace.epfl.ch",
-      }
-    }
-
-    const match = url.match(MEDIASPACE_REGEX)
-    if (!match) {
+    const videoId = extractVideoIdFromUrl(url)
+    if (!videoId) {
       return {
         isValid: false,
         error:
-          "Please enter a valid EPFL MediaSpace URL ending with a video ID (0_...)",
+          "Please enter a valid EPFL MediaSpace URL (https://mediaspace.epfl.ch/media/.../0_...) or direct m3u8 link (https://vod.kaltura.switch.ch/hls/.../entryId/0_.../...index.m3u8)",
       }
     }
 
@@ -136,7 +144,7 @@ export default function LectureForm({
       )}
 
       <Input
-        label="MediaSpace video URL"
+        label="Video URL"
         value={url}
         onChange={setUrl}
         required={type === "create"}
