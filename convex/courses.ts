@@ -127,7 +127,7 @@ export const getMyRegistrations = queryWithAuth({
 
 export const getPreferredCourse = queryWithAuth({
   args: {
-    lastCourseSlug: v.optional(v.string()),
+    lastCourseSlug: v.optional(v.union(v.string(), v.null())),
   },
   handler: async ({ db, session }, { lastCourseSlug }) => {
     if (!session) return { error: "not_logged_in" }
@@ -166,7 +166,7 @@ export const getPreferredCourse = queryWithAuth({
 
     const course = await db.get(mostRecentRegistration.courseId)
     if (!course) {
-      throw new Error("Course not found.")
+      throw new ConvexError("Course not found.")
     }
 
     return { slug: course.slug }
