@@ -325,7 +325,13 @@ function NewMessage({
               toast.error(
                 "You have to upload a tentative solution to get feedback."
               )
-            } else {
+            }
+
+            else if (!["image/png", "image/jpeg"].includes(file.type)) {
+              toast.error("Only PNG and JPG/JPEG images are allowed.");
+            }
+
+            else {
               const uploaded = await startUpload([file])
               const storageId = (uploaded[0].response as { storageId: string })
                 .storageId

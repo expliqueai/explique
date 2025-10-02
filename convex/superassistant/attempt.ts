@@ -115,6 +115,16 @@ export const generateAttempt = mutationWithAuth({
   handler: async (ctx, { problemId, storageId, name }) => {
     if (!ctx.session) throw new ConvexError("Not logged in");
     const userId = ctx.session.user._id;
+
+    const metadata = await ctx.db.system.get(storageId);
+
+    if (!metadata || !metadata.contentType) {
+      throw new ConvexError("File must have a valid content type.");
+    }
+
+    if (!["image/png", "image/jpeg"].includes(metadata.contentType)) {
+      throw new ConvexError("Only PNG and JPG/JPEG images are allowed.");
+    }
     
     const attemptId = await ctx.db.insert("saAttempts", {
       problemId: problemId,
@@ -333,6 +343,16 @@ export const updateAttemptInChat = mutationWithAuth({
   }, 
   handler: async (ctx, { storageId, attemptId }) => {
     if (!ctx.session) throw new ConvexError("Not logged in");
+
+    const metadata = await ctx.db.system.get(storageId);
+
+    if (!metadata || !metadata.contentType) {
+      throw new ConvexError("File must have a valid content type.");
+    }
+
+    if (!["image/png", "image/jpeg"].includes(metadata.contentType)) {
+      throw new ConvexError("Only PNG and JPG/JPEG images are allowed.");
+  }
 
     const fileUrl = await ctx.storage.getUrl(storageId);
     if (fileUrl) {      // schedule the action to generate feedback

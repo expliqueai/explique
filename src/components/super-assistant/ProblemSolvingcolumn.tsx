@@ -15,6 +15,7 @@ import { useFileUpload } from "@/hooks/useFileUpload";
 import UploadWithImage from "@/components/UploadWithImage";
 import Input from "@/components/Input";
 import { Button } from "@/components/Button";
+import { ConvexError } from "convex/values";
 
 
 
@@ -145,6 +146,12 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
               return;
             }
 
+            if (!["image/png", "image/jpeg"].includes(file.type)) {
+              toast.error("Only PNG and JPG/JPEG images are allowed.");
+              return;
+            }
+
+            try {
             const uploaded = await startUpload([file]);
             const storageId = (uploaded[0].response as { storageId: string })
                               .storageId as Id<"_storage">;
@@ -159,14 +166,23 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
               router.push(`/p/${attemptId}`);
             } else {
               toast.error("Failed to generate feedback/chat.");
-              return;
             }
+          }
 
-            setIsOpen(false);
-            setFile(null);
-            setNote("");
-          }}
-        >
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          catch (err: any) {
+          if (err.message?.includes("Only PNG and JPG/PEG")) {
+            toast.error("Only PNG and JPG/JPEG images are allowed.");
+          } else {
+            toast.error("Something went wrong. Please try again.");
+          }
+        } finally {
+          setIsOpen(false);
+          setFile(null);
+          setNote("");
+        }
+      }}
+    >
 
           <label
             htmlFor={id}

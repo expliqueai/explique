@@ -131,7 +131,7 @@ function Week<T extends BaseItem>({
         .map((item) => renderItem(item))}
 
          <NewItemLink href={`/${courseSlug}${newItemPath}/${week._id}`} />
-</div>
+      </div>
 
       <DeleteWeekModal
         isOpen={isDeleteModalOpen}
