@@ -17,68 +17,65 @@ type ProblemDoc = {
   weekId: Id<"weeks">;
   name?: string;
   instructions?: string;
-  solutions?: string;
   mandatory?: boolean;
 };
 
 export default function Problems({ courseSlug, weekId }: Props) {
   const router = useRouter();
-
   const problems = useQuery(api.superassistant.problem.listByWeek, { weekId }) as
     | ProblemDoc[]
     | undefined;
 
   const deleteProblem = useMutation(api.superassistant.problem.deleteProblem);
   const toggleMandatory = useMutation(api.superassistant.problem.toggleMandatory);
-
   const [confirmingId, setConfirmingId] = useState<Id<"problems"> | null>(null);
 
-  if (!problems) return <div>Loading…</div>;
-  if (problems.length === 0) {
-    return <div className="text-gray-500">No problems for this week yet.</div>;
-  }
+  if (!problems) return null;
+  if (problems.length === 0) return null;
 
   return (
-    <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+    <>
       {problems.map((p) => (
         <div
           key={p._id}
-          className="relative rounded-2xl bg-slate-700/90 p-10 text-white shadow-lg hover:bg-slate-600 transition cursor-pointer"
-          onClick={() =>
-            router.push(`/${courseSlug}/admin/problems/${p._id}`)
-          }
+          className="w-full max-w-[280px] group relative rounded-2xl shadow-lg transition hover:scale-105 hover:shadow-2xl cursor-pointer"
+          onClick={() => router.push(`/${courseSlug}/admin/problems/${p._id}`)}
         >
-            <button
-            onClick={async (e) => {
-                e.stopPropagation();
-                await toggleMandatory({ problemId: p._id });
-            }}
-            className="absolute top-3 left-3 text-yellow-400"
-            aria-label="Toggle mandatory"
-            >
-            <Star
-                className={`w-6 h-6 ${
-                p.mandatory ? "fill-yellow-400" : "stroke-current"
-                }`}
-            />
-            </button>
+          <div className="relative pb-[57.14%] rounded-2xl bg-slate-700/90 overflow-hidden">
+            <div className="absolute top-3 left-3 right-3 flex justify-between items-center z-20">
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  await toggleMandatory({ problemId: p._id });
+                }}
+                className="text-yellow-400"
+                aria-label="Toggle mandatory"
+              >
+                <Star
+                  className={`w-6 h-6 ${
+                    p.mandatory ? "fill-yellow-400" : "stroke-current"
+                  }`}
+                />
+              </button>
 
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setConfirmingId(p._id);
-            }}
-            className="absolute top-3 right-3 text-red-400 hover:text-red-600"
-            aria-label="Delete problem"
-          >
-            <Trash2 className="w-6 h-6" />
-          </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConfirmingId(p._id);
+                }}
+                className="text-red-400 hover:text-red-600"
+                aria-label="Delete problem"
+              >
+                <Trash2 className="w-6 h-6" />
+              </button>
+            </div>
 
-          <div className="text-lg font-bold">
-            {p.name || "Untitled"}
-          </div>
-          <div className="mt-2 text-slate-300 line-clamp-3">
-            {p.instructions}
+            <div className="absolute inset-0 flex flex-col justify-end p-4 text-white">
+              <div className="text-lg font-bold truncate">{p.name || "Untitled"}</div>
+              <div className="mt-0 text-slate-300 line-clamp-3">
+                {p.instructions}
+              </div>
+            </div>
           </div>
         </div>
       ))}
@@ -109,6 +106,6 @@ export default function Problems({ courseSlug, weekId }: Props) {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

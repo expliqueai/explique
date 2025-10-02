@@ -37,15 +37,14 @@ export default function AdminExercisesPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       renderItem={(item: any) => {
         if (item.type === "exercise") {
-          return <ExerciseLinkWithMenu key={item.id} exercise={item} />;
+          return (
+            <ExerciseLinkWithMenu key={item.id} exercise={item} />
+          );
+         
         }
         if (item.type === "problemsFooter") {
           return (
-            <div key={item.id} className="col-span-full">
-              <div className="mt-3">
-                <Problems courseSlug={courseSlug} weekId={item.weekId} />
-              </div>
-            </div>
+           <Problems key={item.id} courseSlug={courseSlug} weekId={item.weekId} />
           );
         }
         return null;

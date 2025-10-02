@@ -13,7 +13,8 @@ import Link from "next/link";
 
 interface BaseItem {
   id: Id<"weeks"> | Id<"lectureWeeks"> | Id<"exercises"> | Id<"lectures">;
-  name: string;
+  name?: string;
+  type?: string;
 }
 
 interface WeekListProps<T extends BaseItem> {
@@ -79,9 +80,6 @@ function Week<T extends BaseItem>({
   const courseSlug = useCourseSlug();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const isRegularWeek = weekType === "weeks";
-  const isLectureWeek = weekType === "lectureWeeks";
-
   return (
     <div>
       <h2 className="text-3xl font-medium flex mb-4 gap-3 flex-wrap items-center">
@@ -101,49 +99,39 @@ function Week<T extends BaseItem>({
         </DropdownMenu>
       </h2>
 
-      {isRegularWeek && (
-        <p className="text-gray-700">
-          <strong className="font-medium text-gray-800">
-            {formatTimestampHumanFormat((week as Doc<"weeks">).startDate)}
-          </strong>{" "}
-          {(week as Doc<"weeks">).softEndDate ? (
-            <>
-              to{" "}
-              <strong className="font-medium text-gray-800">
-                {formatTimestampHumanFormat(
-                  (week as Doc<"weeks">).softEndDate!,
-                )}
-              </strong>{" "}
-              (late deadline:{" "}
-              <strong className="font-medium text-gray-800">
-                {formatTimestampHumanFormat((week as Doc<"weeks">).endDate)}
-              </strong>
-              )
-            </>
-          ) : (
-            <>
-              to{" "}
-              <strong className="font-medium text-gray-800">
-                {formatTimestampHumanFormat((week as Doc<"weeks">).endDate)}
-              </strong>
-            </>
-          )}
-        </p>
-      )}
+      {"startDate" in week && "endDate" in week && (
+      <p className="text-gray-700">
+        <strong className="font-medium text-gray-800">
+          {formatTimestampHumanFormat(week.startDate)}
+        </strong>{" "}
+        to{" "}
+        <strong className="font-medium text-gray-800">
+          {formatTimestampHumanFormat(week.endDate)}
+        </strong>
+      </p>
+    )}
 
-      {isLectureWeek && week.startDate && (
-        <p className="text-gray-700">
-          Starting from{" "}
-          <strong className="font-medium text-gray-800">
-            {formatTimestampHumanFormat(week.startDate)}
-          </strong>
-        </p>
-      )}
+    {"startDate" in week && !("endDate" in week) && (
+      <p className="text-gray-700">
+        <strong className="font-medium text-gray-800">
+          {formatTimestampHumanFormat(week.startDate)}
+        </strong>
+      </p>
+    )}
 
-      <div className="mt-4 grid gap-6 md:grid-cols-2">
-        {week.items.map((item) => renderItem(item))}
-        <NewItemLink href={`/${courseSlug}${newItemPath}/${week._id}`} />
+      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {week.items
+          .filter((it) => it.type === "exercise")
+          .map((item) => renderItem(item))}
       </div>
+
+      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {week.items
+        .filter((it) => it.type === "problemsFooter")
+        .map((item) => renderItem(item))}
+
+         <NewItemLink href={`/${courseSlug}${newItemPath}/${week._id}`} />
+</div>
 
       <DeleteWeekModal
         isOpen={isDeleteModalOpen}
@@ -159,13 +147,11 @@ function NewItemLink({ href }: { href: string }) {
   return (
     <Link
       href={href}
-      className="block rounded-3xl shadow-[inset_0_0_0_2px_#bfdbfe] transition-shadow hover:shadow-[inset_0_0_0_2px_#0084c7]"
+      className="w-full max-w-[280px] min-h-[150px] rounded-2xl shadow-[inset_0_0_0_2px_#bfdbfe] flex items-center justify-center text-sky-700 text-xl hover:shadow-[inset_0_0_0_2px_#0084c7] transition"
     >
-      <div className="relative pb-[57.14%]">
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-sky-700 text-xl gap-2">
-          <PlusIcon className="w-6 h-6" />
-          <span>New Item</span>
-        </div>
+      <div className="flex flex-col items-center justify-center gap-2">
+        <PlusIcon className="w-6 h-6" />
+        <span>New Item</span>
       </div>
     </Link>
   );
@@ -187,10 +173,8 @@ function DeleteWeekModal({
       <div className="mt-2">
         <p className="text-sm text-gray-500">
           Are you sure that you want to delete the week{" "}
-          <strong className="font-semibold text-gray-600">
-            &quot;{weekName}&quot;
-          </strong>
-          ? This action cannot be undone.
+          <strong className="font-semibold text-gray-600">{weekName}</strong>?
+          This action cannot be undone.
         </p>
       </div>
 

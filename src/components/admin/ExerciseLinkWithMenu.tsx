@@ -22,43 +22,35 @@ type Exercise = {
 
 export function ExerciseLinkWithMenu({ exercise }: { exercise: Exercise }) {
   const courseSlug = useCourseSlug();
-
   const deleteExercise = useMutation(api.admin.exercises.softDelete);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
 
   return (
-    <>
+    <div className="w-full max-w-[280px] rounded-2xl shadow-lg transition hover:scale-105 hover:shadow-2xl cursor-pointer bg-slate-700/90">
+      {/* Exercise card with dropdown in corner */}
       <ImageLink
         href={`/${courseSlug}/admin/exercises/${exercise.id}`}
         name={exercise.name}
         image={exercise.image}
         corner={
-          <div className="p-4">
-            <div className="pointer-events-auto">
-              <DropdownMenu variant="overlay">
-                <DropdownMenuItem
-                  onClick={() => {
-                    setIsDuplicateModalOpen(true);
-                  }}
-                >
-                  Duplicate
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setIsDeleteModalOpen(true);
-                  }}
-                  variant="danger"
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenu>
-            </div>
+          <div className="p-3 pointer-events-auto">
+            <DropdownMenu variant="overlay">
+              <DropdownMenuItem onClick={() => setIsDuplicateModalOpen(true)}>
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setIsDeleteModalOpen(true)}
+                variant="danger"
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenu>
           </div>
         }
       />
 
+      {/* Duplicate modal */}
       <Modal
         isOpen={isDuplicateModalOpen}
         onClose={() => setIsDuplicateModalOpen(false)}
@@ -70,6 +62,7 @@ export function ExerciseLinkWithMenu({ exercise }: { exercise: Exercise }) {
         />
       </Modal>
 
+      {/* Delete modal */}
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
@@ -109,7 +102,7 @@ export function ExerciseLinkWithMenu({ exercise }: { exercise: Exercise }) {
           </Button>
         </div>
       </Modal>
-    </>
+    </div>
   );
 }
 
@@ -122,28 +115,29 @@ function DuplicationForm({
 }) {
   const courseSlug = useCourseSlug();
   const courses = useQuery(api.courses.getMyRegistrations, {})?.filter(
-    (course) => course.isAdmin,
+    (course) => course.isAdmin
   );
+
   const [selectedCourse, setSelectedCourse] = useState<Id<"courses"> | null>(
-    null,
+    null
   );
 
   const selectedCourseSlug = selectedCourse
     ? courses?.find((c) => c.id === selectedCourse)?.slug
     : null;
+
   const weeks = useQuery(
     api.admin.weeks.list,
-    selectedCourseSlug ? { courseSlug: selectedCourseSlug } : "skip",
+    selectedCourseSlug ? { courseSlug: selectedCourseSlug } : "skip"
   );
 
   const [selectedWeek, setSelectedWeek] = useState<Id<"weeks"> | null>(null);
-
   const duplicate = useMutation(api.admin.exercises.duplicate);
 
   return (
     <>
       <div className="mt-2">
-        {courses !== undefined && true ? (
+        {courses !== undefined && courses.length > 0 ? (
           <SelectWithNone
             label="Course"
             value={selectedCourse}
@@ -191,7 +185,6 @@ function DuplicationForm({
             await duplicate({
               courseSlug,
               id: exercise.id,
-
               weekId: selectedWeek!,
               courseId: selectedCourse!,
             });
