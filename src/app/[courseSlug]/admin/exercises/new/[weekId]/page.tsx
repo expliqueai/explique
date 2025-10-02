@@ -46,7 +46,7 @@ export default function NewItemPage() {
             onClick={() => setMode("problems")}
             size="sm"
           >
-            Add Problems (Super-Assistant)
+            Add a Problem (Super-Assistant)
           </Button>
         </div>
 

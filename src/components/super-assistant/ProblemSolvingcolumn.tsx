@@ -103,7 +103,7 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
       {problems && problems.length > 0 && (
         <>
           <div className="inline-flex items-center rounded-full bg-gray-700 px-3 py-1 text-xs font-semibold text-white my-4">
-            Open-Ended Problems
+             Solve problems
           </div>
 
           <div className="grid gap-6 md:grid-cols-4">
