@@ -85,7 +85,7 @@ build-staging-demo:
     - echo $DOCKER_AUTH_CONFIG > /kaniko/.docker/config.json
     - cat /kaniko/.docker/config.json
     - export BUILD_TAG="staging-demo"
-    - export BUILD_BASE_URL="https://demo.${BASE_DOMAIN}"
+    - export BUILD_BASE_URL="https://demo.previews.${BASE_DOMAIN}"
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE_PATH --destination $HARBOR_REGISTRY/$REPO_NAME/$IMAGE_NAME:$BUILD_TAG --build-arg CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg BASE_URL=$BUILD_BASE_URL --build-arg "JWT_KEY='$JWT_KEY'" --build-arg "ADMIN_API_PUBLIC_KEY='$ADMIN_API_PUBLIC_KEY'" --build-arg IDENTIFIER_SALT=$IDENTIFIER_SALT
 
 deploy-to-prod:
@@ -116,12 +116,12 @@ deploy-to-staging-demo:
       - main
   environment:
     name: staging-demo
-    url: https://demo.$BASE_DOMAIN
+    url: https://demo.previews.$BASE_DOMAIN
   variables:
     APPLICATION_NAME: "explique-demo"
     TAG: "staging-demo"
-    FQDN: "demo.${BASE_DOMAIN}"
-    TLS_SECRET_NAME: "demo.explique.ai-tls"
+    FQDN: "demo.previews.${BASE_DOMAIN}"
+    TLS_SECRET_NAME: "previews.explique.ai-tls"
     DEPLOYMENT_FILE: "deployment-staging.yaml"
   image:
     name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
