@@ -234,24 +234,12 @@ export const processVideo = internalAction({
       // Validate URL and extract video ID
       const urlValidation = validateAndExtractVideoUrl(url)
       if (!urlValidation.isValid) {
-        throw new Error(urlValidation.error || "Invalid video URL")
+        throw new ConvexError(urlValidation.error || "Invalid video URL")
       }
 
-      // If it's a direct m3u8 URL, use it as-is without processing
-      if (urlValidation.isDirectM3u8) {
-        // The URL is already a direct m3u8 link, no need to process
-        await ctx.runMutation(api.admin.lectures.setStatus, {
-          lectureId,
-          status: "READY",
-          authToken: process.env.VIDEO_PROCESSING_API_TOKEN!,
-        })
-        return
-      }
-
-      // For MediaSpace URLs, process them through the video processing service
       const processingUrl = process.env.LECTURES_PROCESSING_URL
       if (!processingUrl) {
-        throw new Error(
+        throw new ConvexError(
           "LECTURES_PROCESSING_URL environment variable is not configured"
         )
       }
@@ -269,7 +257,7 @@ export const processVideo = internalAction({
 
       if (!response.ok) {
         const errorText = await response.text()
-        throw new Error(
+        throw new ConvexError(
           `Failed to start video processing: ${response.status} ${response.statusText} - ${errorText}`
         )
       }
