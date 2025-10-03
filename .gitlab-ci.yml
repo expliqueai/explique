@@ -70,6 +70,24 @@ build-staging:
     - export BUILD_BASE_URL="https://${CI_COMMIT_REF_SLUG}.previews.${BASE_DOMAIN}"
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE_PATH --destination $HARBOR_REGISTRY/$REPO_NAME/$IMAGE_NAME:$BUILD_TAG --build-arg CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg BASE_URL=$BUILD_BASE_URL --build-arg "JWT_KEY='$JWT_KEY'" --build-arg "ADMIN_API_PUBLIC_KEY='$ADMIN_API_PUBLIC_KEY'" --build-arg IDENTIFIER_SALT=$IDENTIFIER_SALT --build-arg CI_COMMIT_REF_SLUG=$CI_COMMIT_REF_SLUG 
 
+build-staging-demo:
+  stage: build
+  only:
+    refs:
+      - main
+  environment:
+    name: demo
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo $DOCKER_AUTH_CONFIG > /kaniko/.docker/config.json
+    - cat /kaniko/.docker/config.json
+    - export BUILD_TAG="staging-demo"
+    - export BUILD_BASE_URL="https://demo.${BASE_DOMAIN}"
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE_PATH --destination $HARBOR_REGISTRY/$REPO_NAME/$IMAGE_NAME:$BUILD_TAG --build-arg CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg BASE_URL=$BUILD_BASE_URL --build-arg "JWT_KEY='$JWT_KEY'" --build-arg "ADMIN_API_PUBLIC_KEY='$ADMIN_API_PUBLIC_KEY'" --build-arg IDENTIFIER_SALT=$IDENTIFIER_SALT
+
 deploy-to-prod:
   stage: deploy
   when: manual
@@ -85,6 +103,26 @@ deploy-to-prod:
     FQDN: "explique.epfl.ch"
     TLS_SECRET_NAME: "explique.epfl.ch-tls"
     DEPLOYMENT_FILE: "deployment-prod.yaml"
+  image:
+    name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
+    entrypoint: [""]
+  script:
+    - *EXEC_SCRIPT
+
+deploy-to-staging-demo:
+  stage: deploy
+  only:
+    refs:
+      - main
+  environment:
+    name: staging-demo
+    url: https://demo.$BASE_DOMAIN
+  variables:
+    APPLICATION_NAME: "explique-demo"
+    TAG: "staging-demo"
+    FQDN: "demo.${BASE_DOMAIN}"
+    TLS_SECRET_NAME: "demo.explique.ai-tls"
+    DEPLOYMENT_FILE: "deployment-staging.yaml"
   image:
     name: ic-registry.epfl.ch/tools/helm-kubectl-docker:latest
     entrypoint: [""]
