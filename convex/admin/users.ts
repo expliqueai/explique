@@ -47,7 +47,13 @@ async function formatListElement(
   registration: Doc<"registrations">
 ) {
   const user = await db.get(registration.userId)
-  if (!user) throw new Error("User of registration not found")
+  if (!user) {
+    // User not found, possibly manually deleted account
+    // Only the registration remains
+    console.error(`User not found for registration: ${registration._id}`)
+    return null
+  }
+
   return {
     id: registration.userId,
     email: user.email,
@@ -77,11 +83,13 @@ export const list = queryWithAuth({
 
     return {
       ...registrations,
-      page: await Promise.all(
-        registrations.page.map((registration) =>
-          formatListElement(db, registration)
+      page: (
+        await Promise.all(
+          registrations.page.map((registration) =>
+            formatListElement(db, registration)
+          )
         )
-      ),
+      ).filter(Boolean),
     }
   },
 })
