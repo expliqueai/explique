@@ -16,6 +16,7 @@ import UploadWithImage from "@/components/UploadWithImage";
 import Input from "@/components/Input";
 import { Button } from "@/components/Button";
 import { ConvexError } from "convex/values";
+import Markdown from "@/components/Markdown";
 
 
 
@@ -60,14 +61,11 @@ function ExerciseBlob({
           </div>
 
           <div className="text-base font-semibold text-white">{title}</div>
-          <div
-            className={clsx(
-              "mt-1 text-sm text-slate-200/85",
-              "line-clamp-4 overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-line-clamp:4] [-webkit-box-orient:vertical]"
-            )}
-          >
-            {snippet}
+         <div className="mt-1 text-sm text-white/90 prose-sm prose-invert leading-snug">
+          <div className="max-h-[3.8em] overflow-hidden break-words [mask-image:linear-gradient(to_bottom,black_85%,transparent_100%)]">
+            <Markdown text={snippet || ""} className="prose-invert prose-sm text-white/90" />
           </div>
+        </div>
         </div>
       </div>
     </button>
@@ -103,9 +101,9 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
     <>
       {problems && problems.length > 0 && (
         <>
-          <div className="inline-flex items-center rounded-full bg-gray-700 px-3 py-1 text-xs font-semibold text-white my-4">
-             Solve problems
-          </div>
+        <div className="inline-flex items-center justify-center rounded-full bg-gray-200 text-gray-800 px-8 py-4 text-base font-semibold shadow-sm ring-1 ring-gray-300 mt-9 mb-6">
+          Solve problems
+        </div>
 
           <div className="grid gap-6 md:grid-cols-4">
             {problems?.map((problem) => {
@@ -134,7 +132,7 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
       >
         {pickedProblem && (
           <div className="my-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-slate-800">
-            {pickedProblem.instructions}
+            <Markdown text={pickedProblem.instructions || ""} />
           </div>
         )}
 

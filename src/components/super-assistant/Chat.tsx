@@ -34,7 +34,7 @@ export default function Chat({ chatId }: { chatId: Id<"saAttempts"> }) {
     <>
       <div className="flex flex-col gap-6">
         <div className="mt-4 mb-8 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-slate-800">
-          {statement}
+          <Markdown text={statement || ""} />
         </div>
 
         {imageUrl !== null && imageUrl !== undefined && (

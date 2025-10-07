@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/Button";
+import Markdown from "@/components/Markdown";
 
 export default function EditProblem() {
   const router = useRouter();
@@ -81,15 +82,19 @@ export default function EditProblem() {
 
           <div>
             <label className="block text-sm font-medium text-slate-900 mb-1">
-              Instructions
+              Statement
             </label>
             <textarea
-              className="w-full border rounded-lg p-2"
-              rows={4}
+              className="w-full border rounded-lg p-2 font-mono"
+              rows={6}
               value={draftInstructions}
               onChange={(e) => setDraftInstructions(e.target.value)}
+              placeholder="Write your problem using Markdown or LaTeX"
               required
             />
+            <div className="mt-2 rounded-lg border border-slate-200 bg-gray-50 p-3">
+              <Markdown text={draftInstructions || ""} />
+            </div>
           </div>
 
           <div>
@@ -97,11 +102,15 @@ export default function EditProblem() {
               Solution (optional)
             </label>
             <textarea
-              className="w-full border rounded-lg p-2"
-              rows={3}
+              className="w-full border rounded-lg p-2 font-mono"
+              rows={5}
               value={draftSolution}
               onChange={(e) => setDraftSolution(e.target.value)}
+              placeholder="Write your solution using Markdown or LaTeX (optional)"
             />
+            <div className="mt-2 rounded-lg border border-slate-200 bg-gray-50 p-3">
+              <Markdown text={draftSolution || ""} />
+            </div>
           </div>
 
           <label className="flex items-center gap-2 text-sm">

@@ -6,6 +6,7 @@ import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { useState } from "react";
 import { Trash2, Star } from "lucide-react";
+import Markdown from "@/components/Markdown";
 
 type Props = {
   courseSlug: string;
@@ -72,8 +73,10 @@ export default function Problems({ courseSlug, weekId }: Props) {
 
             <div className="absolute inset-0 flex flex-col justify-end p-4 text-white">
               <div className="text-lg font-bold truncate">{p.name || "Untitled"}</div>
-              <div className="mt-0 text-slate-300 line-clamp-3">
-                {p.instructions}
+              <div className="mt-0 text-gray-100/90 line-clamp-3">
+                <div className="[&_*]:text-gray-100/90">
+                  <Markdown text={p.instructions || ""} />
+                </div>
               </div>
             </div>
           </div>

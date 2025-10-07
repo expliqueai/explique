@@ -15,6 +15,9 @@ import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { Id } from "../../../../../../../convex/_generated/dataModel";
 import { api } from "../../../../../../../convex/_generated/api";
 
+import Markdown from "@/components/Markdown";
+
+
 type Mode = "explain" | "problems";
 
 export default function NewItemPage() {
@@ -183,6 +186,9 @@ function ProblemForm({
           onChange={(e) => setInstructions(e.target.value)}
           required
         />
+        <div className="mt-2 rounded-lg border border-slate-200 bg-gray-50 p-3">
+          <Markdown text={instructions || ""} />
+        </div>
       </div>
       <div>
       <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -194,6 +200,9 @@ function ProblemForm({
           value={solutions}
           onChange={(e) => setSolution(e.target.value)}
         />
+        <div className="mt-2 rounded-lg border border-slate-200 bg-gray-50 p-3">
+          <Markdown text={solutions|| ""} />
+        </div>
        </div>
 
       <label className="flex items-center gap-2 text-sm">
