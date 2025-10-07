@@ -188,7 +188,7 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
             htmlFor={id}
             className="block mt-10 text-sm font-medium text-slate-800"
           >
-            Upload your tentative solution (your file must be an image):
+            Upload your tentative solution (your file must have an image type):
             <UploadWithImage 
               value={file}
               onChange={setFile}

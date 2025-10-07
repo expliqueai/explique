@@ -343,7 +343,7 @@ function NewMessage({
               setIsNewAttemptModalOpen(false)
             }
           }}
-        >
+        > <div>Your file must have an image type.</div>
           <UploadWithImage value={file} onChange={(value) => setFile(value)} />
           <div className="flex justify-end gap-2">
             <Button
