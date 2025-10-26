@@ -1,9 +1,10 @@
 import { ConvexError, v } from "convex/values";
 import { Id } from "../_generated/dataModel";
 import { queryWithAuth, mutationWithAuth } from "../auth/withAuth";
+import { internalQuery } from "../_generated/server";
 
 export type Status = "NOT STARTED" | "IN PROGRESS" | "COMPLETED";
-export type Problem = { id: Id<"problems">; weekId: Id<"weeks">; name: string; instructions: string; solutions? : string; mandatory: boolean; status: Status; attemptId?: Id<"saAttempts"> };
+export type Problem = { id: Id<"problems">; weekId: Id<"weeks">; name: string; instructions: string; solutions? : string; mandatory: boolean; status: Status; attemptId?: Id<"saAttempts">, customInstructions?: string};
 
 export const list = queryWithAuth({
   args: {
@@ -34,6 +35,7 @@ export const list = queryWithAuth({
             mandatory: problem.mandatory,
             status: attempt ? "IN PROGRESS" : "NOT STARTED",
             attemptId: attempt ? attempt._id : undefined,
+            customInstructions: problem.customInstructions,
         });
     }
 
@@ -63,14 +65,16 @@ export const createProblem = mutationWithAuth({
     instructions: v.string(),
     solutions: v.optional(v.string()),
     mandatory: v.boolean(),
+    customInstructions: v.optional(v.string()),
   },
-  handler: async (ctx, { weekId, name, instructions, solutions, mandatory }) => {
+  handler: async (ctx, { weekId, name, instructions, solutions, mandatory, customInstructions }) => {
     return await ctx.db.insert("problems", {
       weekId,
       name,
       instructions,
       solutions,
       mandatory,
+      customInstructions: customInstructions ?? ""
     });
   },
 });
@@ -82,13 +86,15 @@ export const updateProblem = mutationWithAuth({
     instructions: v.string(),
     solutions: v.optional(v.string()),
     mandatory: v.boolean(),
+    customInstructions: v.optional(v.string()),
   },
-  handler: async (ctx, { problemId, name, instructions, solutions, mandatory }) => {
+  handler: async (ctx, { problemId, name, instructions, solutions, mandatory, customInstructions}) => {
     await ctx.db.patch(problemId, {
       name,
       instructions,
       solutions,
       mandatory,
+      customInstructions: customInstructions ?? "",
     });
   },
 });
@@ -110,6 +116,18 @@ export const toggleMandatory = mutationWithAuth({
     await ctx.db.patch(problemId, { mandatory: !prob.mandatory });
   },
 });
+
+export const internalGetProblem = internalQuery({
+  args: {
+    problemId: v.id("problems"),
+  },
+  handler: async ({ db }, { problemId }) => {
+    const p = await db.get(problemId);
+    if (!p) throw new ConvexError("Problem not found");
+    return p;
+  },
+});
+
 
 
 export const listProblemsByWeek = queryWithAuth({
@@ -135,6 +153,7 @@ export const get = queryWithAuth({
       instructions: p.instructions ?? "",
       solutions: p.solutions ?? undefined,
       mandatory: !!p.mandatory,
+      customInstructions: p.customInstructions ?? "",
     };
   },
 });

@@ -269,7 +269,13 @@ export const generateTranscriptMessages = internalQuery({
 
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
 
-    const instructions =
+    const attempt = await db.get(attemptId);
+    if (!attempt) throw new ConvexError("Attempt not found");
+
+    const problem = await db.get(attempt.problemId);
+    if (!problem) throw new ConvexError("Invalid problemId");
+    
+    const defaultInstructions =
       '\
             You are an assistant for a course. You are given the exercises and corresponding solutions.\
             \
@@ -287,9 +293,16 @@ export const generateTranscriptMessages = internalQuery({
             to solve the problem and then give them one hint on how to continue in the right direction. Otherwise, if what they started to do is wrong, tell them "You might want to \
             rethink your solution.", then tell them what is wrong with what they have done so far (one sentence per incorrect thing) and reformulate the problem statement for them.';
 
+    const custom = problem.customInstructions ?? "";
+    
+   const finalInstructions =
+      custom && custom.length > 0
+        ? `${defaultInstructions}\n\n# Additional professor instructions:\n${custom}`
+        : defaultInstructions;
+
     messages.push({
       role: "system",
-      content: instructions,
+      content: finalInstructions,
     });
 
     for (const feedbackMessage of feedbackMessages) {

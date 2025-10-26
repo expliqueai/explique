@@ -136,6 +136,7 @@ function ProblemForm({
   const [solutions, setSolution] = useState("");
   const [mandatory, setMandatory] = useState(false);
   const [weekId, setWeekId] = useState(initialWeekId ?? "");
+  const [customInstructions, setCustomInstructions] = useState("");
 
   const weeks = useQuery(api.admin.weeks.list, { courseSlug });
   const createProblem = useMutation(api.superassistant.problem.createProblem);
@@ -153,6 +154,7 @@ function ProblemForm({
         name,
         instructions,
         solutions: solutions || undefined,
+        customInstructions: customInstructions || undefined,
         mandatory,
       });
       toast.success("Problem created!");
@@ -204,6 +206,21 @@ function ProblemForm({
           <Markdown text={solutions|| ""} />
         </div>
        </div>
+      
+      <div>
+
+      <label className="block text-sm font-medium text-slate-700 mb-1">
+        Custom Model Instructions (optional)
+      </label>
+      <textarea
+        className="w-full border rounded p-2 font-mono"
+        rows={4}
+        value={customInstructions}
+        onChange={(e) => setCustomInstructions(e.target.value)}
+        placeholder="These instructions will be sent to the AI model for this problem only."
+      />
+    </div>
+
 
       <label className="flex items-center gap-2 text-sm">
         <input

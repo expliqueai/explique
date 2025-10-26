@@ -158,6 +158,18 @@ export const generateAttempt = mutationWithAuth({
   },
 });
 
+export const internalGetAttempt = internalQuery({
+  args: {
+    attemptId: v.id("saAttempts"),
+  },
+  handler: async ({ db }, { attemptId }) => {
+    const attempt = await db.get(attemptId);
+    if (!attempt) throw new Error("Attempt not found");
+    return attempt;
+  },
+});
+
+
 export const generateFirstMessages = internalAction({
   args: {
     fileUrl: v.string(),
@@ -169,7 +181,7 @@ export const generateFirstMessages = internalAction({
 
     const messages : OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
 
-    const instructions = "\
+    const defaultInstructions = "\
       You are an assistant for a course. You are given the exercises and corresponding solutions.\
       \
       A student is coming to you because they have tried to solve one of the exercises. Their tentative solution will be given to you.\
@@ -186,11 +198,29 @@ export const generateFirstMessages = internalAction({
       to solve the problem and then give them one hint on how to continue in the right direction. Otherwise, if what they started to do is wrong, tell them \"You might want to \
       rethink your solution.\", then tell them what is wrong with what they have done so far (one sentence per incorrect thing) and reformulate the problem statement for them.";
   
+    const attempt = await ctx.runQuery(
+      internal.superassistant.attempt.internalGetAttempt,
+      { attemptId }
+    );
+
+    // Get problem safely
+    const problem = await ctx.runQuery(
+      internal.superassistant.problem.internalGetProblem,
+      { problemId: attempt.problemId }
+    );
+
+    const custom = problem.customInstructions?.trim() ?? "";
+
+    const finalInstructions =
+      custom.length > 0
+        ? `${defaultInstructions}\n\n# Additional professor instructions\n${custom}`
+      : defaultInstructions;
 
     messages.push({
-      role:"system",
-      content:instructions,
+      role: "system",
+      content: finalInstructions,
     });
+
 
     const message1 : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
     message1.push({

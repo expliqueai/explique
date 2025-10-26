@@ -226,6 +226,7 @@ export default defineSchema(
             instructions: v.string(),
       solutions: v.optional(v.string()),
       mandatory: v.boolean(),
+      customInstructions: v.optional(v.string()),
     }).index("by_week", ["weekId"]),
     reports: defineTable({
       attemptId: v.id("attempts"),

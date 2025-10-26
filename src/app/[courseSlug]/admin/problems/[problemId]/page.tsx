@@ -25,6 +25,7 @@ export default function EditProblem() {
   const [draftInstructions, setDraftInstructions] = useState("");
   const [draftSolution, setDraftSolution] = useState("");
   const [draftMandatory, setDraftMandatory] = useState(false);
+  const [draftCustomInstructions, setDraftCustomInstructions] = useState("");
 
   useEffect(() => {
     if (problem) {
@@ -32,6 +33,7 @@ export default function EditProblem() {
       setDraftInstructions(problem.instructions ?? "");
       setDraftSolution(problem.solutions ?? "");
       setDraftMandatory(problem.mandatory ?? false);
+      setDraftCustomInstructions(problem.customInstructions ?? "");
     }
   }, [problem]);
 
@@ -50,6 +52,7 @@ export default function EditProblem() {
       instructions: draftInstructions,
       solutions: draftSolution,
       mandatory: draftMandatory,
+      customInstructions: draftCustomInstructions,
     });
     toast.success("Problem updated successfully.");
     router.push(`/${courseSlug}/admin/exercises`);
@@ -112,6 +115,20 @@ export default function EditProblem() {
               <Markdown text={draftSolution || ""} />
             </div>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-900 mb-1">
+              Custom Model Instructions (optional)
+            </label>
+            <textarea
+              className="w-full border rounded-lg p-2 font-mono"
+              rows={4}
+              value={draftCustomInstructions}
+              onChange={(e) => setDraftCustomInstructions(e.target.value)}
+              placeholder="These instructions will be sent to the AI model for this problem only."
+            />
+          </div>
+
 
           <label className="flex items-center gap-2 text-sm">
             <input
