@@ -6,6 +6,7 @@ import { Id } from "@/../convex/_generated/dataModel";
 import { Problem, Status } from "../../../convex/superassistant/problem";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { ClockIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/Modal";
@@ -17,6 +18,7 @@ import Input from "@/components/Input";
 import { Button } from "@/components/Button";
 import { ConvexError } from "convex/values";
 import Markdown from "@/components/Markdown";
+
 
 
 
@@ -82,10 +84,15 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
   const [file, setFile] = useState<File | null>(null);
   const [pickedProblem, setPickedProblem] = useState<Problem | null>(null);
   const [note, setNote] = useState("");
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+
 
   const generateAttempt = useMutation(api.superassistant.attempt.generateAttempt);
   const generateUploadUrl = useMutation(api.superassistant.attempt.generateUploadUrl);
+  const resetAttempt = useMutation(api.superassistant.attempt.resetAttempt);
+
   const { startUpload } = useFileUpload(() => generateUploadUrl({}));
+  
 
   const onPick = async (problem: Problem) => {
     if (problem.status === "NOT STARTED") {
@@ -106,17 +113,32 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
         </div>
 
           <div className="grid gap-6 md:grid-cols-4">
-            {problems?.map((problem) => {
-              return (
-                <ExerciseBlob
-                  key={problem.id}
-                  title={problem.name}
-                  snippet={problem.instructions}
-                  status={problem.status}
-                  onClick={() => onPick(problem)}
-                />
-              )
-            })}
+            {problems?.map((problem) => (
+            <div key={problem.id} className="relative group">
+              <ExerciseBlob
+                title={problem.name}
+                snippet={problem.instructions}
+                status={problem.status}
+                onClick={() => onPick(problem)}
+              />
+
+              {problem.status === "IN PROGRESS" && problem.attemptId && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPickedProblem(problem);
+                    setResetModalOpen(true);
+                  }}
+                  className="absolute bottom-2 right-2 p-1 rounded-full bg-white
+                 shadow-md hover:bg-red-500 hover:text-white 
+                 text-gray-700 transition">
+
+                  <ArrowPathIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          ))}
+
           </div>
         </>
       )}
@@ -220,6 +242,42 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
           </div>
         </form>
       </Modal>
+
+
+      <Modal
+        isOpen={resetModalOpen}
+        onClose={() => setResetModalOpen(false)}
+        title="Reset Attempt?"
+      >
+        <p className="text-sm text-slate-700 mb-4">
+          This will permanently delete your current attempt and let you start again.
+        </p>
+
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setResetModalOpen(false)}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={async () => {
+              if (!pickedProblem?.attemptId) return;
+
+              await resetAttempt({ attemptId: pickedProblem.attemptId });
+              toast.success("Attempt reset successfully!");
+              setResetModalOpen(false);
+            }}
+          >
+            Reset
+          </Button>
+        </div>
+      </Modal>
+
     </>
   );
 }

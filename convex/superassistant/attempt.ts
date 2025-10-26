@@ -409,3 +409,29 @@ export const generateUploadUrl = mutationWithAuth({
     return await ctx.storage.generateUploadUrl();
   },
 });
+
+export const resetAttempt = mutationWithAuth({
+  args: {
+    attemptId: v.id("saAttempts"),
+  },
+  handler: async (ctx, { attemptId }) => {
+    if (!ctx.session) throw new ConvexError("Not logged in");
+
+    const attempt = await ctx.db.get(attemptId);
+    if (!attempt) throw new ConvexError("Attempt not found");
+
+    if (attempt.userId !== ctx.session.user._id) {
+      throw new ConvexError("Not authorized");
+    }
+
+    const messages = await ctx.db
+      .query("saMessages")
+      .withIndex("by_attempt", (q) => q.eq("attemptId", attemptId))
+      .collect();
+    for (const msg of messages) {
+      await ctx.db.delete(msg._id);
+    }
+
+    await ctx.db.delete(attemptId);
+  },
+});
