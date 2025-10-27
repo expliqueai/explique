@@ -94,14 +94,40 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
   const { startUpload } = useFileUpload(() => generateUploadUrl({}));
   
 
-  const onPick = async (problem: Problem) => {
-    if (problem.status === "NOT STARTED") {
-      setPickedProblem(problem);
-      setIsOpen(true);
-    } else {
-      if (problem.attemptId) router.push(`/p/${problem.attemptId}`);
-    }
-  };
+  // const onPick = async (problem: Problem) => {
+  //   if (problem.status === "NOT STARTED") {
+  //     setPickedProblem(problem);
+  //     setIsOpen(true);
+  //     setResetModalOpen(false);
+  //     // router.push(`/p/new?problemId=${problem.id}`);
+  //     router.push(`/p/new?problemId=${problem.id}`);
+  //   } else {
+  //     if (problem.attemptId) router.push(`/p/${problem.attemptId}`);
+  //   }
+  // };
+
+const onPick = async (problem: Problem) => {
+  if (problem.attemptId) {
+    router.push(`/p/${problem.attemptId}`);
+    return;
+  }
+
+  const attemptId = await generateAttempt({
+    problemId: problem.id,
+    storageId: undefined,
+    name: problem.name,
+  });
+
+  if (!attemptId) {
+    toast.error("Could not start the problem. Please try again.");
+    return;
+  }
+
+  router.push(`/p/${attemptId}`);
+};
+
+
+
 
 
   return (
@@ -113,16 +139,26 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
         </div>
 
           <div className="grid gap-6 md:grid-cols-4">
-            {problems?.map((problem) => (
+          {problems?.map((problem) => {
+          const hasImages = problem.images && problem.images.length > 0;
+
+          const displayStatus =
+            problem.status === "COMPLETED"
+              ? "COMPLETED"
+              : hasImages
+              ? "IN PROGRESS"
+              : "NOT STARTED";
+
+          return (
             <div key={problem.id} className="relative group">
               <ExerciseBlob
                 title={problem.name}
                 snippet={problem.instructions}
-                status={problem.status}
+                status={displayStatus}
                 onClick={() => onPick(problem)}
               />
 
-              {problem.status === "IN PROGRESS" && problem.attemptId && (
+              {hasImages && problem.status !== "COMPLETED" && problem.attemptId && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -130,20 +166,22 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
                     setResetModalOpen(true);
                   }}
                   className="absolute bottom-2 right-2 p-1 rounded-full bg-white
-                 shadow-md hover:bg-red-500 hover:text-white 
-                 text-gray-700 transition">
-
+                              shadow-md hover:bg-red-500 hover:text-white 
+                              text-gray-700 transition"
+                >
                   <ArrowPathIcon className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
-          ))}
+          );
+        })}
+
 
           </div>
         </>
       )}
 
-      <Modal
+      {/* <Modal
         isOpen={isOpen}
         onClose={() => {
           setIsOpen(false);
@@ -241,7 +279,7 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
             </Button>
           </div>
         </form>
-      </Modal>
+      </Modal> */}
 
 
       <Modal

@@ -9,6 +9,7 @@ import OpenAI from "openai";
 import { internalAction, internalMutation, internalQuery } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { api } from "../_generated/api";
+import { Id } from "../_generated/dataModel";
 
 export const getName = queryWithAuth({
   args: {
@@ -51,10 +52,16 @@ export const getImage = queryWithAuth({
   },
   handler: async (ctx, { attemptId }) => {
     const attempt = await ctx.db.get(attemptId);
-    if (attempt === null) return null;
+    if (!attempt) return null;
+    
+    if (!attempt.images || attempt.images.length === 0) {
+      return null;
+    }
+
     return await ctx.storage.getUrl(attempt.images[0]);
   }
 });
+
 
 export const get = queryWithAuth({
   args: {
@@ -109,28 +116,35 @@ export const getCourseSlug = queryWithAuth({
 export const generateAttempt = mutationWithAuth({
   args: {
     problemId: v.id("problems"),
-    storageId: v.id("_storage"),
+    storageId: v.optional(v.id("_storage")),
     name: v.string(),
   }, 
   handler: async (ctx, { problemId, storageId, name }) => {
     if (!ctx.session) throw new ConvexError("Not logged in");
     const userId = ctx.session.user._id;
 
-    const metadata = await ctx.db.system.get(storageId);
+    let images: Id<"_storage">[] = [];
 
-    if (!metadata || !metadata.contentType) {
-      throw new ConvexError("File must have a valid content type.");
+    if (storageId) {
+      const metadata = await ctx.db.system.get(storageId);
+
+      if (!metadata || !metadata.contentType) {
+        throw new ConvexError("File must have a valid content type.");
+      }
+
+      if (!["image/png", "image/jpeg"].includes(metadata.contentType)) {
+        throw new ConvexError("Only PNG and JPG/JPEG images are allowed.");
+      }
+
+      images = [storageId];
     }
 
-    if (!["image/png", "image/jpeg"].includes(metadata.contentType)) {
-      throw new ConvexError("Only PNG and JPG/JPEG images are allowed.");
-    }
     
     const attemptId = await ctx.db.insert("saAttempts", {
       problemId: problemId,
       userId: userId,
       name: name,
-      images: [storageId],
+      images,
       lastModified: 0,
       validated: false,
     });
@@ -141,18 +155,26 @@ export const generateAttempt = mutationWithAuth({
       lastModified: attempt?._creationTime,
     })
 
-    const fileUrl = await ctx.storage.getUrl(storageId);
+
     const problem = await ctx.db.get(problemId);
     if (!problem) throw new ConvexError("Missing problem");
 
-    if (fileUrl) {      // schedule the action to generate feedback
-      await ctx.scheduler.runAfter(0, internal.superassistant.attempt.generateFirstMessages, {
-        fileUrl: fileUrl,
-        problemInstructions: problem.instructions,
-        solutions: problem.solutions,
-        attemptId: attemptId,
-      });
-    };
+    if (storageId) {
+      const fileUrl = await ctx.storage.getUrl(storageId);
+      if (fileUrl) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.superassistant.attempt.generateFirstMessages,
+          {
+            fileUrl,
+            problemInstructions: problem.instructions,
+            solutions: problem.solutions,
+            attemptId,
+          }
+        );
+      }
+    }
+
 
     return attemptId;
   },
@@ -384,15 +406,40 @@ export const updateAttemptInChat = mutationWithAuth({
       throw new ConvexError("Only PNG and JPG/JPEG images are allowed.");
   }
 
-    const fileUrl = await ctx.storage.getUrl(storageId);
-    if (fileUrl) {      // schedule the action to generate feedback
-      await ctx.scheduler.runAfter(0, internal.superassistant.attempt.generateUpdateMessages, {
-        fileUrl: fileUrl,
-        attemptId: attemptId,
-      });
-    };
-
     const attempt = await ctx.db.get(attemptId);
+    if (!attempt) throw new ConvexError("Attempt not found");
+
+    const fileUrl = await ctx.storage.getUrl(storageId);
+    if (!fileUrl) throw new ConvexError("No file URL");
+
+    const isFirstImage = !attempt.images || attempt.images.length === 0;
+
+    if (isFirstImage) {
+      const problem = await ctx.db.get(attempt.problemId);
+      if (!problem) throw new ConvexError("Problem missing");
+
+      await ctx.scheduler.runAfter(
+        0,
+        internal.superassistant.attempt.generateFirstMessages,
+        {
+          fileUrl,
+          problemInstructions: problem.instructions,
+          solutions: problem.solutions,
+          attemptId,
+        }
+      );
+    } else {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.superassistant.attempt.generateUpdateMessages,
+        {
+          fileUrl,
+          attemptId,
+        }
+      );
+    }
+
+
     if (attempt) {
       const timestamp = Date.now();
       await ctx.db.patch(attemptId, {

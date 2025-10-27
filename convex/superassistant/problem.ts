@@ -4,7 +4,7 @@ import { queryWithAuth, mutationWithAuth } from "../auth/withAuth";
 import { internalQuery } from "../_generated/server";
 
 export type Status = "NOT STARTED" | "IN PROGRESS" | "COMPLETED";
-export type Problem = { id: Id<"problems">; weekId: Id<"weeks">; name: string; instructions: string; solutions? : string; mandatory: boolean; status: Status; attemptId?: Id<"saAttempts">, customInstructions?: string};
+export type Problem = { id: Id<"problems">; weekId: Id<"weeks">; name: string; instructions: string; solutions? : string; mandatory: boolean; status: Status; attemptId?: Id<"saAttempts">, customInstructions?: string, images?: Id<"_storage">[];};
 
 export const list = queryWithAuth({
   args: {
@@ -33,9 +33,13 @@ export const list = queryWithAuth({
             instructions: problem.instructions,
             solutions: problem.solutions,
             mandatory: problem.mandatory,
-            status: attempt ? "IN PROGRESS" : "NOT STARTED",
+            status:
+            attempt && attempt.images?.length > 0
+              ? "IN PROGRESS"
+              : "NOT STARTED",
             attemptId: attempt ? attempt._id : undefined,
             customInstructions: problem.customInstructions,
+            images: attempt?.images ?? [], 
         });
     }
 
