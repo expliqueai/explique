@@ -89,7 +89,7 @@ export const list = queryWithAuth({
             formatListElement(db, registration)
           )
         )
-      ).filter(Boolean),
+      ).filter((x): x is NonNullable<typeof x> => x !== null),
     }
   },
 })
