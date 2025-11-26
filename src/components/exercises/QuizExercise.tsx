@@ -38,7 +38,7 @@ export default function QuizExercise({
     questions.map((_, i) => (lastSubmission ? lastSubmission.answers[i] : null))
   )
 
-  const [timeoutSeconds, setTimeoutSeconds] = useState<null | number>(67)
+  const [timeoutSeconds, setTimeoutSeconds] = useState<null | number>(null)
   const disabled = succeeded || timeoutSeconds !== null || isDue
 
   // Update the timer
@@ -51,7 +51,8 @@ export default function QuizExercise({
     const update = () => {
       const elapsed = Date.now() - lastSubmission.timestamp
       const remaining = ATTEMPT_TIMEOUT_MS - elapsed
-      setTimeoutSeconds(remaining >= 0 ? Math.floor(remaining / 1000) : null)
+      const seconds = remaining >= 0 ? Math.floor(remaining / 1000) : 0
+      setTimeoutSeconds(seconds > 0 ? Math.min(60, seconds) : null)
     }
 
     update()
