@@ -15,7 +15,7 @@ import { ArrowUpIcon, StopIcon } from "@heroicons/react/16/solid"
 import { ArrowPathIcon } from "@heroicons/react/24/outline"
 import { useParams, useSearchParams } from "next/navigation"
 import React, { useCallback, useEffect, useRef, useState } from "react"
-import ReactPlayer from "react-player/file"
+import ReactPlayer from "react-player"
 import { api } from "../../../../../convex/_generated/api"
 import type { Id } from "../../../../../convex/_generated/dataModel"
 

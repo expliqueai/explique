@@ -15,6 +15,9 @@ const MEDIASPACE_REGEX =
 const M3U8_REGEX =
   /^https:\/\/vod\.kaltura\.switch\.ch\/hls\/.*\/entryId\/(0_[a-zA-Z0-9]+)\/.*\/index\.m3u8$/
 
+const YOUTUBE_REGEX =
+  /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/(watch\?v=)?([a-zA-Z0-9_-]{11})$/
+
 function extractVideoIdFromUrl(url: string): string | null {
   const mediaSpaceMatch = url.match(MEDIASPACE_REGEX)
   if (mediaSpaceMatch) {
@@ -24,6 +27,11 @@ function extractVideoIdFromUrl(url: string): string | null {
   const m3u8Match = url.match(M3U8_REGEX)
   if (m3u8Match) {
     return m3u8Match[1]
+  }
+
+  const youtubeMatch = url.match(YOUTUBE_REGEX)
+  if (youtubeMatch) {
+    return youtubeMatch[5]
   }
 
   return null
@@ -86,7 +94,7 @@ export default function LectureForm({
       return {
         isValid: false,
         error:
-          "Please enter a valid EPFL MediaSpace URL (https://mediaspace.epfl.ch/media/.../0_...) or direct m3u8 link (https://vod.kaltura.switch.ch/hls/.../entryId/0_.../...index.m3u8)",
+          "Please enter a valid EPFL MediaSpace URL, direct m3u8 link or YouTube URL",
       }
     }
 
@@ -144,7 +152,7 @@ export default function LectureForm({
       )}
 
       <Input
-        label="Video URL"
+        label="Video URL (Mediaspace or YouTube)"
         value={url}
         onChange={setUrl}
         required={type === "create"}
