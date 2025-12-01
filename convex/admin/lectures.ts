@@ -267,15 +267,6 @@ export const processVideo = internalAction({
         throw new ConvexError(urlValidation.error || "Invalid video URL")
       }
 
-      if (urlValidation.isYoutube) {
-        await ctx.runMutation(api.admin.lectures.setStatus, {
-          lectureId,
-          status: "READY",
-          authToken: process.env.VIDEO_PROCESSING_API_TOKEN!,
-        })
-        return
-      }
-
       const processingUrl = process.env.LECTURES_PROCESSING_URL
       if (!processingUrl) {
         throw new ConvexError(
@@ -286,7 +277,9 @@ export const processVideo = internalAction({
       const response = await fetch(processingUrl, {
         method: "POST",
         body: JSON.stringify({
-          kaltura_video_id: urlValidation.videoId,
+          ...(urlValidation.isYoutube
+            ? { youtube_video_id: urlValidation.videoId }
+            : { kaltura_video_id: urlValidation.videoId }),
           convex_lecture_id: lectureId,
         }),
         headers: {
