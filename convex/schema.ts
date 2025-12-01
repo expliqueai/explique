@@ -180,9 +180,67 @@ export default defineSchema(
       ),
     }).index("by_attempt", ["attemptId"]),
 
+    saAttempts: defineTable({
+      problemId: v.id("problems"),
+      userId: v.id("users"),
+      name: v.string(),
+      images: v.array(v.id("_storage")),
+      lastModified: v.number(),
+      validated: v.boolean(),
+    }).index("by_key", ["userId", "problemId"]),
+    saMessages: defineTable({
+      attemptId: v.id("saAttempts"),
+      role: v.union(
+        v.literal("user"),
+        v.literal("system"),
+        v.literal("assistant"),
+      ),
+      content: v.union(
+        v.string(),
+        v.array(
+          v.union(
+            v.object({
+              type: v.literal("text"),
+              text: v.string(),
+            }),
+            v.object({
+              type: v.literal("image_url"),
+              image_url: v.object({ url: v.string() }),
+            }),
+          ),
+        ),
+      ),
+      appearance: v.optional(
+        v.union(
+          v.literal("finished"),
+          v.literal("feedback"),
+          v.literal("typing"),
+          v.literal("error"),
+        ),
+      ),
+      streaming: v.optional(v.boolean()),
+    }).index("by_attempt", ["attemptId"]),
+    problems: defineTable({
+      weekId: v.id("weeks"),
+      name: v.string(),
+            instructions: v.string(),
+      solutions: v.optional(v.string()),
+      mandatory: v.boolean(),
+      customInstructions: v.optional(v.string()),
+    }).index("by_week", ["weekId"]),
     reports: defineTable({
       attemptId: v.id("attempts"),
       messageId: v.id("messages"),
+      courseId: v.id("courses"),
+      reason: v.string(),
+    })
+      .index("by_attempt", ["attemptId"])
+      .index("by_message", ["messageId"])
+      .index("by_course", ["courseId"]),
+
+    saReports: defineTable({
+      attemptId: v.id("saAttempts"),
+      messageId: v.id("saMessages"),
       courseId: v.id("courses"),
       reason: v.string(),
     })

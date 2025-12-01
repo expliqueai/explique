@@ -58,26 +58,36 @@ export const list = queryWithAuth({
       .order("desc")
       .collect()
 
-    // @TODO Only query the exercises from this course
-    const exercises = await db.query("exercises").collect()
+    const exercises = await db.query("exercises").collect();
+    const problems = await db.query("problems").collect();
 
     const result = []
     for (const week of weeks) {
-      const resultExercises = []
-      for (const exercise of exercises) {
-        if (exercise.weekId === week._id) {
-          resultExercises.push({
-            id: exercise._id,
-            name: exercise.name,
-            image: await getImageForExercise(db, storage, exercise),
-          })
-        }
-      }
+      const resultExercises = await Promise.all(
+        exercises
+          .filter((ex) => ex.weekId === week._id)
+          .map(async (ex) => ({
+            type: "exercise",
+            id: ex._id,
+            name: ex.name,
+            image: await getImageForExercise(db, storage, ex),
+          }))
+      );
+
+      const resultProblems = problems
+        .filter((p) => p.weekId === week._id)
+        .map((p) => ({
+          type: "problem" as const,
+          id: p._id,
+          number: p.name,
+          mandatory: p.mandatory ?? false,
+          instructions: p.instructions,
+        }));
 
       result.push({
         ...week,
-        exercises: resultExercises,
-      })
+        items: [...resultExercises, ...resultProblems],
+      });
     }
 
     return result

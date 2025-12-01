@@ -44,6 +44,7 @@
     "oslo": "^1.2.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-dropzone": "^14.3.8",
     "react-markdown": "^10.1.0",
     "react-player": "^2.16.0",
     "rehype-katex": "^7.0.0",

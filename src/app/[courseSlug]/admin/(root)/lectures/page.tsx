@@ -15,7 +15,7 @@ export default function AdminLecturesPage() {
   return (
     <WeekList
       title="Lectures"
-      weeks={weeks?.map((week) => ({ ...week, items: week.lectures }))}
+      weeks={weeks?.map((week) => ({ ...week, items: week.lectures as typeof week.lectures }))}
       onDeleteWeek={async (weekId) => {
         await deleteWeek({ id: weekId, courseSlug });
         toast.success("Week deleted successfully");

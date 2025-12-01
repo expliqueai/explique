@@ -11,6 +11,9 @@ import { useQuery } from "@/usingSession";
 import { formatTimestampHumanFormat, timeFromNow } from "@/util/date";
 import { useCourseSlug } from "@/hooks/useCourseSlug";
 import { ImageLink } from "@/components/ImageLink";
+import ProblemSolvingColumn from "@/components/super-assistant/ProblemSolvingcolumn";
+
+
 
 export default function ExercisesPage() {
   const courseSlug = useCourseSlug();
@@ -50,7 +53,7 @@ function ProjectGrid() {
                 <p className="bg-gray-500 py-2 px-3 text-xs rounded-full font-semibold text-white tracking-wide inline-flex items-center gap-1">
                   <XMarkIconSmall className="w-5 h-5" />
                   Not Completed
-                </p>
+                </p> 
               )}
             </header>
             {week.preview && (
@@ -87,7 +90,7 @@ function ProjectGrid() {
                 </div>
               )}
             </div>
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-4">
               {week.exercises.map((exercise) => (
                 <ImageLink
                   key={exercise.id}
@@ -114,6 +117,8 @@ function ProjectGrid() {
                 />
               ))}
             </div>
+
+            <ProblemSolvingColumn week={week.id} />
           </div>
         );
       })}
