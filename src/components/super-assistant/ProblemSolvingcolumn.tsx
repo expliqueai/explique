@@ -38,18 +38,23 @@ function ExerciseBlob({
   title,
   snippet,
   status,
+  showRestart,
   onClick,
+  onRestart,
 }: {
   title: string;
   snippet: string;
   status: Status;
+  showRestart: boolean;
   onClick: () => void;
+  onRestart: () => void;
 }) {
   return (
+    <div className="transition hover:scale-105">
     <button
       type="button"
       onClick={onClick}
-      className={clsx("group relative block w-full rounded-3xl text-left shadow-lg hover:shadow-2xl transition hover:scale-105",
+      className={clsx("group relative block w-full rounded-3xl text-left shadow-lg hover:shadow-2xl",
                     status === "NOT STARTED" && "bg-slate-700/90",
                     status === "IN PROGRESS" && "bg-blue-700/90",
                     status === "COMPLETED" && "bg-green-700/90"
@@ -71,6 +76,18 @@ function ExerciseBlob({
         </div>
       </div>
     </button>
+
+    {showRestart && (
+      <button
+        onClick={onRestart}
+        className="absolute bottom-2 right-2 p-1 rounded-full bg-white
+                    shadow-md hover:bg-red-500 hover:text-white 
+                    text-gray-700 transition"
+      >
+        <ArrowPathIcon className="w-3.5 h-3.5" />
+      </button>
+    )}
+    </div>
   );
 };
 
@@ -78,209 +95,72 @@ function ExerciseBlob({
 export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
   const problems = useQuery(api.superassistant.problem.list, { weekId: week });
   const router = useRouter();
-  const id = useId();
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
   const [pickedProblem, setPickedProblem] = useState<Problem | null>(null);
-  const [note, setNote] = useState("");
   const [resetModalOpen, setResetModalOpen] = useState(false);
 
-
   const generateAttempt = useMutation(api.superassistant.attempt.generateAttempt);
-  const generateUploadUrl = useMutation(api.superassistant.attempt.generateUploadUrl);
   const resetAttempt = useMutation(api.superassistant.attempt.resetAttempt);
 
-  const { startUpload } = useFileUpload(() => generateUploadUrl({}));
-  
+  const onPick = async (problem: Problem) => {
+    if (problem.attemptId) {
+      router.push(`/p/${problem.attemptId}`);
+      return;
+    }
 
-  // const onPick = async (problem: Problem) => {
-  //   if (problem.status === "NOT STARTED") {
-  //     setPickedProblem(problem);
-  //     setIsOpen(true);
-  //     setResetModalOpen(false);
-  //     // router.push(`/p/new?problemId=${problem.id}`);
-  //     router.push(`/p/new?problemId=${problem.id}`);
-  //   } else {
-  //     if (problem.attemptId) router.push(`/p/${problem.attemptId}`);
-  //   }
-  // };
+    const attemptId = await generateAttempt({
+      problemId: problem.id,
+      storageId: undefined,
+      name: problem.name,
+    });
 
-const onPick = async (problem: Problem) => {
-  if (problem.attemptId) {
-    router.push(`/p/${problem.attemptId}`);
-    return;
-  }
+    if (!attemptId) {
+      toast.error("Could not start the problem. Please try again.");
+      return;
+    }
 
-  const attemptId = await generateAttempt({
-    problemId: problem.id,
-    storageId: undefined,
-    name: problem.name,
-  });
-
-  if (!attemptId) {
-    toast.error("Could not start the problem. Please try again.");
-    return;
-  }
-
-  router.push(`/p/${attemptId}`);
-};
-
-
-
+    router.push(`/p/${attemptId}`);
+  };
 
 
   return (
     <>
       {problems && problems.length > 0 && (
         <>
-        <div className="inline-flex items-center justify-center rounded-full bg-gray-200 text-gray-800 px-8 py-4 text-base font-semibold shadow-sm ring-1 ring-gray-300 mt-9 mb-6">
-          Solve problems
-        </div>
+          <div className="inline-flex items-center justify-center rounded-full bg-gray-200 text-gray-800 px-8 py-4 text-base font-semibold shadow-sm ring-1 ring-gray-300 mt-9 mb-6">
+            Solve problems
+          </div>
 
           <div className="grid gap-6 md:grid-cols-4">
-          {problems?.map((problem) => {
-          const hasImages = problem.images && problem.images.length > 0;
+            {problems?.map((problem) => {
+              const hasImages = problem.images && problem.images.length > 0;
 
-          const displayStatus =
-            problem.status === "COMPLETED"
-              ? "COMPLETED"
-              : hasImages
-              ? "IN PROGRESS"
-              : "NOT STARTED";
+              const displayStatus =
+                problem.status === "COMPLETED"
+                  ? "COMPLETED"
+                  : hasImages
+                  ? "IN PROGRESS"
+                  : "NOT STARTED";
 
-          return (
-            <div key={problem.id} className="relative group">
-              <ExerciseBlob
-                title={problem.name}
-                snippet={problem.instructions}
-                status={displayStatus}
-                onClick={() => onPick(problem)}
-              />
-
-              {hasImages && problem.status !== "COMPLETED" && problem.attemptId && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPickedProblem(problem);
-                    setResetModalOpen(true);
-                  }}
-                  className="absolute bottom-2 right-2 p-1 rounded-full bg-white
-                              shadow-md hover:bg-red-500 hover:text-white 
-                              text-gray-700 transition"
-                >
-                  <ArrowPathIcon className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          );
-        })}
-
-
+              return (
+                <div key={problem.id} className="relative group">
+                  <ExerciseBlob
+                    title={problem.name}
+                    snippet={problem.instructions}
+                    status={displayStatus}
+                    showRestart={(hasImages != undefined && hasImages) && problem.status !== "COMPLETED" && (problem.attemptId != undefined)}
+                    onClick={() => onPick(problem)}
+                    onRestart={() => {
+                        setPickedProblem(problem);
+                        setResetModalOpen(true);
+                    }}
+                  />
+                </div>
+              );
+            })}
           </div>
         </>
       )}
-
-      {/* <Modal
-        isOpen={isOpen}
-        onClose={() => {
-          setIsOpen(false);
-          setFile(null);
-          setNote("");
-        }}
-        title={pickedProblem ? pickedProblem.name : "Unnamed problem"}
-      >
-        {pickedProblem && (
-          <div className="my-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-slate-800">
-            <Markdown text={pickedProblem.instructions || ""} />
-          </div>
-        )}
-
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (!file || !pickedProblem) {
-              toast.error("Please pick an exercise and upload an image.");
-              return;
-            }
-
-            if (!["image/png", "image/jpeg"].includes(file.type)) {
-              toast.error("Only PNG and JPG/JPEG images are allowed.");
-              return;
-            }
-
-            try {
-            const uploaded = await startUpload([file]);
-            const storageId = (uploaded[0].response as { storageId: string })
-                              .storageId as Id<"_storage">;
-
-            const attemptId = await generateAttempt({
-              problemId: pickedProblem.id,
-              storageId: storageId,
-              name: pickedProblem.name,
-            });
-
-            if (attemptId) {
-              router.push(`/p/${attemptId}`);
-            } else {
-              toast.error("Failed to generate feedback/chat.");
-            }
-          }
-
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          catch (err: any) {
-          if (err.message?.includes("Only PNG and JPG/PEG")) {
-            toast.error("Only PNG and JPG/JPEG images are allowed.");
-          } else {
-            toast.error("Something went wrong. Please try again.");
-          }
-        } finally {
-          setIsOpen(false);
-          setFile(null);
-          setNote("");
-        }
-      }}
-    >
-
-          <label
-            htmlFor={id}
-            className="block mt-10 text-sm font-medium text-slate-800"
-          >
-            Upload your tentative solution (your file must have an image type):
-            <UploadWithImage 
-              value={file}
-              onChange={setFile}
-            />
-          </label>
-
-          <div className="mt-6">
-            <Input
-              label="Add a note for the assistant (optional):"
-              placeholder="What do you want help with?"
-              value={note}
-              onChange={setNote}
-            />
-          </div>
-          <div className="mt-4 flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setIsOpen(false);
-                setFile(null);
-                setNote("");
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" size="sm" disabled={!file}>
-              Upload & Continue
-            </Button>
-          </div>
-        </form>
-      </Modal> */}
-
 
       <Modal
         isOpen={resetModalOpen}
