@@ -19,132 +19,13 @@ import UploadWithImage from "@/components/UploadWithImage";
 import { Dialog, Transition } from "@headlessui/react";
 
 
-// export default function Chat({ chatId }: { chatId: Id<"saAttempts"> }) {
-//   const chat = useQuery(api.superassistant.messages.list, { attemptId: chatId });
-//   const imageUrl = useQuery(api.superassistant.attempt.getImage, { attemptId: chatId });
-//   const statement = useQuery(api.superassistant.attempt.getStatement, { attemptId: chatId });
-//   const attempt = useQuery(api.superassistant.attempt.get, { attemptId: chatId });
-//   const needsImage = !imageUrl;
-
-//   useEffect(() => {
-//     setTimeout(() => {
-//       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-//     }, 0);
-//   }, [chat]);
-
-//   return (
-//     <>
-//       <div className="flex flex-col gap-6">
-//         <div className="mt-4 mb-8 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-slate-800">
-//           <Markdown text={statement || ""} />
-//         </div>
-
-//         {imageUrl !== null && imageUrl !== undefined && (
-//           <ImageMessage imageUrl={imageUrl} />
-//         )}
-
-//         {chat?.map((message, i) => (
-//           <Fragment key={(message).id ?? (message).id ?? i}>
-//             {typeof message.content !== "string" &&
-//               message.role === "user" &&
-//               message.content[1].type === "image_url" && (
-//                 <>
-//                   <div className="flex-row-full flex w-full items-center justify-items-center p-4 text-center text-lg font-bold text-purple-500">
-//                     <div className="w-1/3 items-center">
-//                       <div className="h-0.5 w-auto self-stretch bg-purple-500 px-2"></div>
-//                     </div>
-//                     <p className="w-1/3 px-2">New attempt</p>
-//                     <div className="w-1/3 items-center">
-//                       <div className="h-0.5 w-auto self-stretch bg-purple-500 px-2"></div>
-//                     </div>
-//                   </div>
-//                   <ImageMessage imageUrl={message.content[1].image_url.url} />
-//                 </>
-//               )
-//             }
-
-//             {typeof message.content === "string" &&
-//               (message.role === "assistant" || message.role === "user") && (
-//                 <div key={message.id}>
-//                   <div
-//                     className={clsx(
-//                       "flex",
-//                       message.role === "assistant" && "mr-6",
-//                       message.role === "user" && "ml-6"
-//                     )}
-//                   >
-//                     <div
-//                       className={clsx(
-//                         "relative inline-block rounded-xl p-3 shadow sm:p-4",
-//                         message.role === "assistant" &&
-//                           "rounded-bl-none bg-white",
-//                         message.role === "user" &&
-//                           "ml-auto rounded-br-none bg-gradient-to-b from-purple-500 to-purple-600 text-white"
-//                       )}
-//                     >
-//                       {message.role === "assistant" ? (
-//                         message.appearance === "typing" ? (
-//                           <div className="flex gap-1" aria-label="Loading">
-//                             <div className="h-2 w-2 animate-pulse rounded-full bg-slate-500"></div>
-//                             <div className="animation-delay-1-3 h-2 w-2 animate-pulse rounded-full bg-slate-500"></div>
-//                             <div className="animation-delay-2-3 h-2 w-2 animate-pulse rounded-full bg-slate-500"></div>
-//                           </div>
-//                         ) : message.appearance === "error" ? (
-//                           <div>
-//                             <p className="flex items-center justify-center gap-1 font-light">
-//                               <ExclamationCircleIcon
-//                                 className="h-6 w-6 text-red-600"
-//                                 aria-hidden="true"
-//                               />
-//                               <span className="flex-1">
-//                                 <strong className="font-medium text-red-600">
-//                                   An error occurred.
-//                                 </strong>{" "}
-//                                 Please try again.
-//                               </span>
-//                             </p>
-//                           </div>
-//                         ) : (
-//                           <>
-//                             <Markdown text={message.content} />
-//                             <ReportMessage
-//                               messageId={message.id}
-//                               isReported={message.isReported}
-//                             />
-//                           </>
-//                         )
-//                       ) : (
-//                         <>
-//                           {message.role === "user" && (
-//                             <p className="prose prose-sm sm:prose-base whitespace-pre-wrap text-white">
-//                               {message.content}
-//                             </p>
-//                           )}
-//                         </>
-//                       )}
-//                     </div>
-//                   </div>
-//                 </div>
-//               )
-//             }
-//           </Fragment>
-//         ))}
-//       </div>
-
-//       <NewMessage chatId={chatId} />
-//     </>
-//   );
-// }
 
 export default function Chat({ chatId }: { chatId: Id<"saAttempts"> }) {
   const chat = useQuery(api.superassistant.messages.list, { attemptId: chatId });
   const imageUrl = useQuery(api.superassistant.attempt.getImage, { attemptId: chatId });
   const statement = useQuery(api.superassistant.attempt.getStatement, { attemptId: chatId });
-
-  const attempt = useQuery(api.superassistant.attempt.get, { attemptId: chatId });
   const needsImage = !imageUrl;
 
-  const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
     setTimeout(() => {
@@ -166,15 +47,11 @@ export default function Chat({ chatId }: { chatId: Id<"saAttempts"> }) {
 ${statement}
 
 ---
-Please upload **one picture** of your handwritten solution
+Please upload **one picture** of your handwritten solution.
 `}
               />
             </div>
           </div>
-
-          {/* <div className="ml-6">
-            <UploadWithImage value={file} onChange={setFile} />
-          </div> */}
         </div>
 
         <NewMessage chatId={chatId} disabled />
@@ -192,7 +69,7 @@ Please upload **one picture** of your handwritten solution
             
             {typeof message.content !== "string" &&
               message.role === "user" &&
-              message.content[1].type === "image_url" && (
+              message.content[1].type === "image" && (
                 <>
                   <div className="flex-row-full flex w-full items-center justify-items-center p-4 text-center text-lg font-bold text-purple-500">
                     <div className="w-1/3 items-center">
@@ -203,7 +80,7 @@ Please upload **one picture** of your handwritten solution
                       <div className="h-0.5 w-auto self-stretch bg-purple-500 px-2"></div>
                     </div>
                   </div>
-                  <ImageMessage imageUrl={message.content[1].image_url.url} />
+                  <ImageMessage imageUrl={message.content[1].image} />
                 </>
               )}
 

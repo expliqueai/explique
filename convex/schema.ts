@@ -204,8 +204,8 @@ export default defineSchema(
               text: v.string(),
             }),
             v.object({
-              type: v.literal("image_url"),
-              image_url: v.object({ url: v.string() }),
+              type: v.literal("image"),
+              image: v.string(),
             }),
           ),
         ),

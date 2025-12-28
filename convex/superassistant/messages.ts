@@ -5,11 +5,15 @@ import {
   internalAction,
   internalQuery,
 } from "../_generated/server";
+import { google } from "@ai-sdk/google";
+import { generateText } from "ai";
 import { ConvexError, v } from "convex/values";
 import { Session, queryWithAuth, mutationWithAuth } from "../auth/withAuth";
 import { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
-import OpenAI from "openai";
+
+const CHAT_MODEL_PROVIDER = google("gemini-2.5-flash")
+
 
 async function getAttemptIfAuthorized(
   db: DatabaseReader,
@@ -143,8 +147,8 @@ export const insertMessage = internalMutation({
             text: v.string(),
           }),
           v.object({
-            type: v.literal("image_url"),
-            image_url: v.object({ url: v.string() }),
+            type: v.literal("image"),
+            image: v.string(),
           }),
         ),
       ),
@@ -182,7 +186,8 @@ export const addChunk = internalMutation({
     const message = await db.get(messageId);
     if (typeof message?.content === "string") {
       await db.patch(messageId, {
-        content: message.content.concat(chunk),
+        content: message.content === "..." ? chunk : message.content.concat(chunk),
+        appearance: undefined,
       });
     }
   },
@@ -267,7 +272,16 @@ export const generateTranscriptMessages = internalQuery({
       .withIndex("by_attempt", (q) => q.eq("attemptId", attemptId))
       .collect();
 
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
+    const messages: ({ role: "assistant" | "system"; content: string; } 
+                    | { role: "user"; content: string | ({
+                            type: "text";
+                            text: string;
+                        } | {
+                            type: "image";
+                            image: string;
+                        })[]; 
+                      }
+                    )[] = [];
 
     const attempt = await db.get(attemptId);
     if (!attempt) throw new ConvexError("Attempt not found");
@@ -301,7 +315,7 @@ export const generateTranscriptMessages = internalQuery({
         : defaultInstructions;
 
     messages.push({
-      role: "system",
+      role: ("system" as const),
       content: finalInstructions,
     });
 
@@ -312,12 +326,12 @@ export const generateTranscriptMessages = internalQuery({
         typeof feedbackMessage.content === "string"
       ) {
         messages.push({
-          role: "system",
+          role: ("system" as const),
           content: feedbackMessage.content,
         });
       } else if (feedbackMessage.role === "user") {
         messages.push({
-          role: "user",
+          role: ("user" as const),
           content: feedbackMessage.content,
         });
       } else if (
@@ -325,7 +339,7 @@ export const generateTranscriptMessages = internalQuery({
         typeof feedbackMessage.content === "string"
       ) {
         messages.push({
-          role: "assistant",
+          role: ("assistant" as const),
           content: feedbackMessage.content,
         });
       }
@@ -363,7 +377,6 @@ export const answerChatCompletionsApi = internalAction({
     assistantMessageId: v.id("saMessages"),
   },
   handler: async (ctx, { attemptId, userMessageId, assistantMessageId }) => {
-    const openai = new OpenAI();
 
     const messages = await ctx.runQuery(
       internal.superassistant.messages.generateTranscriptMessages,
@@ -372,19 +385,14 @@ export const answerChatCompletionsApi = internalAction({
       },
     );
 
-    let response;
+    let response
     try {
-      response = await openai.chat.completions.create(
-        {
-          model: "gpt-4o",
-          messages: messages,
-          temperature: 0.7,
-          stream: false,
-        },
-        {
-          timeout: 3 * 60 * 1000, // 3 minutes
-        },
-      );
+      response = await generateText({
+        model: CHAT_MODEL_PROVIDER,
+        messages: messages,
+        temperature: 0.7,
+        abortSignal: AbortSignal.timeout(3 * 60 * 1000), // 3 minutes
+      })
     } catch (err) {
       console.error("Can’t create a completion", err);
       await ctx.runMutation(internal.superassistant.messages.writeSystemResponse, {
@@ -397,9 +405,8 @@ export const answerChatCompletionsApi = internalAction({
       return;
     }
 
-    const message = response.choices[0].message;
-    if (!message.content) {
-      console.error("No content in the response", message);
+    if (!response.text) {
+      console.error("No content in the response", response);
       await ctx.runMutation(internal.superassistant.messages.writeSystemResponse, {
         attemptId,
         userMessageId,
@@ -413,7 +420,7 @@ export const answerChatCompletionsApi = internalAction({
         userMessageId,
         assistantMessageId,
         appearance: undefined,
-        content: message.content,
+        content: response.text,
       });
     }
   },

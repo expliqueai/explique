@@ -4,12 +4,16 @@ import {
   mutationWithAuth,
   actionWithAuth,
 } from "../auth/withAuth";
+import { google } from "@ai-sdk/google";
+import { generateText, streamText } from "ai";
 import { getCourseRegistration } from "../courses";
-import OpenAI from "openai";
 import { internalAction, internalMutation, internalQuery } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { api } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
+
+const IMAGE_MODEL_PROVIDER = google("gemini-2.5-pro")
+
 
 export const getName = queryWithAuth({
   args: {
@@ -201,7 +205,16 @@ export const generateFirstMessages = internalAction({
   },
   handler: async (ctx, { fileUrl, problemInstructions, solutions, attemptId }) => {
 
-    const messages : OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
+    const messages: ({ role: "assistant" | "system"; content: string; } 
+                    | { role: "user"; content: string | ({
+                            type: "text";
+                            text: string;
+                        } | {
+                            type: "image";
+                            image: string;
+                        })[]; 
+                      }
+                    )[] = [];
 
     const defaultInstructions = "\
       You are an assistant for a course. You are given the exercises and corresponding solutions.\
@@ -239,12 +252,12 @@ export const generateFirstMessages = internalAction({
       : defaultInstructions;
 
     messages.push({
-      role: "system",
+      role: ("system" as const),
       content: finalInstructions,
     });
 
 
-    const message1 : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
+    const message1 : { type: "text"; text: string; }[] = [];
     message1.push({
       type:"text",
       text:`Here are the instructions of the exercise: ${problemInstructions}`,
@@ -264,7 +277,7 @@ export const generateFirstMessages = internalAction({
         attemptId:attemptId,
         role:"user",
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        content:message1 as any,
+        content:message1,
       }
     );
     messages.push({
@@ -272,16 +285,14 @@ export const generateFirstMessages = internalAction({
       content:message1,
     });
 
-    const message2 : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
+    const message2 : ({ text: string; type: "text"; } | { type: "image"; image: string; })[] = [];
     message2.push({
       type:"text",
       text:"Here is my tentative solution. Give me feedback.",
     });
     message2.push({
-      type:"image_url",
-      image_url:{
-        url:fileUrl,
-      },
+      type:"image",
+      image:fileUrl,
     });
 
     await ctx.runMutation(
@@ -290,7 +301,7 @@ export const generateFirstMessages = internalAction({
         attemptId:attemptId,
         role:"user",
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        content:message2 as any,
+        content:message2,
       }
     );
     messages.push({
@@ -298,16 +309,12 @@ export const generateFirstMessages = internalAction({
       content:message2,
     });
 
-    const openai = new OpenAI();
-
-    const stream = await openai.chat.completions.create(
-      {
-        model: "gpt-4o",
-        messages: messages,
-        temperature: 0.3,
-        stream: true,
-      }
-    );
+    const { textStream } = streamText({
+      model: IMAGE_MODEL_PROVIDER,
+      messages: messages,
+      temperature: 0.7,
+      abortSignal: AbortSignal.timeout(3 * 60 * 1000), // 3 minutes
+    })
 
     const messageId = await ctx.runMutation(
       internal.superassistant.messages.insertMessage,
@@ -316,17 +323,17 @@ export const generateFirstMessages = internalAction({
         role:"assistant",
         content:"",
         streaming:true,
+        appearance:"typing",
       }
     );
 
-    for await (const chunk of stream) {
-      const newChunk = chunk.choices[0]?.delta?.content || "";
-      if (newChunk !== "") {
+    for await (const chunk of textStream) {
+      if (chunk !== "") {
         await ctx.runMutation(
           internal.superassistant.messages.addChunk,
           {
             messageId:messageId,
-            chunk:newChunk,
+            chunk:chunk,
           }
         );
       }
@@ -348,16 +355,14 @@ export const generateUpdateMessages = internalAction({
     attemptId: v.id("saAttempts"),
   },
   handler: async (ctx, { fileUrl, attemptId }) => {
-    const message : OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
+    const message : ({ type:"text"; text:string; } | { type:"image"; image:string; })[] = [];
     message.push({
       type:"text",
       text:"Here is a new try I made on the exercise. Analyze what is different from the previous attempt I made and tell me if I am closer to something correct or not. Give me feedback on what is different. Make sure the attempt is on the same exercise as before and that it is not a picture I already gave you.",
     });
     message.push({
-      type:"image_url",
-      image_url:{
-        url:fileUrl,
-      },
+      type:"image",
+      image:fileUrl,
     });
 
     const userMessageId = await ctx.runMutation(
@@ -366,7 +371,7 @@ export const generateUpdateMessages = internalAction({
         attemptId:attemptId,
         role:"user",
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        content:message as any,
+        content:message,
       }
     );
 
@@ -376,7 +381,7 @@ export const generateUpdateMessages = internalAction({
         attemptId:attemptId,
         role:"assistant",
         content:"",
-        appearance: "typing",
+        appearance:"typing",
       }
     );
 
