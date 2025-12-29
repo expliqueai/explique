@@ -38,23 +38,18 @@ function ExerciseBlob({
   title,
   snippet,
   status,
-  showRestart,
   onClick,
-  onRestart,
 }: {
   title: string;
   snippet: string;
   status: Status;
-  showRestart: boolean;
   onClick: () => void;
-  onRestart: () => void;
 }) {
   return (
-    <div className="transition hover:scale-105">
     <button
       type="button"
       onClick={onClick}
-      className={clsx("group relative block w-full rounded-3xl text-left shadow-lg hover:shadow-2xl",
+      className={clsx("group relative block w-full rounded-3xl text-left shadow-lg hover:shadow-2xl transition hover:scale-105",
                     status === "NOT STARTED" && "bg-slate-700/90",
                     status === "IN PROGRESS" && "bg-blue-700/90",
                     status === "COMPLETED" && "bg-green-700/90"
@@ -76,18 +71,6 @@ function ExerciseBlob({
         </div>
       </div>
     </button>
-
-    {showRestart && (
-      <button
-        onClick={onRestart}
-        className="absolute bottom-2 right-2 p-1 rounded-full bg-white
-                    shadow-md hover:bg-red-500 hover:text-white 
-                    text-gray-700 transition"
-      >
-        <ArrowPathIcon className="w-3.5 h-3.5" />
-      </button>
-    )}
-    </div>
   );
 };
 
@@ -148,12 +131,7 @@ export default function ProblemSolvingColumn({ week }: { week: Id<"weeks"> }) {
                     title={problem.name}
                     snippet={problem.instructions}
                     status={displayStatus}
-                    showRestart={(hasImages != undefined && hasImages) && problem.status !== "COMPLETED" && (problem.attemptId != undefined)}
                     onClick={() => onPick(problem)}
-                    onRestart={() => {
-                        setPickedProblem(problem);
-                        setResetModalOpen(true);
-                    }}
                   />
                 </div>
               );

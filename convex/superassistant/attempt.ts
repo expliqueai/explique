@@ -288,7 +288,7 @@ export const generateFirstMessages = internalAction({
     const message2 : ({ text: string; type: "text"; } | { type: "image"; image: string; })[] = [];
     message2.push({
       type:"text",
-      text:"Here is my tentative solution. Give me feedback.",
+      text:"Here is my tentative solution. Give me feedback. If the image has nothing to do with the exercise, refuse it and tell me immediately to just submit another image.",
     });
     message2.push({
       type:"image",
@@ -358,7 +358,7 @@ export const generateUpdateMessages = internalAction({
     const message : ({ type:"text"; text:string; } | { type:"image"; image:string; })[] = [];
     message.push({
       type:"text",
-      text:"Here is a new try I made on the exercise. Analyze what is different from the previous attempt I made and tell me if I am closer to something correct or not. Give me feedback on what is different. Make sure the attempt is on the same exercise as before and that it is not a picture I already gave you.",
+      text:"Here is a new try I made on the exercise. Analyze what is different from the previous attempt I made and tell me if I am closer to something correct or not. Give me feedback on what is different. Make sure the attempt is on the same exercise as before and that it is not a picture I already gave you. If the image has nothing to do with the execise, tell me immediately and refuse the image.",
     });
     message.push({
       type:"image",
@@ -484,6 +484,12 @@ export const resetAttempt = mutationWithAuth({
       await ctx.db.delete(msg._id);
     }
 
-    await ctx.db.delete(attemptId);
+    for (const img of attempt.images) {
+      await ctx.storage.delete(img);
+    }
+
+    await ctx.db.patch(attemptId, {
+      images: [],
+    });
   },
 });
