@@ -238,7 +238,7 @@ async function sendMessageController(
   const attempt = await ctx.db.get(attemptId);
   if (!attempt) throw new Error(`Attempt ${attemptId} not found`);
 
-  const userMessageId = await ctx.db.insert("saMessages", {
+  await ctx.db.insert("saMessages", {
     attemptId,
     role: "user",
     content: message,
@@ -256,7 +256,6 @@ async function sendMessageController(
     internal.superassistant.messages.answerChatCompletionsApi,
     {
       attemptId,
-      userMessageId,
       assistantMessageId,
     },
   );
@@ -352,14 +351,13 @@ export const generateTranscriptMessages = internalQuery({
 export const writeSystemResponse = internalMutation({
   args: {
     attemptId: v.id("saAttempts"),
-    userMessageId: v.id("saMessages"),
     assistantMessageId: v.id("saMessages"),
     content: v.string(),
     appearance: v.optional(v.union(v.literal("finished"), v.literal("error"))),
   },
   handler: async (
     { db },
-    { attemptId, userMessageId, assistantMessageId, content, appearance },
+    { attemptId, assistantMessageId, content, appearance },
   ) => {
     const attempt = await db.get(attemptId);
     if (!attempt) {
@@ -373,10 +371,9 @@ export const writeSystemResponse = internalMutation({
 export const answerChatCompletionsApi = internalAction({
   args: {
     attemptId: v.id("saAttempts"),
-    userMessageId: v.id("saMessages"),
     assistantMessageId: v.id("saMessages"),
   },
-  handler: async (ctx, { attemptId, userMessageId, assistantMessageId }) => {
+  handler: async (ctx, { attemptId, assistantMessageId }) => {
 
     const messages = await ctx.runQuery(
       internal.superassistant.messages.generateTranscriptMessages,
@@ -397,7 +394,6 @@ export const answerChatCompletionsApi = internalAction({
       console.error("Can’t create a completion", err);
       await ctx.runMutation(internal.superassistant.messages.writeSystemResponse, {
         attemptId,
-        userMessageId,
         assistantMessageId,
         appearance: "error",
         content: "",
@@ -409,7 +405,6 @@ export const answerChatCompletionsApi = internalAction({
       console.error("No content in the response", response);
       await ctx.runMutation(internal.superassistant.messages.writeSystemResponse, {
         attemptId,
-        userMessageId,
         assistantMessageId,
         appearance: "error",
         content: "",
@@ -417,7 +412,6 @@ export const answerChatCompletionsApi = internalAction({
     } else {
       await ctx.runMutation(internal.superassistant.messages.writeSystemResponse, {
         attemptId,
-        userMessageId,
         assistantMessageId,
         appearance: undefined,
         content: response.text,

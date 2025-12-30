@@ -2,14 +2,11 @@ import { ConvexError, v } from "convex/values";
 import {
   queryWithAuth,
   mutationWithAuth,
-  actionWithAuth,
 } from "../auth/withAuth";
 import { google } from "@ai-sdk/google";
-import { generateText, streamText } from "ai";
-import { getCourseRegistration } from "../courses";
-import { internalAction, internalMutation, internalQuery } from "../_generated/server";
+import { streamText } from "ai";
+import { internalAction, internalQuery } from "../_generated/server";
 import { internal } from "../_generated/api";
-import { api } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
 
 const IMAGE_MODEL_PROVIDER = google("gemini-2.5-pro")
@@ -365,7 +362,7 @@ export const generateUpdateMessages = internalAction({
       image:fileUrl,
     });
 
-    const userMessageId = await ctx.runMutation(
+    await ctx.runMutation(
       internal.superassistant.messages.insertMessage,
       {
         attemptId:attemptId,
@@ -387,7 +384,6 @@ export const generateUpdateMessages = internalAction({
 
     await ctx.scheduler.runAfter(0, internal.superassistant.messages.answerChatCompletionsApi, {
       attemptId,
-      userMessageId,
       assistantMessageId,
     });
   },
@@ -449,7 +445,7 @@ export const updateAttemptInChat = mutationWithAuth({
       const timestamp = Date.now();
       await ctx.db.patch(attemptId, {
         lastModified: timestamp,
-        images: [storageId].concat(attempt.images)
+        images: attempt.images.concat([storageId])
       });
     };
   },
