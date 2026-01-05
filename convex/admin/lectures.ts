@@ -23,28 +23,53 @@ const MEDIASPACE_REGEX =
 const M3U8_REGEX =
   /^https:\/\/vod\.kaltura\.switch\.ch\/hls\/.*\/entryId\/(0_[a-zA-Z0-9]+)\/.*\/index\.m3u8$/
 
+const YOUTUBE_REGEX =
+  /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/(watch\?v=|embed\/)?([a-zA-Z0-9_-]{11})$/
+
 function validateAndExtractVideoUrl(url: string): {
   isValid: boolean
   videoId?: string
   isDirectM3u8?: boolean
+  isYoutube?: boolean
   error?: string
 } {
   // Check for MediaSpace URL
   const mediaSpaceMatch = url.match(MEDIASPACE_REGEX)
   if (mediaSpaceMatch) {
-    return { isValid: true, videoId: mediaSpaceMatch[1], isDirectM3u8: false }
+    return {
+      isValid: true,
+      videoId: mediaSpaceMatch[1],
+      isDirectM3u8: false,
+      isYoutube: false,
+    }
   }
 
   // Check for direct m3u8 URL
   const m3u8Match = url.match(M3U8_REGEX)
   if (m3u8Match) {
-    return { isValid: true, videoId: m3u8Match[1], isDirectM3u8: true }
+    return {
+      isValid: true,
+      videoId: m3u8Match[1],
+      isDirectM3u8: true,
+      isYoutube: false,
+    }
+  }
+
+  // Check for YouTube URL
+  const youtubeMatch = url.match(YOUTUBE_REGEX)
+  if (youtubeMatch) {
+    return {
+      isValid: true,
+      videoId: youtubeMatch[5],
+      isDirectM3u8: false,
+      isYoutube: true,
+    }
   }
 
   return {
     isValid: false,
     error:
-      "Please enter a valid EPFL MediaSpace URL (https://mediaspace.epfl.ch/media/.../0_...) or direct m3u8 link (https://vod.kaltura.switch.ch/hls/.../entryId/0_.../...index.m3u8)",
+      "Please enter a valid EPFL MediaSpace URL (https://mediaspace.epfl.ch/media/.../0_...), a direct m3u8 link (https://vod.kaltura.switch.ch/hls/.../entryId/0_.../...index.m3u8) or a YouTube URL.",
   }
 }
 
@@ -210,6 +235,11 @@ export const create = actionWithAuth({
       throw new ConvexError("Invalid week")
     }
 
+    const urlValidation = validateAndExtractVideoUrl(lecture.url)
+    if (urlValidation.isYoutube) {
+      lecture.url = `https://www.youtube.com/embed/${urlValidation.videoId}`
+    }
+
     const id = await ctx.runAction(
       internal.admin.lectures.createInternal,
       lecture
@@ -234,24 +264,12 @@ export const processVideo = internalAction({
       // Validate URL and extract video ID
       const urlValidation = validateAndExtractVideoUrl(url)
       if (!urlValidation.isValid) {
-        throw new Error(urlValidation.error || "Invalid video URL")
+        throw new ConvexError(urlValidation.error || "Invalid video URL")
       }
 
-      // If it's a direct m3u8 URL, use it as-is without processing
-      if (urlValidation.isDirectM3u8) {
-        // The URL is already a direct m3u8 link, no need to process
-        await ctx.runMutation(api.admin.lectures.setStatus, {
-          lectureId,
-          status: "READY",
-          authToken: process.env.VIDEO_PROCESSING_API_TOKEN!,
-        })
-        return
-      }
-
-      // For MediaSpace URLs, process them through the video processing service
       const processingUrl = process.env.LECTURES_PROCESSING_URL
       if (!processingUrl) {
-        throw new Error(
+        throw new ConvexError(
           "LECTURES_PROCESSING_URL environment variable is not configured"
         )
       }
@@ -259,7 +277,9 @@ export const processVideo = internalAction({
       const response = await fetch(processingUrl, {
         method: "POST",
         body: JSON.stringify({
-          kaltura_video_id: urlValidation.videoId,
+          ...(urlValidation.isYoutube
+            ? { youtube_video_id: urlValidation.videoId }
+            : { kaltura_video_id: urlValidation.videoId }),
           convex_lecture_id: lectureId,
         }),
         headers: {
@@ -269,7 +289,7 @@ export const processVideo = internalAction({
 
       if (!response.ok) {
         const errorText = await response.text()
-        throw new Error(
+        throw new ConvexError(
           `Failed to start video processing: ${response.status} ${response.statusText} - ${errorText}`
         )
       }

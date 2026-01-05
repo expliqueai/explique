@@ -104,7 +104,14 @@ export const getMyRegistrations = queryWithAuth({
       .withIndex("by_user", (q) => q.eq("userId", session.user._id))
       .collect()
 
-    const results = []
+    const results: Array<{
+      id: Id<"courses">
+      code: string
+      slug: string
+      name: string
+      isAdmin: boolean
+    }> = []
+
     for (const registration of registrations) {
       const course = await db.get(registration.courseId)
       if (!course) {

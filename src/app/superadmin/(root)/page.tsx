@@ -1,20 +1,29 @@
-"use client";
+"use client"
 
-import Title from "@/components/typography";
-import { useQuery } from "@/usingSession";
-import { api } from "../../../../convex/_generated/api";
-import { PlusIcon } from "@heroicons/react/20/solid";
-import { Button } from "@/components/Button";
+import { Button } from "@/components/Button"
+import Title from "@/components/typography"
+import { useMutation, useQuery } from "@/usingSession"
+import { PlusIcon } from "@heroicons/react/20/solid"
+import { useRouter } from "next/navigation"
+import { api } from "../../../../convex/_generated/api"
 
 export default function SuperadminCoursesPage() {
-  const courses = useQuery(api.superadmin.courses.list, {});
+  const router = useRouter()
+  const courses = useQuery(api.superadmin.courses.list, {})
+  const registerToCourse = useMutation(api.superadmin.courses.register)
+
+  async function handleCourseAccess(courseId: string, courseSlug: string) {
+    // Automatically register superadmin to the course if not already registered
+    await registerToCourse({ courseId })
+    router.push("/" + courseSlug)
+  }
 
   return (
     <>
       <Title>
         <div className="flex-1">Courses</div>
         <Button href="/superadmin/add">
-          <PlusIcon className="w-5 h-5" />
+          <PlusIcon className="h-5 w-5" />
           Add Course
         </Button>
       </Title>
@@ -22,13 +31,13 @@ export default function SuperadminCoursesPage() {
       <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
           {courses !== undefined ? (
-            <div className="overflow-hidden shadow-sm ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+            <div className="ring-opacity-5 overflow-hidden shadow-sm ring-1 ring-black sm:rounded-lg">
               <table className="min-w-full divide-y divide-slate-300">
                 <thead className="bg-slate-50">
                   <tr>
                     <th
                       scope="col"
-                      className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900 sm:pl-6"
+                      className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-slate-900 sm:pl-6"
                     >
                       Code
                     </th>
@@ -40,7 +49,7 @@ export default function SuperadminCoursesPage() {
                     </th>
                     <th
                       scope="col"
-                      className="relative py-3.5 pl-3 pr-4 sm:pr-6"
+                      className="relative py-3.5 pr-4 pl-3 sm:pr-6"
                     >
                       <span className="sr-only">View</span>
                     </th>
@@ -49,19 +58,21 @@ export default function SuperadminCoursesPage() {
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {courses?.map((course) => (
                     <tr key={course.id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 sm:pl-6 tabular-nums">
+                      <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-slate-900 tabular-nums sm:pl-6">
                         {course.code}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
+                      <td className="px-3 py-4 text-sm whitespace-nowrap text-slate-500">
                         {course.name}
                       </td>
-                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <a
-                          href={`/${course.slug}`}
+                      <td className="relative py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-6">
+                        <button
+                          onClick={() =>
+                            handleCourseAccess(course.id, course.slug)
+                          }
                           className="text-blue-600 hover:text-blue-900"
                         >
                           View<span className="sr-only">, {course.name}</span>
-                        </a>
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -69,10 +80,10 @@ export default function SuperadminCoursesPage() {
               </table>
             </div>
           ) : (
-            <div className="h-96 bg-slate-200 animate-pulse rounded-lg"></div>
+            <div className="h-96 animate-pulse rounded-lg bg-slate-200"></div>
           )}
         </div>
       </div>
     </>
-  );
+  )
 }
