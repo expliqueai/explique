@@ -92,7 +92,7 @@ export const get = queryWithAuth({
     }
 
     // For open-problem: get the approved submission image URLs
-    let openProblemImageUrls: string[] = [];
+    const openProblemImageUrls: string[] = [];
     if (exercise.openProblem && attempt.threadId === "open-problem") {
       const submission = await db
         .query("openProblemSubmissions")

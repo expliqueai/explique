@@ -185,8 +185,8 @@ function RestartButton({ exerciseId }: { exerciseId: Id<"exercises"> }) {
       >
         <div className="mt-2">
           <p className="text-sm text-gray-500">
-            If you're experiencing issues, you can restart the exercise and try
-            again.
+            If you&apos;re experiencing issues, you can restart the exercise and
+            try again.
           </p>
         </div>
 
