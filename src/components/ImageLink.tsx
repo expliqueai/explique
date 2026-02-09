@@ -15,11 +15,11 @@ export function ImageLink({
   corner?: React.ReactNode
 }) {
   return (
-    <div className="group block rounded-3xl shadow-lg transition hover:scale-105 hover:shadow-2xl">
+    <div className="group block overflow-hidden rounded-3xl shadow-lg transition hover:scale-105 hover:shadow-2xl">
       <div className="relative pb-[57.14%]">
         <div
           className={clsx(
-            "absolute inset-0 overflow-hidden rounded-3xl",
+            "absolute inset-0",
             image && "bg-slate-500",
             !image && "bg-slate-600"
           )}

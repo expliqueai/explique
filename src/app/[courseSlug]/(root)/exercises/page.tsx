@@ -87,7 +87,7 @@ function ProjectGrid() {
                 </div>
               )}
             </div>
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {week.exercises.map((exercise) => (
                 <ImageLink
                   key={exercise.id}
@@ -133,8 +133,8 @@ function ProjectGridSkeleton() {
 
           <div className="h-6 my-4 bg-slate-200 rounded w-72" />
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {Array.from({ length: 2 }).map((_, i) => (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="pb-[57.14%] bg-slate-200 rounded-3xl" />
             ))}
           </div>

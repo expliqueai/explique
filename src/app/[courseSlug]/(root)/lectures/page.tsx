@@ -39,7 +39,7 @@ function ProjectGrid() {
                 Your instructor(s) will upload the lectures soon.
               </p>
             )}
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {week.lectures.map((lecture) => (
                 <ImageLink
                   key={lecture.id}
@@ -68,8 +68,8 @@ function ProjectGridSkeleton() {
 
           <div className="my-4 h-6 w-72 rounded bg-slate-200" />
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {Array.from({ length: 2 }).map((_, i) => (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="rounded-3xl bg-slate-200 pb-[57.14%]" />
             ))}
           </div>
