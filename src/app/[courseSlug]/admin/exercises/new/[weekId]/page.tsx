@@ -53,6 +53,9 @@ export default function NewExercise() {
             controlGroup: "A",
             completionFunctionDescription:
               "Mark the exercise as complete: call when the user has demonstrated understanding of the algorithm.",
+
+            openProblem: null,
+            compulsory: false,
           }}
           onSubmit={async (state) => {
             await create({ courseSlug, exercise: toConvexState(state) });

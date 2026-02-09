@@ -1,26 +1,26 @@
 import {
   CheckCircleIcon,
-  InformationCircleIcon,
   ExclamationCircleIcon,
-} from "@heroicons/react/24/outline";
-import clsx from "clsx";
+  InformationCircleIcon,
+} from "@heroicons/react/24/outline"
+import clsx from "clsx"
 
-type Variant = "info" | "success" | "error";
+type Variant = "info" | "success" | "error"
 
 export default function Instruction({
   children,
   variant,
 }: React.PropsWithChildren<{
-  variant: Variant;
+  variant: Variant
 }>) {
-  const Icon = iconForVariant(variant);
+  const Icon = iconForVariant(variant)
 
   return (
-    <p className="sm:text-lg font-light flex items-center justify-center gap-1">
+    <p className="flex items-center justify-center gap-1 font-light sm:text-lg">
       <Icon
         className={clsx(
           "size-6 text-purple-700",
-          variant === "error" ? "text-red-600" : "text-purple-700",
+          variant === "error" ? "text-red-600" : "text-purple-700"
         )}
         aria-hidden="true"
       />
@@ -29,25 +29,25 @@ export default function Instruction({
           "[&>strong]:font-medium",
           variant === "error"
             ? "[&>strong]:text-red-600"
-            : "[&>strong]:text-purple-700",
+            : "[&>strong]:text-purple-700"
         )}
       >
         {children}
       </span>
     </p>
-  );
+  )
 }
 
 function iconForVariant(variant: Variant) {
   switch (variant) {
     case "info":
-      return InformationCircleIcon;
+      return InformationCircleIcon
     case "success":
-      return CheckCircleIcon;
+      return CheckCircleIcon
     case "error":
-      return ExclamationCircleIcon;
+      return ExclamationCircleIcon
     default:
-      const _never: never = variant;
-      throw new Error(`Unknown variant: ${_never}`);
+      const _never: never = variant
+      throw new Error(`Unknown variant: ${_never}`)
   }
 }

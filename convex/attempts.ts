@@ -15,7 +15,7 @@ export const get = queryWithAuth({
   args: {
     id: v.id("attempts"),
   },
-  handler: async ({ db, session }, { id }) => {
+  handler: async ({ db, session, storage }, { id }) => {
     if (!session) {
       throw new ConvexError("Not logged in");
     }
@@ -91,6 +91,22 @@ export const get = queryWithAuth({
       );
     }
 
+    // For open-problem: get the approved submission image URLs
+    let openProblemImageUrls: string[] = [];
+    if (exercise.openProblem && attempt.threadId === "open-problem") {
+      const submission = await db
+        .query("openProblemSubmissions")
+        .withIndex("by_attempt", (q) => q.eq("attemptId", attempt._id))
+        .collect();
+      const approved = submission.find((s) => s.validationStatus === "approved");
+      if (approved) {
+        for (const sid of approved.storageIds) {
+          const url = await storage.getUrl(sid);
+          if (url) openProblemImageUrls.push(url);
+        }
+      }
+    }
+
     return {
       courseSlug: course.slug,
       exerciseId: exercise._id,
@@ -114,6 +130,8 @@ export const get = queryWithAuth({
           }
         : null,
       hasQuiz: exercise.quiz !== null,
+      openProblem: exercise.openProblem ?? null,
+      openProblemImageUrls,
     };
   },
 });
@@ -144,6 +162,15 @@ function toUserVisibleQuestion(
   };
 }
 
+export const getRow = internalQuery({
+  args: {
+    id: v.id("attempts"),
+  },
+  handler: async ({ db }, { id }) => {
+    return await db.get(id);
+  },
+});
+
 export const insert = internalMutation({
   args: {
     exerciseId: v.id("exercises"),
@@ -152,7 +179,7 @@ export const insert = internalMutation({
   },
   handler: async ({ db }, { exerciseId, userId, threadId }) => {
     const attemptId = await db.insert("attempts", {
-      status: "exercise",
+      status: threadId === "open-problem" ? "awaitingUpload" : "exercise",
       exerciseId,
       userId,
       threadId,
@@ -163,7 +190,12 @@ export const insert = internalMutation({
       userId,
       attemptId,
       exerciseId,
-      variant: threadId === null ? "reading" : "explain",
+      variant:
+        threadId === null
+          ? "reading"
+          : threadId === "open-problem"
+            ? "open-problem"
+            : "explain",
     });
 
     return attemptId;
@@ -184,6 +216,20 @@ export const start = actionWithAuth({
     if (exercise === null) throw new ConvexError("Unknown exercise");
 
     await validateDueDateFromAction(ctx, exercise, ctx.session.user);
+
+    // Open-problem exercises: upload gate before chat
+    if (exercise.openProblem) {
+      const attemptId: Id<"attempts"> = await ctx.runMutation(
+        internal.attempts.insert,
+        {
+          exerciseId,
+          userId,
+          threadId: "open-problem",
+        },
+      );
+      // Don't send firstMessage yet — that happens after upload validation
+      return attemptId;
+    }
 
     const isUsingExplainVariant = await ctx.runQuery(
       internal.attempts.isUsingExplainVariant,
@@ -286,7 +332,12 @@ export const goToQuiz = mutationWithAuth({
       userId: session.user._id,
       attemptId,
       exerciseId: attempt.exerciseId,
-      variant: attempt.threadId === null ? "reading" : "explain",
+      variant:
+        attempt.threadId === null
+          ? "reading"
+          : attempt.threadId === "open-problem"
+            ? "open-problem"
+            : "explain",
     });
 
     await db.patch(attemptId, {

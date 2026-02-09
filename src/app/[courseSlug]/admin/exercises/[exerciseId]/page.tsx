@@ -64,6 +64,9 @@ export default function EditExercise() {
               controlGroup: exercise.controlGroup,
               completionFunctionDescription:
                 exercise.completionFunctionDescription,
+
+              openProblem: exercise.openProblem ?? null,
+              compulsory: exercise.compulsory ?? false,
             }}
             onSubmit={async (state) => {
               await update({

@@ -36,6 +36,7 @@ import type * as crons from "../crons.js";
 import type * as exercises from "../exercises.js";
 import type * as internal_seed from "../internal/seed.js";
 import type * as lectures from "../lectures.js";
+import type * as openProblem from "../openProblem.js";
 import type * as quiz from "../quiz.js";
 import type * as superadmin_courses from "../superadmin/courses.js";
 import type * as superadmin_relocation from "../superadmin/relocation.js";
@@ -75,6 +76,7 @@ declare const fullApi: ApiFromModules<{
   exercises: typeof exercises;
   "internal/seed": typeof internal_seed;
   lectures: typeof lectures;
+  openProblem: typeof openProblem;
   quiz: typeof quiz;
   "superadmin/courses": typeof superadmin_courses;
   "superadmin/relocation": typeof superadmin_relocation;

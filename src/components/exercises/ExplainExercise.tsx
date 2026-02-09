@@ -5,7 +5,7 @@ import {
   SparklesIcon,
   StopIcon,
 } from "@heroicons/react/16/solid"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { api } from "../../../convex/_generated/api"
 import { Id } from "../../../convex/_generated/dataModel"
 import ChatBubble from "../ChatBubble"
@@ -26,24 +26,33 @@ export default function ExplainExercise({
   writeDisabled,
   nextButton,
   succeeded,
+  containerMode,
 }: {
   hasQuiz: boolean
   attemptId: Id<"attempts">
   writeDisabled: boolean
   nextButton: "show" | "hide" | "disable"
   succeeded: boolean
+  containerMode?: boolean
 }) {
   const chat = useQuery(api.chat.getMessages, { attemptId })
+  const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setTimeout(() => {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })
-    }, 0)
-  }, [chat])
+    if (containerMode) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    } else {
+      setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })
+      }, 0)
+    }
+  }, [chat, containerMode])
 
   return (
     <>
-      <div className="mb-28 flex flex-col gap-6">
+      <div
+        className={`mb-28 flex flex-col gap-6 ${containerMode ? "flex-1" : ""}`}
+      >
         {chat?.map((message) => (
           <ChatMessage
             key={message.id}
@@ -54,9 +63,12 @@ export default function ExplainExercise({
             attemptId={attemptId}
           />
         ))}
+        <div ref={bottomRef} />
       </div>
 
-      {!writeDisabled && <NewMessage attemptId={attemptId} />}
+      {!writeDisabled && (
+        <NewMessage attemptId={attemptId} containerMode={containerMode} />
+      )}
 
       {succeeded && (
         <Instruction variant="success">
@@ -130,7 +142,7 @@ const ChatMessage = React.memo(function ChatMessage({
   if (appearance === "feedback") {
     return (
       <div>
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-start gap-4">
           <Instruction variant="success">
             <strong>Great!</strong> We will now provide feedback on your
             explanation.
@@ -199,7 +211,13 @@ const ChatMessage = React.memo(function ChatMessage({
   )
 })
 
-function NewMessage({ attemptId }: { attemptId: Id<"attempts"> }) {
+function NewMessage({
+  attemptId,
+  containerMode,
+}: {
+  attemptId: Id<"attempts">
+  containerMode?: boolean
+}) {
   const sendMessage = useMutation(api.chat.sendMessage)
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -216,7 +234,13 @@ function NewMessage({ attemptId }: { attemptId: Id<"attempts"> }) {
 
   return (
     <>
-      <div className="fixed bottom-4 left-1/2 w-full max-w-2xl -translate-x-1/2 px-6">
+      <div
+        className={
+          containerMode
+            ? "sticky bottom-4 w-full px-6"
+            : "fixed bottom-4 left-1/2 w-full max-w-2xl -translate-x-1/2 px-6"
+        }
+      >
         <PromptInput
           value={input}
           onValueChange={(value) => setInput(value)}

@@ -70,6 +70,7 @@ export const list = queryWithAuth({
             id: exercise._id,
             name: exercise.name,
             image: await getImageForExercise(db, storage, exercise),
+            hasOpenProblem: !!exercise.openProblem,
           })
         }
       }

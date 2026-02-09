@@ -17,7 +17,7 @@ export default function ActivityHeader({
     <>
       <header
         className={clsx(
-          "bg-opacity-90 top-0 left-0 z-10 flex h-14 w-full items-center justify-center bg-white p-4 shadow-lg backdrop-blur-lg sm:h-16",
+          "bg-opacity-90 top-0 left-0 z-10 flex h-10 w-full items-center justify-center bg-white px-8 py-2 shadow-lg backdrop-blur-lg sm:h-12",
           isSolid ? "block" : "fixed"
         )}
       >
@@ -25,7 +25,7 @@ export default function ActivityHeader({
           <Link
             href={goBackTo}
             title="Back"
-            className="absolute top-0 left-0 flex h-14 w-14 items-center justify-center sm:h-16 sm:w-16"
+            className="absolute top-0 left-5 flex h-10 w-10 items-center justify-center sm:h-12 sm:w-12"
           >
             <ArrowLeftIcon className="h-6 w-6" />
           </Link>
@@ -37,9 +37,9 @@ export default function ActivityHeader({
           )}
         </h1>
 
-        {action && <div className="absolute top-0 right-0">{action}</div>}
+        {action && <div className="absolute top-0 right-5">{action}</div>}
       </header>
-      {!isSolid && <div className="h-14 sm:h-16" />}
+      {!isSolid && <div className="h-10 sm:h-12" />}
     </>
   )
 }

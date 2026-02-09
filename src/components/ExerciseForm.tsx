@@ -40,6 +40,13 @@ export type State = {
   firstMessage: string
   controlGroup: "A" | "B" | "all" | "none"
   completionFunctionDescription: string
+
+  openProblem: {
+    problemStatement: string
+    handwrittenCheckPrompt?: string
+    reasonableAttemptPrompt?: string
+  } | null
+  compulsory: boolean
 }
 
 export function toConvexState(state: State) {
@@ -49,13 +56,13 @@ export function toConvexState(state: State) {
     imagePrompt: state.imagePrompt,
     instructions: state.instructions,
     model: state.model,
-    text: state.text,
+    text: state.openProblem ? "" : state.text,
     weekId: state.weekId,
 
     feedback: state.feedback ?? undefined,
 
     quiz:
-      state.quizBatches === null
+      state.openProblem || state.quizBatches === null
         ? null
         : {
             batches: state.quizBatches.map((batch) => ({
@@ -75,6 +82,9 @@ export function toConvexState(state: State) {
     firstMessage: state.firstMessage,
     controlGroup: state.controlGroup,
     completionFunctionDescription: state.completionFunctionDescription,
+
+    openProblem: state.openProblem ?? undefined,
+    compulsory: state.compulsory || undefined,
   }
 }
 
@@ -126,6 +136,9 @@ export default function ExerciseForm({
 
   const [feedback, setFeedback] = useState(initialState.feedback)
 
+  const [openProblem, setOpenProblem] = useState(initialState.openProblem)
+  const [compulsory, setCompulsory] = useState(initialState.compulsory)
+
   return (
     <form
       onSubmit={async (e) => {
@@ -142,6 +155,8 @@ export default function ExerciseForm({
           controlGroup,
           completionFunctionDescription,
           feedback,
+          openProblem,
+          compulsory,
         })
       }}
     >
@@ -305,6 +320,88 @@ export default function ExerciseForm({
       </section>
 
       <section>
+        <header className="mt-8 mb-4 border-t border-slate-300 py-4">
+          <label className="flex items-center text-sm font-medium text-slate-800">
+            <input
+              type="checkbox"
+              className="mr-2 h-6 w-6"
+              checked={openProblem !== null}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setOpenProblem({
+                    problemStatement: "",
+                  })
+                } else {
+                  setOpenProblem(null)
+                }
+              }}
+            />
+            <h2 className="text-2xl font-medium">Open Problem</h2>
+          </label>
+          <p className="mt-1 ml-8 text-sm text-slate-500">
+            Students upload handwritten solutions and receive AI-guided feedback.
+            Uses the explanation exercise settings above for the guidance chat.
+          </p>
+        </header>
+
+        {openProblem && (
+          <div className="space-y-4">
+            <div className="grid gap-x-12 md:grid-cols-2">
+              <Textarea
+                label="Problem statement"
+                value={openProblem.problemStatement}
+                onChange={(val) =>
+                  setOpenProblem({ ...openProblem, problemStatement: val })
+                }
+                hint={<MarkdownTip />}
+                required
+              />
+              <div className="mt-6">
+                <Markdown text={openProblem.problemStatement} />
+              </div>
+            </div>
+
+            <Textarea
+              label="Custom handwritten check prompt (optional)"
+              value={openProblem.handwrittenCheckPrompt ?? ""}
+              onChange={(val) =>
+                setOpenProblem({
+                  ...openProblem,
+                  handwrittenCheckPrompt: val || undefined,
+                })
+              }
+              hint="Customize how the AI checks if the upload is handwritten. Leave empty for default."
+            />
+
+            <Textarea
+              label="Custom reasonable attempt prompt (optional)"
+              value={openProblem.reasonableAttemptPrompt ?? ""}
+              onChange={(val) =>
+                setOpenProblem({
+                  ...openProblem,
+                  reasonableAttemptPrompt: val || undefined,
+                })
+              }
+              hint="Customize what counts as a reasonable attempt. Leave empty for default (very lenient)."
+            />
+          </div>
+        )}
+      </section>
+
+      <section>
+        <label className="mt-6 flex items-center gap-2 text-sm font-medium text-slate-800">
+          <input
+            type="checkbox"
+            checked={compulsory}
+            onChange={(e) => setCompulsory(e.target.checked)}
+          />
+          Compulsory exercise (required for course completion)
+        </label>
+      </section>
+
+      {!openProblem && (
+      <>
+      <section>
         <h2 className="mt-8 mb-4 border-t border-slate-300 py-4 text-2xl font-medium">
           Reading Exercise
         </h2>
@@ -413,6 +510,8 @@ export default function ExerciseForm({
           <MarkdownTip />
         </p>
       </section>
+      </>
+      )}
 
       <div className="h-36"></div>
 

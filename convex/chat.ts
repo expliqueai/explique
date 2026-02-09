@@ -127,7 +127,12 @@ export const writeSystemResponse = internalMutation({
       exerciseId: attempt.exerciseId,
       userMessageId,
       systemMessageId,
-      variant: "explain",
+      variant:
+        attempt.threadId === null
+          ? "reading"
+          : attempt.threadId === "open-problem"
+            ? "open-problem"
+            : "explain",
     })
   },
 })
@@ -168,7 +173,12 @@ async function sendMessageController(
     exerciseId: attempt.exerciseId,
     userMessageId,
     systemMessageId,
-    variant: "explain",
+    variant:
+      attempt.threadId === null
+        ? "reading"
+        : attempt.threadId === "open-problem"
+          ? "open-problem"
+          : "explain",
   })
 
   // Always use Chat Completions API (Assistants API deprecated)
@@ -289,11 +299,54 @@ export const answerChatCompletionsApi = internalAction({
       }
     )
 
+    // For open-problem exercises, inject the uploaded image into the AI context
+    const attempt = await ctx.runQuery(internal.attempts.getRow, {
+      id: attemptId,
+    })
+    let aiMessages: Parameters<typeof generateText>[0]["messages"] = [
+      { role: "system", content: instructions },
+      ...messages,
+    ]
+
+    if (attempt?.threadId === "open-problem") {
+      const submission = await ctx.runQuery(
+        internal.openProblem.getApprovedSubmission,
+        { attemptId }
+      )
+      if (submission) {
+        const imageParts: { type: "image"; image: URL }[] = []
+        for (const sid of submission.storageIds) {
+          const url = await ctx.storage.getUrl(sid)
+          if (url) {
+            imageParts.push({ type: "image", image: new URL(url) })
+          }
+        }
+        if (imageParts.length > 0) {
+          aiMessages = [
+            { role: "system", content: instructions },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: "Here is my handwritten solution:" },
+                ...imageParts,
+              ],
+            },
+            {
+              role: "assistant",
+              content:
+                "I've reviewed your solution. Let me guide you through some questions.",
+            },
+            ...messages,
+          ]
+        }
+      }
+    }
+
     let response
     try {
       response = await generateText({
         model: CHAT_MODEL_PROVIDER,
-        messages: [{ role: "system", content: instructions }, ...messages],
+        messages: aiMessages,
         tools: {
           markComplete: {
             description: completionFunctionDescription,
@@ -407,7 +460,8 @@ export const markFinished = internalMutation({
       userId: attempt.userId,
       attemptId,
       exerciseId: attempt.exerciseId,
-      variant: "explain",
+      variant:
+        attempt.threadId === "open-problem" ? "open-problem" : "explain",
     })
 
     if (exercise.feedback) {
@@ -525,7 +579,8 @@ export const saveFeedback = internalMutation({
       attemptId: args.attemptId,
       exerciseId: attempt.exerciseId,
       systemMessageId: args.feedbackMessageId,
-      variant: "explain",
+      variant:
+        attempt.threadId === "open-problem" ? "open-problem" : "explain",
     })
   },
 })

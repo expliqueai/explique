@@ -72,6 +72,14 @@ export const exerciseAdminSchema = {
   completionFunctionDescription: v.string(),
   image: v.optional(v.id("images")),
   imagePrompt: v.optional(v.string()),
+
+  // Open-problem exercise: students upload handwritten solutions
+  openProblem: v.optional(v.object({
+    problemStatement: v.string(), // Problem text shown to student (markdown)
+    handwrittenCheckPrompt: v.optional(v.string()), // Custom prompt for handwritten validation
+    reasonableAttemptPrompt: v.optional(v.string()), // Custom prompt for reasonable attempt check
+  })),
+  compulsory: v.optional(v.boolean()), // Whether exercise is required for course completion
 }
 
 export default defineSchema(
@@ -87,7 +95,8 @@ export default defineSchema(
         v.literal("exercise"),
         v.literal("exerciseCompleted"),
         v.literal("quiz"),
-        v.literal("quizCompleted")
+        v.literal("quizCompleted"),
+        v.literal("awaitingUpload") // Open-problem: waiting for student to upload solution
       ),
       exerciseId: v.id("exercises"),
       userId: v.id("users"),
@@ -166,6 +175,18 @@ export default defineSchema(
       .index("by_exercise", ["exerciseId"])
       .index("by_lecture", ["lectureId"]),
 
+    openProblemSubmissions: defineTable({
+      attemptId: v.id("attempts"),
+      storageIds: v.array(v.id("_storage")),
+      validationStatus: v.union(
+        v.literal("pending"),
+        v.literal("validating"),
+        v.literal("approved"),
+        v.literal("rejected")
+      ),
+      rejectionReason: v.optional(v.string()),
+    }).index("by_attempt", ["attemptId"]),
+
     messages: defineTable({
       attemptId: v.id("attempts"),
       system: v.boolean(),
@@ -205,7 +226,7 @@ export default defineSchema(
       exerciseId: v.id("exercises"),
       userMessageId: v.optional(v.id("messages")),
       systemMessageId: v.optional(v.id("messages")),
-      variant: v.union(v.literal("reading"), v.literal("explain")),
+      variant: v.union(v.literal("reading"), v.literal("explain"), v.literal("open-problem")),
       details: v.optional(v.any()),
     }).index("by_type", ["type"]),
 
