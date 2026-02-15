@@ -8,11 +8,6 @@
  * @module
  */
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
 import type * as admin_course from "../admin/course.js";
 import type * as admin_exercises from "../admin/exercises.js";
 import type * as admin_identitiesJwt from "../admin/identitiesJwt.js";
@@ -38,19 +33,18 @@ import type * as internal_seed from "../internal/seed.js";
 import type * as lectures from "../lectures.js";
 import type * as quiz from "../quiz.js";
 import type * as superadmin_courses from "../superadmin/courses.js";
+import type * as superadmin_duplication from "../superadmin/duplication.js";
 import type * as superadmin_relocation from "../superadmin/relocation.js";
 import type * as superadmin_util from "../superadmin/util.js";
 import type * as video_chat from "../video/chat.js";
 import type * as weeks from "../weeks.js";
 
-/**
- * A utility for referencing Convex functions in your app's API.
- *
- * Usage:
- * ```js
- * const myFunctionReference = api.myModule.myFunction;
- * ```
- */
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
+
 declare const fullApi: ApiFromModules<{
   "admin/course": typeof admin_course;
   "admin/exercises": typeof admin_exercises;
@@ -77,16 +71,37 @@ declare const fullApi: ApiFromModules<{
   lectures: typeof lectures;
   quiz: typeof quiz;
   "superadmin/courses": typeof superadmin_courses;
+  "superadmin/duplication": typeof superadmin_duplication;
   "superadmin/relocation": typeof superadmin_relocation;
   "superadmin/util": typeof superadmin_util;
   "video/chat": typeof video_chat;
   weeks: typeof weeks;
 }>;
+
+/**
+ * A utility for referencing Convex functions in your app's public API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = api.myModule.myFunction;
+ * ```
+ */
 export declare const api: FilterApi<
   typeof fullApi,
   FunctionReference<any, "public">
 >;
+
+/**
+ * A utility for referencing Convex functions in your app's internal API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = internal.myModule.myFunction;
+ * ```
+ */
 export declare const internal: FilterApi<
   typeof fullApi,
   FunctionReference<any, "internal">
 >;
+
+export declare const components: {};
