@@ -339,8 +339,9 @@ export default function ExerciseForm({
             <h2 className="text-2xl font-medium">Open Problem</h2>
           </label>
           <p className="mt-1 ml-8 text-sm text-slate-500">
-            Students upload handwritten solutions and receive AI-guided feedback.
-            Uses the explanation exercise settings above for the guidance chat.
+            Students upload handwritten solutions and receive AI-guided
+            feedback. Uses the explanation exercise settings above for the
+            guidance chat.
           </p>
         </header>
 
@@ -400,123 +401,127 @@ export default function ExerciseForm({
       </section>
 
       {!openProblem && (
-      <>
-      <section>
-        <h2 className="mt-8 mb-4 border-t border-slate-300 py-4 text-2xl font-medium">
-          Reading Exercise
-        </h2>
-        <div className="grid gap-x-12 md:grid-cols-2">
-          <Textarea
-            label="Text"
-            value={text}
-            onChange={setText}
-            hint={<MarkdownTip />}
-            required
-          />
+        <>
+          <section>
+            <h2 className="mt-8 mb-4 border-t border-slate-300 py-4 text-2xl font-medium">
+              Reading Exercise
+            </h2>
+            <div className="grid gap-x-12 md:grid-cols-2">
+              <Textarea
+                label="Text"
+                value={text}
+                onChange={setText}
+                hint={<MarkdownTip />}
+                required
+              />
 
-          <div className="mt-6">
-            <Markdown text={text} />
-          </div>
-        </div>
-      </section>
+              <div className="mt-6">
+                <Markdown text={text} />
+              </div>
+            </div>
+          </section>
 
-      <section>
-        <header className="mt-8 mb-4 flex flex-wrap items-center justify-between border-t border-slate-300 py-4">
-          <label className="flex items-center text-sm font-medium text-slate-800">
-            <input
-              type="checkbox"
-              className="mr-1 h-6 w-6"
-              checked={quizBatches !== null}
-              onChange={(e) => {
-                setQuizBatches(
-                  e.target.checked
-                    ? [
-                        {
-                          randomize: true,
-                          questions: [
+          <section>
+            <header className="mt-8 mb-4 flex flex-wrap items-center justify-between border-t border-slate-300 py-4">
+              <label className="flex items-center text-sm font-medium text-slate-800">
+                <input
+                  type="checkbox"
+                  className="mr-1 h-6 w-6"
+                  checked={quizBatches !== null}
+                  onChange={(e) => {
+                    setQuizBatches(
+                      e.target.checked
+                        ? [
                             {
-                              question: "Question",
-                              answers: [
-                                "Answer 1",
-                                "Answer 2",
-                                "Answer 3",
-                                "Answer 4",
+                              randomize: true,
+                              questions: [
+                                {
+                                  question: "Question",
+                                  answers: [
+                                    "Answer 1",
+                                    "Answer 2",
+                                    "Answer 3",
+                                    "Answer 4",
+                                  ],
+                                  correctAnswerIndex: null,
+                                },
                               ],
-                              correctAnswerIndex: null,
                             },
-                          ],
-                        },
-                      ]
-                    : null
-                )
-              }}
-            />
-            <h2 className="text-2xl font-medium">Validation Quiz</h2>
-          </label>
+                          ]
+                        : null
+                    )
+                  }}
+                />
+                <h2 className="text-2xl font-medium">Validation Quiz</h2>
+              </label>
 
-          {quizBatches && (
-            <Button
-              type="button"
-              onClick={() => {
-                setQuizBatches([
-                  ...quizBatches,
-                  {
-                    randomize: true,
-                    questions: [
+              {quizBatches && (
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setQuizBatches([
+                      ...quizBatches,
                       {
-                        question: "Question",
-                        answers: [
-                          "Answer 1",
-                          "Answer 2",
-                          "Answer 3",
-                          "Answer 4",
+                        randomize: true,
+                        questions: [
+                          {
+                            question: "Question",
+                            answers: [
+                              "Answer 1",
+                              "Answer 2",
+                              "Answer 3",
+                              "Answer 4",
+                            ],
+                            correctAnswerIndex: null,
+                          },
                         ],
-                        correctAnswerIndex: null,
                       },
-                    ],
-                  },
-                ])
-              }}
-            >
-              <PlusIcon className="h-5 w-5" />
-              New Batch
-            </Button>
-          )}
-        </header>
+                    ])
+                  }}
+                >
+                  <PlusIcon className="h-5 w-5" />
+                  New Batch
+                </Button>
+              )}
+            </header>
 
-        {quizBatches &&
-          quizBatches.map((batch, batchIndex) => (
-            <QuizBatch
-              key={batchIndex}
-              batch={batch}
-              batchIndex={batchIndex}
-              onChange={(newBatch) => {
-                setQuizBatches((quizBatches) =>
-                  (quizBatches ?? []).map((b, index) =>
-                    index === batchIndex ? newBatch : b
-                  )
-                )
-              }}
-              canDelete={quizBatches.length > 1}
-              onDelete={() => {
-                setQuizBatches((quizBatches) =>
-                  (quizBatches ?? []).filter((_, index) => index !== batchIndex)
-                )
-              }}
-            />
-          ))}
+            {quizBatches &&
+              quizBatches.map((batch, batchIndex) => (
+                <QuizBatch
+                  key={batchIndex}
+                  batch={batch}
+                  batchIndex={batchIndex}
+                  onChange={(newBatch) => {
+                    setQuizBatches((quizBatches) =>
+                      (quizBatches ?? []).map((b, index) =>
+                        index === batchIndex ? newBatch : b
+                      )
+                    )
+                  }}
+                  canDelete={quizBatches.length > 1}
+                  onDelete={() => {
+                    setQuizBatches((quizBatches) =>
+                      (quizBatches ?? []).filter(
+                        (_, index) => index !== batchIndex
+                      )
+                    )
+                  }}
+                />
+              ))}
 
-        <p className="mb-6 flex-1 gap-2 text-sm text-slate-500">
-          <MarkdownTip />
-        </p>
-      </section>
-      </>
+            <p className="mb-6 flex-1 gap-2 text-sm text-slate-500">
+              <MarkdownTip />
+            </p>
+          </section>
+        </>
       )}
 
       <div className="h-36"></div>
 
-      <div className="fixed bottom-0 left-0 flex w-full justify-end bg-white/60 p-8 shadow-2xl backdrop-blur-xl">
-        <PrimaryButton type="submit">{submitLabel}</PrimaryButton>
+      <div className="fixed bottom-0 left-0 flex w-full flex-col items-center bg-white/60 py-4 shadow-2xl backdrop-blur-xl">
+        <div className="flex w-full max-w-6xl justify-end">
+          <PrimaryButton type="submit">{submitLabel}</PrimaryButton>
+        </div>
       </div>
     </form>
   )

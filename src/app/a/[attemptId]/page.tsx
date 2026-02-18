@@ -219,7 +219,7 @@ function OpenProblemContext({
   imageUrls: string[]
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 lg:flex lg:h-full lg:flex-col">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 lg:flex lg:h-full lg:flex-col">
       <div className="lg:shrink-0">
         <h3 className="mb-2 text-sm font-medium tracking-wide text-slate-500 uppercase">
           Problem
